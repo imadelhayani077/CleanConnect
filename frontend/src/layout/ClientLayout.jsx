@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { useClientContext } from "@/Helper/ClientContext";
@@ -9,12 +9,14 @@ import { ModeButton } from "@/components/ui/Button-mode";
 import { ClientMenu } from "./NavBar/component/ClientMenu";
 
 export default function ClientLayout() {
+    const [isLoaded, setIsLoaded] = useState(false);
     const navigate = useNavigate();
     const { authenticated, client, logout, setClient } = useClientContext();
 
     // Only redirect if we know user is NOT authenticated
     useEffect(() => {
         if (authenticated) {
+            setIsLoaded(true);
             const fetchUser = async () => {
                 try {
                     const res = await ClientApi.getClient();
@@ -51,6 +53,16 @@ export default function ClientLayout() {
             navigate("/login", { replace: true });
         }
     };
+    if (!isLoaded) {
+        return (
+            <div className="p-6 space-y-4">
+                <div className="h-6 w-1/3 animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-full animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-5/6 animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted"></div>
+            </div>
+        );
+    }
 
     return (
         <>
