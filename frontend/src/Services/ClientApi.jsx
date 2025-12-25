@@ -13,6 +13,9 @@ const ClientApi = {
     logout: async () => {
         return await axiosClient.post("/logout");
     },
+    register: async (values) => {
+        return await axiosClient.post("/register", values);
+    },
 
     getClient: async () => {
         return await axiosClient.get("/user");
