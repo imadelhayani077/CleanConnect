@@ -4,16 +4,8 @@ import React from "react";
 
 export default function Contact() {
     return (
-        <div>
-            contact
-            <div>
-                // Usage examples:
-                <ChevronDown className="w-4 h-4" /> // Simple chevron down
-                <ArrowDown className="w-4 h-4" /> // Arrow with line
-                <MoveDown className="w-4 h-4" /> // Arrow with dot
-                <ChevronsDown className="w-4 h-4" /> // Double chevron
-                <ModeButton />
-            </div>
+        <div className="container mx-auto my-22 px-6">
+            <h1 className="text-3xl font-bold my-6">Contact us</h1>
         </div>
     );
 }

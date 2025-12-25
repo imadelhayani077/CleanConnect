@@ -24,15 +24,14 @@ export default function ClientDashboard() {
 
                     <tbody className="divide-y divide-border text-sm">
                         <tr className="hover:bg-muted/50">
-                            <td className="px-4 py-3">
+                            <td className="px-4 py-3 ">
                                 <span className="font-medium">{client.id}</span>
                             </td>
 
-                            <td className="px-4 py-3 flex items-center gap-2">
+                            <td className="px-4 py-3 flex items-center gap-2 ">
                                 <img
                                     src="https://i.pravatar.cc/50"
                                     className="w-10 h-10 rounded-full"
-                                    alt="User avatar"
                                 />
                                 {client.name}
                             </td>

@@ -13,6 +13,7 @@ export default function ClientLayout() {
     const navigate = useNavigate();
     const { authenticated, client, logout, setClient } = useClientContext();
 
+    // Only redirect if we know user is NOT authenticated
     useEffect(() => {
         if (authenticated) {
             setIsLoaded(true);
@@ -20,17 +21,18 @@ export default function ClientLayout() {
                 try {
                     const res = await ClientApi.getClient();
                     setClient(res.data);
+                    // If you want to show name/email, update context here if needed
                 } catch (error) {
                     console.log(
                         "Could not fetch user — session may be invalid"
                     );
+                    // Don't auto-logout here unless you want strict check
                 }
             };
 
             fetchUser();
         }
     }, [authenticated]);
-
     useEffect(() => {
         if (authenticated === false) {
             navigate("/login", { replace: true });
@@ -39,24 +41,25 @@ export default function ClientLayout() {
 
     const handleLogout = async () => {
         try {
-            await ClientApi.logout();
+            await ClientApi.logout(); // Try to clear session on server
         } catch (error) {
+            // 401 is expected if session already gone — ignore it
             if (error.response?.status !== 401) {
                 console.error("Unexpected logout error:", error);
             }
         } finally {
-            logout();
+            // Always clear frontend state, no matter what server says
+            logout(); // Clears authenticated + localStorage
             navigate("/login", { replace: true });
         }
     };
-
     if (!isLoaded) {
         return (
-            <div className="skeleton-container">
-                <div className="skeleton-line skeleton-line-medium w-1/3"></div>
-                <div className="skeleton-line skeleton-line-small w-full"></div>
-                <div className="skeleton-line skeleton-line-small w-5/6"></div>
-                <div className="skeleton-line skeleton-line-small w-2/3"></div>
+            <div className="p-6 space-y-4">
+                <div className="h-6 w-1/3 animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-full animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-5/6 animate-pulse rounded bg-muted"></div>
+                <div className="h-4 w-2/3 animate-pulse rounded bg-muted"></div>
             </div>
         );
     }
@@ -64,8 +67,8 @@ export default function ClientLayout() {
     return (
         <>
             <header>
-                <nav className="navbar">
-                    <div className="navbar-container">
+                <nav className="fixed top-0 w-full py-4 px-6 z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+                    <div className="max-w-7xl mx-auto flex justify-between items-center">
                         <div className="text-2xl font-bold text-white">
                             CleanConnect
                         </div>
@@ -91,7 +94,10 @@ export default function ClientLayout() {
 
             <main className="min-h-screen pt-20">
                 <div className="flex">
+                    {/* Sidebar */}
                     <SideBar />
+
+                    {/* Content */}
                     <div className="flex-1 px-6">
                         <Outlet />
                     </div>

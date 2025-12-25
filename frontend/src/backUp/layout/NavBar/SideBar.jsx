@@ -3,6 +3,7 @@ import {
     Play,
     Compass,
     Radio,
+    Library,
     ListMusic,
     Music2,
     User,
@@ -47,8 +48,17 @@ export default function SideBar() {
 
     return (
         <div className="min-h-screen bg-white">
-            <div className="sidebar">
+            <div
+                className="
+    w-64
+    min-h-screen
+    border-r
+    border-border
+    bg-background
+"
+            >
                 <div className="p-4 space-y-6">
+                    {/* Header */}
                     <div className="flex items-center justify-between px-2">
                         <h1 className="text-2xl font-bold">
                             <GaugeIcon className="inline mb-1 mr-1" />
@@ -58,6 +68,7 @@ export default function SideBar() {
 
                     <ScrollArea className="h-[calc(100vh-5rem)]">
                         <div className="space-y-6 pr-4">
+                            {/* Discover Section */}
                             <div className="space-y-1">
                                 <h2 className="px-2 text-sm font-semibold text-muted-foreground mb-2">
                                     Discover
@@ -79,6 +90,7 @@ export default function SideBar() {
                                 ))}
                             </div>
 
+                            {/* Library Section */}
                             <div className="space-y-1">
                                 <h2 className="px-2 text-sm font-semibold text-muted-foreground mb-2">
                                     Library
@@ -100,6 +112,7 @@ export default function SideBar() {
                                 ))}
                             </div>
 
+                            {/* Playlists Section */}
                             <div className="space-y-1">
                                 <h2 className="px-2 text-sm font-semibold text-muted-foreground mb-2">
                                     Playlists

@@ -4,8 +4,8 @@ import React from "react";
 
 export default function Homepage() {
     return (
-        <div className="container mx-auto my-22 px-6">
-            <h1 className="text-3xl font-bold my-6">Homepage</h1>
+        <div className="max-w-3xl mx-auto p-6">
+            <h1 className="text-2xl font-bold">Homepage</h1>
         </div>
     );
 }

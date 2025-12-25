@@ -11,6 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useClientContext } from "@/Helper/ClientContext";
@@ -36,6 +37,7 @@ export default function ClientLoginForm() {
     });
 
     const {
+        register,
         handleSubmit,
         formState: { isSubmitting },
         setError,
@@ -43,6 +45,8 @@ export default function ClientLoginForm() {
     } = form;
 
     const onSubmit = async (values) => {
+        console.log(values.remember);
+
         clearErrors();
 
         try {
@@ -73,7 +77,7 @@ export default function ClientLoginForm() {
 
     return (
         <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="form-wrapper">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
                     control={form.control}
                     name="email"

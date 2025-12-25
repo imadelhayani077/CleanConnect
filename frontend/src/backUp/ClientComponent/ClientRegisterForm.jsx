@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useClientContext } from "@/Helper/ClientContext";
+import ClientApi from "@/Services/ClientApi";
 
 const formSchema = z.object({
     name: z.string().min(6),
@@ -38,8 +39,8 @@ export default function ClientRegisterForm() {
     const { register } = useClientContext();
 
     const onSubmit = async (values) => {
-        form.clearErrors();
-
+        form.clearErrors(); // Clear previous errors
+        console.log(values);
         if (values.password === values.password_confirmation) {
             try {
                 const res = await register(values);
@@ -64,14 +65,36 @@ export default function ClientRegisterForm() {
                 message: "Passwords do not match",
             });
         }
+
+        // try {
+        //     const res = await login(values);
+
+        //     if (res.status === 204) {
+        //         setAuthenticated(true);
+        //         navigate("/clientdashboard");
+        //     }
+        // } catch (error) {
+        //     console.error("Login failed:", error);
+
+        //     if (error.response?.status === 422) {
+        //         const errors = error.response.data.errors || {};
+        //         Object.keys(errors).forEach((field) => {
+        //             form.setError(field, {
+        //                 type: "manual",
+        //                 message: errors[field][0],
+        //             });
+        //         });
+        //     } else {
+        //         form.setError("email", {
+        //             message: "Invalid credentials or server error",
+        //         });
+        //     }
+        // }
     };
 
     return (
         <Form {...form}>
-            <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="form-wrapper"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <FormField
                     control={form.control}
                     name="name"
