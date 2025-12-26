@@ -55,7 +55,7 @@ class User extends Authenticatable
         return $this->hasMany(Address::class);
     }
     // Bookings made by this user (as client)
-public function bookings()
+public function clientBookings()
 {
     return $this->hasMany(Booking::class, 'user_id');
 }
@@ -65,4 +65,27 @@ public function sweepstarBookings()
 {
     return $this->hasMany(Booking::class, 'sweepstar_id');
 }
+// Reviews written by this user
+public function reviewsWritten()
+{
+    return $this->hasMany(Review::class, 'reviewer_id');
+}
+
+// Reviews about this user
+public function reviewsReceived()
+{
+    return $this->hasMany(Review::class, 'target_id');
+}
+    // Check if user is sweepstar
+    public function isSweepstar()
+    {
+        return $this->role === 'sweepstar';
+    }
+
+    // Check if user is admin
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
 }

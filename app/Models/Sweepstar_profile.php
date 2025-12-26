@@ -34,4 +34,15 @@ class SweepstarProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+     public function bookings()
+    {
+        return $this->hasManyThrough(
+            Booking::class,
+            User::class,
+            'id', // Foreign key on users table
+            'sweepstar_id', // Foreign key on bookings table
+            'user_id', // Local key on sweepstar_profiles table
+            'id' // Local key on users table
+        );
+    }
 }

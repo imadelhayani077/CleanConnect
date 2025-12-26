@@ -53,4 +53,20 @@ class Booking extends Model
                 ->withPivot('price_at_booking')  // Access the snapshot price
                 ->withTimestamps();              // If you want created_at/updated_at on pivot
 }
+  public function review()
+    {
+        return $this->hasOne(Review::class);
+    }
+
+    //    // Scopes for filtering
+    // public function scopePending($query)
+    // {
+    //     return $query->where('status', 'pending');
+    // }
+
+    // public function scopeCompleted($query)
+    // {
+    //     return $query->where('status', 'completed');
+    // }
+
 }

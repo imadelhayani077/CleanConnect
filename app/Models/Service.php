@@ -29,4 +29,5 @@ public function bookings()
                 ->withPivot('price_at_booking')
                 ->withTimestamps();
 }
+
 }
