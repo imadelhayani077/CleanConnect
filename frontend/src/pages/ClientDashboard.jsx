@@ -3,7 +3,7 @@ import { useClientContext } from "@/Helper/ClientContext";
 import React from "react";
 
 export default function ClientDashboard() {
-    const { client } = useClientContext();
+    const { user } = useClientContext();
 
     return (
         <Card>
@@ -25,7 +25,7 @@ export default function ClientDashboard() {
                     <tbody className="divide-y divide-border text-sm">
                         <tr className="hover:bg-muted/50">
                             <td className="px-4 py-3">
-                                <span className="font-medium">{client.id}</span>
+                                <span className="font-medium">{user.id}</span>
                             </td>
 
                             <td className="px-4 py-3 flex items-center gap-2">
@@ -34,12 +34,12 @@ export default function ClientDashboard() {
                                     className="w-10 h-10 rounded-full"
                                     alt="User avatar"
                                 />
-                                {client.name}
+                                {user.name}
                             </td>
 
                             <td className="px-4 py-3">
                                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-muted">
-                                    {client.email}
+                                    {user.email}
                                 </span>
                             </td>
 
@@ -50,7 +50,7 @@ export default function ClientDashboard() {
                             </td>
 
                             <td className="px-4 py-3 text-muted-foreground">
-                                {client.created_at}
+                                {user.created_at}
                             </td>
                         </tr>
                     </tbody>

@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useClientContext } from "@/Helper/ClientContext";
 import { Checkbox } from "@radix-ui/react-checkbox";
+import ClientApi from "@/Services/ClientApi";
 
 const formSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -24,7 +25,7 @@ const formSchema = z.object({
 
 export default function ClientLoginForm() {
     const navigate = useNavigate();
-    const { login, setAuthenticated } = useClientContext();
+    const { login, setAuthenticated, setUser } = useClientContext();
 
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -46,11 +47,25 @@ export default function ClientLoginForm() {
         clearErrors();
 
         try {
+            // 1. Perform Login (Sets the cookie)
             const res = await login(values);
 
             if (res.status === 204) {
+                // 2. Fetch the User to know their Role
+                const { data: user } = await ClientApi.getClient();
+
+                // 3. Update Context
                 setAuthenticated(true);
-                navigate("/clientdashboard");
+                setUser(user);
+
+                // 4. Redirect based on Role
+                if (user.role === "admin") {
+                    navigate("/admin/dashboard");
+                } else if (user.role === "sweepstar") {
+                    navigate("/sweepstar/dashboard");
+                } else {
+                    navigate("/client/dashboard");
+                }
             }
         } catch (error) {
             console.error("Login failed:", error);
