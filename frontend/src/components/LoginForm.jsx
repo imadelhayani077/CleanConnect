@@ -59,14 +59,7 @@ export default function ClientLoginForm() {
                 setAuthenticated(true);
                 setUser(user);
 
-                // 4. Redirect based on Role
-                if (user.role === "admin") {
-                    navigate("/admin/dashboard");
-                } else if (user.role === "sweepstar") {
-                    navigate("/sweepstar/dashboard");
-                } else {
-                    navigate("/client/dashboard");
-                }
+                navigate("/dashboard");
             }
         } catch (error) {
             console.error("Login failed:", error);

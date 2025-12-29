@@ -1,129 +1,104 @@
 import React from "react";
+import { useClientContext } from "@/Helper/ClientContext";
 import {
-    Play,
-    Compass,
-    Radio,
-    ListMusic,
-    Music2,
-    User,
-    Mic2,
-    Disc3,
-    Clock,
-    TrendingUp,
+    LayoutDashboard,
+    UserRoundCog,
     Users,
-    Moon,
-    GaugeIcon,
+    Calendar,
+    Briefcase,
+    Settings,
+    LogOut,
+    PlusCircle,
+    MapPin,
+    ListChecks,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
 
-export default function SideBar() {
-    const [activeItem, setActiveItem] = React.useState("listen-now");
+export default function Sidebar({ activePage, setActivePage }) {
+    const { user, logout } = useClientContext();
+    const role = user?.role || "user";
 
-    const discoverItems = [
-        { id: "listen-now", icon: Play, label: "Listen Now" },
-        { id: "browse", icon: Compass, label: "Browse" },
-        { id: "radio", icon: Radio, label: "Radio" },
-    ];
+    // --- CONFIGURATION ---
+    const MENUS = {
+        admin: [
+            { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+            { id: "my-info", label: "My Info", icon: UserRoundCog },
+            { id: "users", label: "All Users", icon: Users },
+            { id: "bookings", label: "All Bookings", icon: Calendar },
+            { id: "settings", label: "System Settings", icon: Settings },
+        ],
+        sweepstar: [
+            { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
+            { id: "my-info", label: "My Info", icon: UserRoundCog },
+            { id: "jobs", label: "My Jobs", icon: ListChecks },
+            { id: "schedule", label: "My Schedule", icon: Calendar },
+        ],
+        client: [
+            { id: "dashboard", label: "Home", icon: LayoutDashboard },
+            { id: "my-info", label: "My Info", icon: UserRoundCog },
+            { id: "book-new", label: "Book Service", icon: PlusCircle },
+            { id: "my-bookings", label: "History", icon: Briefcase },
+            { id: "addresses", label: "My Addresses", icon: MapPin },
+        ],
+    };
 
-    const libraryItems = [
-        { id: "playlists", icon: ListMusic, label: "Playlists" },
-        { id: "songs", icon: Music2, label: "Songs" },
-        { id: "made-for-you", icon: User, label: "Made for You" },
-        { id: "artists", icon: Mic2, label: "Artists" },
-        { id: "albums", icon: Disc3, label: "Albums" },
-    ];
-
-    const playlistItems = [
-        { id: "recently-added", icon: Clock, label: "Recently Added" },
-        { id: "recently-played", icon: Play, label: "Recently Played" },
-        { id: "top-songs", icon: TrendingUp, label: "Top Songs" },
-        { id: "top-albums", icon: Disc3, label: "Top Albums" },
-        { id: "top-artists", icon: Users, label: "Top Artists" },
-        { id: "logic-discography", icon: Disc3, label: "Logic Discography" },
-        { id: "bedtime-beats", icon: Moon, label: "Bedtime Beats" },
-    ];
+    const currentMenu = MENUS[role] || MENUS["client"];
 
     return (
-        <div className="min-h-screen bg-white">
-            <div className="sidebar">
-                <div className="p-4 space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                        <h1 className="text-2xl font-bold">
-                            <GaugeIcon className="inline mb-1 mr-1" />
-                            Dashboard
-                        </h1>
+        // Changed: bg-white -> bg-card, border-gray-200 -> border-border
+        <div className="w-64 min-h-screen bg-card border-r border-border flex flex-col shadow-sm">
+            {/* 1. Header Logo */}
+            <div className="p-6 border-b border-border">
+                {/* Changed: text-primary handles the color automatically */}
+                <h1 className="text-xl font-bold flex items-center gap-2 text-primary">
+                    {/* Changed: bg-black -> bg-primary, text-white -> text-primary-foreground */}
+                    <div className="w-8 h-8 bg-primary text-primary-foreground rounded flex items-center justify-center text-sm font-bold">
+                        {role.charAt(0).toUpperCase()}
                     </div>
-
-                    <ScrollArea className="h-[calc(100vh-5rem)]">
-                        <div className="space-y-6 pr-4">
-                            <div className="space-y-1">
-                                <h2 className="px-2 text-sm font-semibold text-muted-foreground mb-2">
-                                    Discover
-                                </h2>
-                                {discoverItems.map((item) => (
-                                    <Button
-                                        key={item.id}
-                                        variant="ghost"
-                                        onClick={() => setActiveItem(item.id)}
-                                        className={cn(
-                                            "w-full justify-start gap-3",
-                                            activeItem === item.id &&
-                                                "bg-muted text-foreground hover:bg-muted"
-                                        )}
-                                    >
-                                        <item.icon className="w-4 h-4" />
-                                        <span>{item.label}</span>
-                                    </Button>
-                                ))}
-                            </div>
-
-                            <div className="space-y-1">
-                                <h2 className="px-2 text-sm font-semibold text-muted-foreground mb-2">
-                                    Library
-                                </h2>
-                                {libraryItems.map((item) => (
-                                    <Button
-                                        key={item.id}
-                                        variant="ghost"
-                                        onClick={() => setActiveItem(item.id)}
-                                        className={cn(
-                                            "w-full justify-start gap-3",
-                                            activeItem === item.id &&
-                                                "bg-muted text-foreground hover:bg-muted"
-                                        )}
-                                    >
-                                        <item.icon className="w-4 h-4" />
-                                        <span>{item.label}</span>
-                                    </Button>
-                                ))}
-                            </div>
-
-                            <div className="space-y-1">
-                                <h2 className="px-2 text-sm font-semibold text-muted-foreground mb-2">
-                                    Playlists
-                                </h2>
-                                {playlistItems.map((item) => (
-                                    <Button
-                                        key={item.id}
-                                        variant="ghost"
-                                        onClick={() => setActiveItem(item.id)}
-                                        className={cn(
-                                            "w-full justify-start gap-3",
-                                            activeItem === item.id &&
-                                                "bg-muted text-foreground hover:bg-muted"
-                                        )}
-                                    >
-                                        <item.icon className="w-4 h-4" />
-                                        <span>{item.label}</span>
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-                    </ScrollArea>
-                </div>
+                    <span>
+                        Dash<span className="text-muted-foreground">Board</span>
+                    </span>
+                </h1>
+                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider ml-1">
+                    {role} Panel
+                </p>
             </div>
+
+            {/* 2. Dynamic Menu Items */}
+            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                {currentMenu.map((item) => (
+                    <button
+                        key={item.id}
+                        onClick={() => setActivePage(item.id)}
+                        // Changed: Hover and Active states use 'accent' and 'primary' variables
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                            activePage === item.id
+                                ? "bg-primary text-primary-foreground shadow-md"
+                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                    >
+                        <item.icon
+                            className={`w-5 h-5 ${
+                                activePage === item.id
+                                    ? "text-primary-foreground"
+                                    : "text-muted-foreground"
+                            }`}
+                        />
+                        {item.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* 3. Footer / Logout */}
+            {/* <div className="p-4 border-t border-border">
+                <button
+                    onClick={logout}
+                    // Changed: red-50 -> hover:bg-destructive/10, text-red-600 -> text-destructive
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                >
+                    <LogOut className="w-5 h-5" />
+                    Logout
+                </button>
+            </div> */}
         </div>
     );
 }

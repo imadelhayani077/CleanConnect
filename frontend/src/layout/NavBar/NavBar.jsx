@@ -20,9 +20,7 @@ export default function NavBar() {
     // Helper to determine where the "Dashboard" button points
     const getDashboardRoute = () => {
         if (!user) return "/login";
-        if (user.role === "admin") return "/admin/dashboard";
-        if (user.role === "sweepstar") return "/sweepstar/dashboard"; // Corrected for Sweepstars
-        return "/client/dashboard"; // Default for Clients
+        if (user.role) return "/dashboard";
     };
 
     const NavItem = ({ to, children, onClick }) => {
@@ -71,7 +69,7 @@ export default function NavBar() {
                             <>
                                 {/* Dynamic Dashboard Link */}
                                 <NavItem to={getDashboardRoute()}>
-                                    Dashboard
+                                    {user.role} Dashboard
                                 </NavItem>
                                 <NavItem onClick={handleLogout}>Logout</NavItem>
                             </>

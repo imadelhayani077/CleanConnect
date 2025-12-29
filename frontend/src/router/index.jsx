@@ -1,22 +1,21 @@
 import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import MasterLayout from "@/layout/MasterLayout";
-import RoleRoute from "./RoleRoute"; // Ensure you created this from previous step
+import RoleRoute from "./RoleRoute";
 
 // Pages
 import Homepage from "../pages/homepage";
 import Login from "../pages/login";
 import Signup from "../pages/signup";
 import Contact from "../pages/contact";
-import ClientDashboard from "../pages/ClientDashboard";
+import MainDashboard from "@/pages/Dashboards/MainDashboard";
 import NotFound from "../pages/notFound";
-import SweepstarDashboard from "@/pages/SweepstarDashboard";
-import AdminDashboard from "@/pages/AdminDashboard";
+import UsersList from "@/pages/Admin/UsersListe";
 
 // Helper to redirect logged-in users away from Login page
 const GuestOnly = ({ children }) => {
     const isAuth = window.localStorage.getItem("Authenticated") === "true";
-    return isAuth ? <Navigate to="/client/dashboard" /> : children;
+    return isAuth ? <Navigate to="/dashboard" /> : children;
 };
 
 export const AppRouter = createBrowserRouter([
@@ -46,30 +45,33 @@ export const AppRouter = createBrowserRouter([
                 ),
             },
 
-            // --- PROTECTED: CLIENT ---
+            // --- PROTECTED: SHARED DASHBOARD (ALL ROLES) ---
+            // We use RoleRoute without 'requiredRole' just to check if they are logged in.
             {
-                element: <RoleRoute requiredRole="client" />,
-                children: [
-                    { path: "client/dashboard", element: <ClientDashboard /> },
-                    // Add Booking page here later
-                ],
-            },
-            {
-                element: <RoleRoute requiredRole="sweepstar" />,
+                element: <RoleRoute />,
                 children: [
                     {
-                        path: "sweepstar/dashboard",
-                        element: <SweepstarDashboard />,
+                        path: "dashboard",
+                        element: <MainDashboard />, // <--- MainDashboard handles the role switching
                     },
                 ],
             },
 
-            // --- PROTECTED: ADMIN ---
+            // --- PROTECTED: SPECIFIC ADMIN PAGES ---
+            // Only put pages here that ONLY admins can see (e.g. /admin/users)
             {
                 element: <RoleRoute requiredRole="admin" />,
                 children: [
-                    { path: "admin/dashboard", element: <AdminDashboard /> },
-                    // { path: "admin/users", element: <UsersList /> },
+                    { path: "admin/users", element: <UsersList /> },
+                    // { path: "admin/settings", element: <AdminSettings /> },
+                ],
+            },
+
+            // --- PROTECTED: SPECIFIC CLIENT PAGES ---
+            {
+                element: <RoleRoute requiredRole="client" />,
+                children: [
+                    // { path: "my-bookings", element: <MyBookings /> },
                 ],
             },
 

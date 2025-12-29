@@ -21,16 +21,9 @@ const RoleRoute = ({ requiredRole }) => {
 
     // 3. If logged in BUT wrong role, redirect to THEIR correct dashboard
     if (requiredRole && !isRole(requiredRole)) {
-        if (user.role === "admin") {
-            return <Navigate to="/admin/dashboard" />;
+        if (user.role) {
+            return <Navigate to="/dashboard" />;
         }
-
-        if (user.role === "sweepstar") {
-            return <Navigate to="/sweepstar/dashboard" />; // Fixed Path
-        }
-
-        // Default fallback for clients
-        return <Navigate to="/client/dashboard" />;
     }
 
     // 4. If all checks pass, show the page
