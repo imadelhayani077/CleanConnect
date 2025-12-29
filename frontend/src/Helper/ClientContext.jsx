@@ -81,7 +81,7 @@ export default function ClientContext({ children }) {
                 login,
                 logout,
                 register,
-                isRole, // Now this exists!
+                isRole,
             }}
         >
             {children}

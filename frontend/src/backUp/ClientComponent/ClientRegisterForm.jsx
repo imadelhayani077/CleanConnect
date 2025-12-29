@@ -45,7 +45,7 @@ export default function ClientRegisterForm() {
             try {
                 const res = await register(values);
 
-                if (res.status === 204) {
+                if (res.status === 201 || res.status === 204) {
                     navigate("/login", {
                         state: {
                             alert: {

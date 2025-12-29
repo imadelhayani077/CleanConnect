@@ -11,7 +11,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useClientContext } from "@/Helper/ClientContext";
 import { Checkbox } from "@radix-ui/react-checkbox";
@@ -25,6 +25,7 @@ const formSchema = z.object({
 
 export default function ClientLoginForm() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login, setAuthenticated, setUser } = useClientContext();
 
     const form = useForm({
@@ -87,79 +88,89 @@ export default function ClientLoginForm() {
     };
 
     return (
-        <Form {...form}>
-            <form onSubmit={handleSubmit(onSubmit)} className="form-wrapper">
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                                <Input
-                                    placeholder="Enter your email"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Password</FormLabel>
-                            <FormControl>
-                                <Input
-                                    type="password"
-                                    placeholder="Enter your password"
-                                    {...field}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <FormField
-                    control={form.control}
-                    name="remember"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                            <FormControl>
-                                <Checkbox
-                                    className="h-4 w-4 border-2 border-gray-400 rounded data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                                    checked={field.value}
-                                    onCheckedChange={(checked) =>
-                                        field.onChange(checked === true)
-                                    }
-                                />
-                            </FormControl>
-                            <FormLabel className="text-sm font-medium">
-                                Remember me
-                            </FormLabel>
-                        </FormItem>
-                    )}
-                />
-
-                <Button
-                    disabled={isSubmitting}
-                    type="submit"
-                    className="w-full"
+        <>
+            {location.state?.alert && (
+                <div className="p-4 mb-4 text-sm rounded-lg bg-green-100 text-green-700">
+                    {location.state.alert.type} : {location.state.alert.message}
+                </div>
+            )}
+            <Form {...form}>
+                <form
+                    onSubmit={handleSubmit(onSubmit)}
+                    className="form-wrapper"
                 >
-                    {isSubmitting ? (
-                        <>
-                            <Loader className="mr-2 h-4 w-4 animate-spin" />
-                            Signing in...
-                        </>
-                    ) : (
-                        "Sign In"
-                    )}
-                </Button>
-            </form>
-        </Form>
+                    <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Email</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        placeholder="Enter your email"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        type="password"
+                                        placeholder="Enter your password"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+
+                    <FormField
+                        control={form.control}
+                        name="remember"
+                        render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                                <FormControl>
+                                    <Checkbox
+                                        className="h-4 w-4 border-2 border-gray-400 rounded data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                                        checked={field.value}
+                                        onCheckedChange={(checked) =>
+                                            field.onChange(checked === true)
+                                        }
+                                    />
+                                </FormControl>
+                                <FormLabel className="text-sm font-medium">
+                                    Remember me
+                                </FormLabel>
+                            </FormItem>
+                        )}
+                    />
+
+                    <Button
+                        disabled={isSubmitting}
+                        type="submit"
+                        className="w-full"
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <Loader className="mr-2 h-4 w-4 animate-spin" />
+                                Signing in...
+                            </>
+                        ) : (
+                            "Sign In"
+                        )}
+                    </Button>
+                </form>
+            </Form>
+        </>
     );
 }
