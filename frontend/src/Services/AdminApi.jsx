@@ -1,20 +1,30 @@
 import { axiosClient } from "@/api/axios";
 
 const AdminApi = {
-    // Fetch all users (The function we need now)
+    // --- USERS ---
+    // Fetch all users (Matches route: /api/admin/users)
     getAllUsers: async () => {
-        return await axiosClient.get("/api/all-users");
+        return await axiosClient.get("/api/admin/users");
     },
 
-    // Example: Future function to delete a user
-    // deleteUser: async (id) => {
-    //     return await axiosClient.delete(`/api/users/${id}`);
-    // },
+    // --- BOOKINGS ---
+    // Fetch all bookings for Admin Dashboard
+    getAllBookings: async () => {
+        return await axiosClient.get("/api/admin/bookings");
+    },
 
-    // // Example: Future function to approve a booking
-    // approveBooking: async (bookingId) => {
-    //     return await axiosClient.post(`/api/bookings/${bookingId}/approve`);
-    // }
+    // Update specific booking status (e.g. Approve/Reject)
+    // Matches route: Route::put('/admin/bookings/{booking}/status', ...)
+    updateBookingStatus: async (id, status) => {
+        return await axiosClient.put(`/api/admin/bookings/${id}/status`, {
+            status,
+        });
+    },
+
+    // Delete a booking (Uses the standard shared resource route)
+    deleteBooking: async (id) => {
+        return await axiosClient.delete(`/api/bookings/${id}`);
+    },
 };
 
 export default AdminApi;
