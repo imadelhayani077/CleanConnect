@@ -10,6 +10,9 @@ const ServiceApi = {
     createService: async (data) => {
         return await axiosClient.post("/api/services", data);
     },
+    updateService: async (id, data) => {
+        return await axiosClient.put(`/api/services/${id}`, data);
+    },
 
     // 3. Delete Service (Admin Only)
     deleteService: async (id) => {

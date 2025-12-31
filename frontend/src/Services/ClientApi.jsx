@@ -52,6 +52,9 @@ const ClientApi = {
     updateBooking: async (id, data) => {
         return await axiosClient.put(`/api/bookings/${id}`, data);
     },
+    applyToBecomeSweepstar: async (data) => {
+        return await axiosClient.post("/api/sweepstar/apply", data);
+    },
 };
 
 export default ClientApi;

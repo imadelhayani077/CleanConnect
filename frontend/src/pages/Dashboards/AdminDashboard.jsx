@@ -4,6 +4,8 @@ import { useClientContext } from "@/Helper/ClientContext";
 import BookingManager from "../Admin/BookingManager";
 import UsersList from "../Admin/UsersListe";
 import UserInfo from "@/layout/NavBar/component/UserInfo";
+import ApplicationManager from "../Admin/ApplicationManager";
+import ServiceManager from "../Admin/ServiceManager";
 
 // Simple Reusable Card Component using your Theme
 const StatCard = ({ title, value, icon, colorClass }) => (
@@ -54,8 +56,12 @@ export default function AdminDashboard({ activePage }) {
                 return <UsersList />; // Shows the table we made earlier
             case "my-info":
                 return <UserInfo />;
+            case "Applications":
+                return <ApplicationManager />;
             case "bookings":
                 return <BookingManager />;
+            case "services":
+                return <ServiceManager />;
             case "dashboard":
             default:
                 return (

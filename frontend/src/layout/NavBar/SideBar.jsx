@@ -9,6 +9,8 @@ import {
     Settings,
     LogOut,
     PlusCircle,
+    Wrench,
+    BrushCleaning,
     MapPin,
     ListChecks,
 } from "lucide-react";
@@ -24,7 +26,12 @@ export default function Sidebar({ activePage, setActivePage }) {
             { id: "my-info", label: "My Info", icon: UserRoundCog },
             { id: "users", label: "All Users", icon: Users },
             { id: "bookings", label: "All Bookings", icon: Calendar },
-            { id: "settings", label: "System Settings", icon: Settings },
+            { id: "services", label: "All Services", icon: Wrench },
+            {
+                id: "Applications",
+                label: "Applications Manager",
+                icon: Settings,
+            },
         ],
         sweepstar: [
             { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
@@ -38,6 +45,11 @@ export default function Sidebar({ activePage, setActivePage }) {
             { id: "book-new", label: "Book Service", icon: PlusCircle },
             { id: "my-bookings", label: "History", icon: Briefcase },
             { id: "addresses", label: "My Addresses", icon: MapPin },
+            {
+                id: "becomSweep",
+                label: "Become a SweepStar",
+                icon: BrushCleaning,
+            },
         ],
     };
 

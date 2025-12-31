@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useNavigate } from "react-router-dom"; // Added for navigation
+import { useNavigate } from "react-router-dom";
 
 // Icons
 import {
@@ -10,7 +10,6 @@ import {
     CheckCircle,
     Loader2,
     DollarSign,
-    Info,
 } from "lucide-react";
 
 // Shadcn Components
@@ -39,11 +38,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge"; // Optional, looks nice for price
+import { Badge } from "@/components/ui/badge";
 
-// Context
+// --- CONTEXT IMPORTS ---
 import { useAddress } from "@/Helper/AddressContext";
 import { useBooking } from "@/Helper/BookingContext";
+import { useServiceContext } from "@/Helper/ServiceContext"; // <--- ADDED THIS
 
 // --- 1. Zod Validation Schema ---
 const bookingSchema = z.object({
@@ -58,25 +58,25 @@ const bookingSchema = z.object({
 });
 
 export default function Booking() {
-    // Context
-    const { createBooking, fetchServices, services } = useBooking(); // Fetch services from here
+    // --- CONTEXT HOOKS ---
+    // 1. Get Actions from BookingContext
+    const { createBooking } = useBooking();
+
+    // 2. Get Data from ServiceContext (Single Source of Truth)
+    const { services, loading: loadingServices } = useServiceContext();
+
+    // 3. Get Address Data
     const { addresses, loading: loadingAddresses } = useAddress();
-    console.log(services);
 
     // State
     const [isSuccess, setIsSuccess] = useState(false);
     const navigate = useNavigate();
 
-    // Load Services on Mount
-    useEffect(() => {
-        fetchServices();
-    }, []);
-
     // --- 2. Form Setup ---
     const form = useForm({
         resolver: zodResolver(bookingSchema),
         defaultValues: {
-            service_ids: [], // Array of numbers
+            service_ids: [],
             address_id: "",
             scheduled_at: "",
             notes: "",
@@ -91,13 +91,12 @@ export default function Booking() {
     }, [addresses, form]);
 
     // --- Calculate Estimated Price ---
-    // Watch the service_ids array to recalculate price dynamically
     const selectedIds = form.watch("service_ids");
     const estimatedTotal = services
         .filter((s) => selectedIds.includes(s.id))
         .reduce((sum, s) => sum + Number(s.base_price), 0);
 
-    // --- Helper to Toggle Services (Checkbox logic) ---
+    // --- Helper to Toggle Services ---
     const toggleService = (serviceId) => {
         const currentIds = form.getValues("service_ids");
         if (currentIds.includes(serviceId)) {
@@ -108,21 +107,19 @@ export default function Booking() {
         } else {
             form.setValue("service_ids", [...currentIds, serviceId]);
         }
-        // Trigger validation/re-render for price
         form.trigger("service_ids");
     };
 
     // --- 3. Submit Handler ---
     const onSubmit = async (data) => {
         try {
-            // NOTE: We do NOT send total_price. The backend calculates it.
             const result = await createBooking(data);
 
             if (result.success) {
                 setIsSuccess(true);
             } else {
-                // Handle backend error (e.g., toast)
-                console.error(result.message);
+                // You might want to show a Toast notification here
+                alert(result.message || "Booking failed");
             }
         } catch (error) {
             console.error("Booking Error:", error);
@@ -185,12 +182,23 @@ export default function Booking() {
                                             Select Services
                                         </FormLabel>
                                         <div className="grid gap-3 mt-2">
-                                            {services.length === 0 && (
-                                                <p className="text-sm text-muted-foreground">
-                                                    Loading services...
-                                                </p>
+                                            {/* Loading State */}
+                                            {loadingServices && (
+                                                <div className="flex items-center justify-center p-4">
+                                                    <Loader2 className="animate-spin h-6 w-6 text-muted-foreground" />
+                                                </div>
                                             )}
 
+                                            {/* Empty State */}
+                                            {!loadingServices &&
+                                                services.length === 0 && (
+                                                    <p className="text-sm text-muted-foreground">
+                                                        No services available at
+                                                        the moment.
+                                                    </p>
+                                                )}
+
+                                            {/* List */}
                                             {services.map((service) => {
                                                 const isChecked = form
                                                     .getValues("service_ids")
@@ -210,7 +218,6 @@ export default function Booking() {
                                                         }`}
                                                     >
                                                         <div className="flex items-center gap-3">
-                                                            {/* Custom Checkbox Appearance */}
                                                             <div
                                                                 className={`w-5 h-5 rounded border flex items-center justify-center ${
                                                                     isChecked

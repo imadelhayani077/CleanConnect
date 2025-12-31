@@ -37,6 +37,38 @@ class ServiceController extends Controller
 
         return response()->json(['message' => 'Service created', 'service' => $service], 201);
     }
+    public function update(Request $request, $id)
+{
+    // Find the service
+    $service = Service::find($id);
 
-    // You can implement show/update/destroy if needed later
+    if (!$service) {
+        return response()->json(['message' => 'Service not found'], 404);
+    }
+
+    // Validate
+    $validated = $request->validate([
+        'name' => 'sometimes|string|max:255',
+        'base_price' => 'sometimes|numeric',
+    ]);
+
+    // Update
+    $service->update($validated);
+
+    return response()->json([
+        'message' => 'Service updated successfully',
+        'service' => $service
+    ], 200);
+}
+    public function destroy(Request $request, Service $service)
+    {
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $service->delete();
+
+        return response()->json(['message' => 'Service deleted successfully'], 200);
+    }
+
 }

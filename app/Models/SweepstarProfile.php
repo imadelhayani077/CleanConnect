@@ -10,7 +10,7 @@ class SweepstarProfile extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $table = 'sweepstar_profiles'; // Optional, but good practice
+    protected $table = 'sweepstar_profiles';
 
     protected $fillable = [
         'user_id',
@@ -27,22 +27,9 @@ class SweepstarProfile extends Model
         'total_jobs_completed' => 'integer',
     ];
 
-    /**
-     * Get the user that owns this profile.
-     */
+    // Link back to the User (Login account)
     public function user()
     {
         return $this->belongsTo(User::class);
-    }
-     public function bookings()
-    {
-        return $this->hasManyThrough(
-            Booking::class,
-            User::class,
-            'id', // Foreign key on users table
-            'sweepstar_id', // Foreign key on bookings table
-            'user_id', // Local key on sweepstar_profiles table
-            'id' // Local key on users table
-        );
     }
 }

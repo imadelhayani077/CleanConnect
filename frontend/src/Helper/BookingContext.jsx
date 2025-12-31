@@ -2,40 +2,14 @@ import React, { createContext, useContext, useState, useCallback } from "react";
 import ClientApi from "@/Services/ClientApi";
 import AdminApi from "@/Services/AdminApi";
 import SweepstarApi from "@/Services/SweepstarApi";
-import ServiceApi from "@/Services/ServiceApi"; // Make sure this path matches where you created the file
 
-const BookingStateContext = createContext({
-    bookings: [],
-    loading: true,
-    services: [],
-    createBooking: (values) => {},
-    fetchMyBookings: () => {},
-    fetchAllBookings: () => {},
-    editBooking: (id, updatedData) => {},
-    fetchServices: () => {},
-    fetchAvailableJobs: () => {},
-    fetchMySchedule: () => {},
-    acceptJobAssignment: (bookingId) => {},
-});
+const BookingStateContext = createContext();
 
 export default function BookingContext({ children }) {
     const [bookings, setBookings] = useState([]);
-    const [services, setServices] = useState([]); // Store services list
     const [loading, setLoading] = useState(false);
 
-    // --- 1. SHARED: Fetch Services (For Booking Form) ---
-    const fetchServices = async () => {
-        try {
-            const response = await ServiceApi.getAllServices();
-            setServices(response.data.services);
-            return response.data.services;
-        } catch (error) {
-            console.error("Context: Failed to load services", error);
-            return [];
-        }
-    };
-
-    // --- 2. CLIENT: Fetch My Bookings ---
+    // --- CLIENT: Fetch My Bookings ---
     const fetchMyBookings = useCallback(async () => {
         setLoading(true);
         try {
@@ -48,7 +22,7 @@ export default function BookingContext({ children }) {
         }
     }, []);
 
-    // --- 3. ADMIN: Fetch All Bookings ---
+    // --- ADMIN: Fetch All Bookings ---
     const fetchAllBookings = useCallback(async () => {
         setLoading(true);
         try {
@@ -61,17 +35,15 @@ export default function BookingContext({ children }) {
         }
     }, []);
 
-    // --- 4. CLIENT: Create Booking ---
+    // --- CLIENT: Create Booking ---
     const createBooking = async (bookingData) => {
         setLoading(true);
         try {
-            // Note: bookingData should now contain 'service_ids' (array)
             const response = await ClientApi.createBooking(bookingData);
             const newBooking = response.data.booking;
 
-            // Add new booking to top of list
+            // Update UI immediately
             setBookings([newBooking, ...bookings]);
-
             return { success: true };
         } catch (error) {
             console.error("Context: Create Booking Failed", error);
@@ -82,7 +54,7 @@ export default function BookingContext({ children }) {
         }
     };
 
-    // --- 5. SHARED: Edit Booking ---
+    // --- SHARED: Edit Booking ---
     const editBooking = async (id, updatedData) => {
         try {
             const response = await ClientApi.updateBooking(id, updatedData);
@@ -94,18 +66,16 @@ export default function BookingContext({ children }) {
             return { success: true };
         } catch (error) {
             console.error("Context: Update Booking Failed", error);
-            const msg = error.response?.data?.message || "Update failed";
-            return { success: false, error: msg };
+            return { success: false, error: error.message };
         }
     };
 
-    // --- 6. SWEEPSTAR FUNCTIONS ---
-
+    // --- SWEEPSTAR FUNCTIONS ---
     const fetchAvailableJobs = async () => {
         setLoading(true);
         try {
             const response = await SweepstarApi.getAvailableJobs();
-            return response.data.jobs;
+            return response.data.jobs || [];
         } catch (error) {
             console.error("Context: Failed to load available jobs", error);
             return [];
@@ -118,7 +88,7 @@ export default function BookingContext({ children }) {
         setLoading(true);
         try {
             const response = await SweepstarApi.getMySchedule();
-            return response.data.jobs;
+            return response.data.jobs || [];
         } catch (error) {
             console.error("Context: Failed to load schedule", error);
             return [];
@@ -132,7 +102,6 @@ export default function BookingContext({ children }) {
             const response = await SweepstarApi.acceptJob(bookingId);
             return { success: true, message: response.data.message };
         } catch (error) {
-            console.error("Context: Failed to accept job", error);
             const msg =
                 error.response?.data?.message || "Failed to accept job.";
             return { success: false, message: msg };
@@ -144,11 +113,9 @@ export default function BookingContext({ children }) {
             value={{
                 bookings,
                 loading,
-                services, // Expose services list
-                fetchServices, // Expose fetch function
-                createBooking,
                 fetchMyBookings,
                 fetchAllBookings,
+                createBooking,
                 editBooking,
                 fetchAvailableJobs,
                 fetchMySchedule,

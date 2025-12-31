@@ -4,6 +4,7 @@ import Booking from "../Client/Booking";
 import UserInfo from "@/layout/NavBar/component/UserInfo";
 import { useClientContext } from "@/Helper/ClientContext";
 import AddressManager from "../Client/AddressManager";
+import SweepstarApply from "../Client/SweepstarApply";
 
 export default function ClientDashboard({ activePage }) {
     const { user } = useClientContext();
@@ -24,6 +25,8 @@ export default function ClientDashboard({ activePage }) {
                 return <AddressManager />;
             case "my-info":
                 return <UserInfo />;
+            case "becomSweep":
+                return <SweepstarApply />;
             case "dashboard":
             default:
                 return (

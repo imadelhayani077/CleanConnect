@@ -6,9 +6,10 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\BookingController;
-use App\Http\Controllers\ServiceController; // <--- Import this
+use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SweepstarProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,35 +30,41 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
-    // --- B. Services ---
-    // Fetch all services (for the Booking Form)
+    // --- B. User Actions ---
+    // Anyone logged in can apply to be a Sweepstar
+    Route::post('/sweepstar/apply', [SweepstarProfileController::class, 'apply']);
+
+    // --- C. General Resources ---
     Route::get('/services', [ServiceController::class, 'index']);
-    // Create service (Admin only - basic check inside controller or add middleware here)
-    Route::post('/services', [ServiceController::class, 'store']);
-
-    // --- C. Addresses ---
+    Route::post('/services', [ServiceController::class, 'store']); // Suggestion: Move to Admin group later
+    Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
+    Route::put('/services/{id}', [ServiceController::class, 'update']);
     Route::apiResource('addresses', AddressController::class);
-
-    // --- D. Bookings ---
     Route::apiResource('bookings', BookingController::class);
 
-    // --- E. Sweepstar Specifics ---
-    Route::get('/sweepstar/available-jobs', [BookingController::class, 'availableJobs']);
-    Route::get('/sweepstar/my-schedule', [BookingController::class, 'mySchedule']);
-    Route::post('/bookings/{id}/accept', [BookingController::class, 'acceptJob']);
 
-
-    // --- F. ADMIN Routes (Role Middleware) ---
+    // --- D. ADMIN Routes (Role: Admin) ---
     Route::middleware(['role:admin'])->group(function () {
+        // Dashboard & Users
         Route::get('/admin/dashboard-stats', [DashboardController::class, 'adminStats']);
         Route::get('/admin/users', [UserController::class, 'index']);
-        // The main 'index' in BookingController already handles Admin logic,
-        // so /bookings is sufficient, but you can keep specific admin routes if preferred.
+
+        // Sweepstar Applications Management
+        Route::get('/admin/applications', [SweepstarProfileController::class, 'pendingApplications']);
+        Route::post('/admin/applications/{id}/approve', [SweepstarProfileController::class, 'approve']);
+        Route::delete('/admin/applications/{id}/reject', [SweepstarProfileController::class, 'reject']);
     });
 
-    // --- G. SWEEPSTAR Routes (Role Middleware) ---
+
+    // --- E. SWEEPSTAR Routes (Role: Sweepstar) ---
     Route::middleware(['role:sweepstar'])->group(function () {
+        // Dashboard
         Route::get('/sweepstar/dashboard', [DashboardController::class, 'sweepstarJobs']);
+
+        // Job Management (Moved here for better security/organization)
+        Route::get('/sweepstar/available-jobs', [BookingController::class, 'availableJobs']);
+        Route::get('/sweepstar/my-schedule', [BookingController::class, 'mySchedule']);
+        Route::post('/bookings/{id}/accept', [BookingController::class, 'acceptJob']);
     });
 
 });
