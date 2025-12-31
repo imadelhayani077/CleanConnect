@@ -10,7 +10,7 @@ const AdminApi = {
     // --- BOOKINGS ---
     // Fetch all bookings for Admin Dashboard
     getAllBookings: async () => {
-        return await axiosClient.get("/api/admin/bookings");
+        return await axiosClient.get("/api/bookings");
     },
 
     // Update specific booking status (e.g. Approve/Reject)

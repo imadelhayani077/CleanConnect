@@ -1,15 +1,19 @@
 import React, { useState } from "react";
 import { useClientContext } from "@/Helper/ClientContext";
-import Job from "../Sweepstar/Job";
+
 import UserInfo from "@/layout/NavBar/component/UserInfo";
+import AvailableJobs from "../Sweepstar/AvailableJobs";
+import MySchedule from "../Sweepstar/MySchedule";
 
 export default function SweepstarDashboard({ activePage }) {
     const { user } = useClientContext();
     const [isAvailable, setIsAvailable] = useState(true);
     const HnadelContent = () => {
         switch (activePage) {
-            case "jobs":
-                return <Job />;
+            case "available":
+                return <AvailableJobs />;
+            case "schedule":
+                return <MySchedule />;
             case "my-info":
                 return <UserInfo />;
             case "dashboard":

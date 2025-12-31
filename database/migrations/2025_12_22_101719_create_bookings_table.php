@@ -6,33 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('bookings', function (Blueprint $table) {
-    $table->id();
-    // The Client
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    // The SweepStar (Nullable initially)
-    $table->foreignId('sweepstar_id')->nullable()->constrained('users')->onDelete('set null');
-    // The Address
-    $table->foreignId('address_id')->constrained();
+            $table->id();
 
-    $table->dateTime('scheduled_at');
-    $table->integer('duration_hours')->default(2);
-    $table->decimal('total_price', 10, 2);
-    $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending');
+            // Relationships
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // The Client
+            $table->foreignId('sweepstar_id')->nullable()->constrained('users')->onDelete('set null'); // The Cleaner
+            $table->foreignId('address_id')->constrained()->onDelete('cascade');
 
-    $table->timestamps();
-    $table->softDeletes(); // <--- Soft Delete
-});
+            // Booking Details
+            $table->dateTime('scheduled_at');
+            $table->integer('duration_hours')->default(2);
+            $table->decimal('total_price', 10, 2);
+            $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending');
+            $table->text('notes')->nullable(); // Important: Added notes column
+
+            $table->timestamps();
+            $table->softDeletes();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('bookings');

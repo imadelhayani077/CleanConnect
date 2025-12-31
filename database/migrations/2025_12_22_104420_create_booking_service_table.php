@@ -6,23 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-      Schema::create('booking_service', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('booking_id')->constrained()->onDelete('cascade');
-    $table->foreignId('service_id')->constrained()->onDelete('cascade');
-    $table->decimal('price_at_booking', 8, 2); // Snapshot of price
-    $table->timestamps();
-});
+        Schema::create('booking_service', function (Blueprint $table) {
+            $table->id();
+
+            $table->foreignId('booking_id')->constrained()->onDelete('cascade');
+            $table->foreignId('service_id')->constrained()->onDelete('cascade');
+
+            // Saves the price at the moment of booking (snapshot)
+            $table->decimal('price_at_booking', 8, 2);
+
+            $table->timestamps();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('booking_service');

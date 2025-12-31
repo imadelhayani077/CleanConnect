@@ -8,42 +8,35 @@ use Illuminate\Http\Request;
 class ServiceController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Get list of all services (Public or Auth)
      */
     public function index()
     {
-        //
+        return response()->json([
+            'services' => Service::all()
+        ]);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Create a new Service (Admin Only)
      */
     public function store(Request $request)
     {
-        //
+        // Simple role check (or use Middleware in routes)
+        if ($request->user()->role !== 'admin') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'base_price' => 'required|numeric|min:0',
+        ]);
+
+        $service = Service::create($validated);
+
+        return response()->json(['message' => 'Service created', 'service' => $service], 201);
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Service $service)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Service $service)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Service $service)
-    {
-        //
-    }
+    // You can implement show/update/destroy if needed later
 }

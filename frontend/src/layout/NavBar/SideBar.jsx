@@ -29,7 +29,7 @@ export default function Sidebar({ activePage, setActivePage }) {
         sweepstar: [
             { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
             { id: "my-info", label: "My Info", icon: UserRoundCog },
-            { id: "jobs", label: "My Jobs", icon: ListChecks },
+            { id: "available", label: "My Jobs", icon: ListChecks },
             { id: "schedule", label: "My Schedule", icon: Calendar },
         ],
         client: [

@@ -1,31 +1,33 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers; // Adjust if your file is directly in Controllers
 
+use App\Http\Controllers\Controller;
 use App\Models\Booking;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; // Required for transactions
 
 class BookingController extends Controller
 {
     /**
-     * Fetch all bookings (Admin View)
+     * Fetch all bookings (Admin View & Client History)
      */
     public function index(Request $request)
     {
-        // 1. Optional: Ensure only Admins or Sweepstars can see ALL bookings
+        // 1. Client View: Only show THEIR bookings
         if ($request->user()->role === 'user') {
-             // If a normal user tries to access this, only show THEIR bookings
              return response()->json([
                 'bookings' => Booking::where('user_id', $request->user()->id)
-                                     ->with('user')
+                                     ->with(['user', 'address', 'services'])
                                      ->orderBy('created_at', 'desc')
                                      ->get()
              ]);
         }
 
-        // 2. Admin/Sweepstar sees everything
-        $bookings = Booking::with(['user', 'address']) // Eager load relationships
+        // 2. Admin View: Show EVERYTHING
+        $bookings = Booking::with(['user', 'address', 'services'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -35,110 +37,161 @@ class BookingController extends Controller
     }
 
     /**
-     * Store a newly created booking (Client creates a job)
+     * Store a newly created booking
      */
     public function store(Request $request)
     {
-        // 1. Validate the incoming data
+        // 1. Validate
         $validated = $request->validate([
-            'service_type' => 'required|string',
-            'scheduled_at' => 'required|date|after:now', // Must be in the future
             'address_id'   => 'required|exists:addresses,id',
-            'total_price'  => 'required|numeric|min:0',
+            'scheduled_at' => 'required|date|after:now',
             'notes'        => 'nullable|string',
+            'service_ids'  => 'required|array|min:1',
+            'service_ids.*'=> 'exists:services,id',
         ]);
 
-        // 2. Prepare data
-        // If the user is an admin, they might be booking for someone else (optional logic)
-        // Otherwise, force the current logged-in user's ID
-        $validated['user_id'] = $request->user()->id;
-        $validated['status'] = 'pending'; // Default status for new bookings
+        return DB::transaction(function () use ($request, $validated) {
+            // 2. Fetch Services to calculate total price securely
+            $services = Service::whereIn('id', $validated['service_ids'])->get();
+            $totalPrice = $services->sum('base_price');
 
-        // 3. Create the booking
-        $booking = Booking::create($validated);
+            // 3. Create the Booking
+            $booking = Booking::create([
+                'user_id'      => $request->user()->id,
+                'address_id'   => $validated['address_id'],
+                'scheduled_at' => $validated['scheduled_at'],
+                'status'       => 'pending',
+                'total_price'  => $totalPrice,
+                'notes'        => $validated['notes'] ?? null,
+            ]);
 
-        return response()->json([
-            'message' => 'Booking created successfully!',
-            'booking' => $booking
-        ], 201);
+            // 4. Attach Services with Pivot Data
+            // We save the price at the moment of booking
+            $pivotData = [];
+            foreach ($services as $service) {
+                $pivotData[$service->id] = ['price_at_booking' => $service->base_price];
+            }
+            $booking->services()->attach($pivotData);
+
+            // 5. Load relationships for the frontend
+            return response()->json([
+                'message' => 'Booking created successfully!',
+                'booking' => $booking->load(['services', 'address'])
+            ], 201);
+        });
     }
 
     /**
-     * Display a single booking details
+     * Display single booking details
      */
     public function show(Request $request, Booking $booking)
     {
-        // Security: Ensure the user owns this booking OR is an admin
-        if ($request->user()->role !== 'admin' && $request->user()->id !== $booking->user_id) {
-            return response()->json(['message' => 'Unauthorized access to this booking'], 403);
+        // Security check
+        if ($request->user()->role !== 'admin' &&
+            $request->user()->role !== 'sweepstar' &&
+            $request->user()->id !== $booking->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Load relationships (like the user who booked it, the address, etc.)
-        $booking->load(['user', 'address']);
+        $booking->load(['user', 'address', 'services']);
 
         return response()->json($booking);
     }
 
     /**
-     * Update the specified resource in storage.
-     * Use this for:
-     * 1. Admins changing status (pending -> confirmed)
-     * 2. Clients rescheduling (changing date)
-     */
-/**
-     * Update the specified booking.
+     * Update booking (Admin or Client)
      */
     public function update(Request $request, Booking $booking)
     {
-        // 1. Security: Ensure the user owns this booking
-        if ($request->user()->id !== $booking->user_id) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        // 2. Logic: Prevent editing if the job is already finished or cancelled
-        if (in_array($booking->status, ['completed', 'cancelled', 'in_progress'])) {
-            return response()->json([
-                'message' => 'You cannot edit a booking that is already ' . $booking->status
-            ], 400);
-        }
-
-        // 3. Validation
-        $validated = $request->validate([
-            'service_type' => 'sometimes|string',
-            'scheduled_at' => 'sometimes|date|after:now', // Must be in future
-            'address_id'   => 'sometimes|exists:addresses,id',
-            'notes'        => 'nullable|string',
-            'total_price'  => 'sometimes|numeric'
-        ]);
-
-        // 4. Update
-        $booking->update($validated);
-
-        return response()->json([
-            'message' => 'Booking updated successfully',
-            'booking' => $booking
-        ]);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Request $request, Booking $booking)
-    {
-        // Security: Ensure owner or admin
         if ($request->user()->role !== 'admin' && $request->user()->id !== $booking->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        // Option A: Hard Delete (Removes from DB completely)
-        $booking->delete();
+        if (in_array($booking->status, ['completed', 'cancelled'])) {
+            return response()->json(['message' => 'Cannot edit a finalized booking.'], 400);
+        }
 
-        // Option B: Soft Delete (Better for history)
-        // You would need to add `use SoftDeletes` to your Booking Model for this to work properly
-        // $booking->update(['status' => 'cancelled']);
+        $validated = $request->validate([
+            'scheduled_at' => 'sometimes|date|after:now',
+            'address_id'   => 'sometimes|exists:addresses,id',
+            'notes'        => 'nullable|string',
+            'status'       => 'sometimes|string'
+        ]);
+
+        $booking->update($validated);
 
         return response()->json([
-            'message' => 'Booking deleted successfully'
-        ], 200);
+            'message' => 'Booking updated successfully',
+            'booking' => $booking->load(['user', 'address', 'services'])
+        ]);
+    }
+
+    /**
+     * Delete Booking
+     */
+    public function destroy(Request $request, Booking $booking)
+    {
+        if ($request->user()->role !== 'admin' && $request->user()->id !== $booking->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $booking->delete();
+
+        return response()->json(['message' => 'Booking cancelled successfully'], 200);
+    }
+
+    // --- SWEEPSTAR FUNCTIONS ---
+
+    /**
+     * Get jobs available for Sweepstars (No cleaner assigned yet)
+     */
+    public function availableJobs(Request $request)
+    {
+        if ($request->user()->role !== 'sweepstar') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $jobs = Booking::whereNull('sweepstar_id')
+            ->where('status', 'pending')
+            ->with(['user', 'address', 'services'])
+            ->orderBy('scheduled_at', 'asc')
+            ->get();
+
+        return response()->json(['jobs' => $jobs]);
+    }
+
+    /**
+     * Get jobs assigned to the current Sweepstar
+     */
+    public function mySchedule(Request $request)
+    {
+        $jobs = Booking::where('sweepstar_id', $request->user()->id)
+            ->with(['user', 'address', 'services'])
+            ->orderBy('scheduled_at', 'asc')
+            ->get();
+
+        return response()->json(['jobs' => $jobs]);
+    }
+
+    /**
+     * Sweepstar accepts a job
+     */
+    public function acceptJob(Request $request, $id)
+    {
+        // Use transaction and lockForUpdate to prevent two people accepting at same time
+        return DB::transaction(function () use ($request, $id) {
+            $booking = Booking::lockForUpdate()->findOrFail($id);
+
+            if ($booking->sweepstar_id) {
+                return response()->json(['message' => 'This job has already been taken.'], 409);
+            }
+
+            $booking->update([
+                'sweepstar_id' => $request->user()->id,
+                'status' => 'confirmed'
+            ]);
+
+            return response()->json(['message' => 'Job accepted! It is now in your schedule.']);
+        });
     }
 }

@@ -2,9 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns"; // Standard date library used by Shadcn
-
-// Context & API
+import { useNavigate } from "react-router-dom"; // Added for navigation
 
 // Icons
 import {
@@ -12,7 +10,7 @@ import {
     CheckCircle,
     Loader2,
     DollarSign,
-    MapPin,
+    Info,
 } from "lucide-react";
 
 // Shadcn Components
@@ -25,7 +23,6 @@ import {
     CardHeader,
     CardTitle,
     CardDescription,
-    CardFooter,
 } from "@/components/ui/card";
 import {
     Form,
@@ -42,10 +39,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge"; // Optional, looks nice for price
+
+// Context
+import { useAddress } from "@/Helper/AddressContext";
+import { useBooking } from "@/Helper/BookingContext";
 
 // --- 1. Zod Validation Schema ---
 const bookingSchema = z.object({
-    service_type: z.string().min(1, "Please select a service type."),
+    service_ids: z
+        .array(z.number())
+        .min(1, "Please select at least one service."),
     address_id: z.string().min(1, "Please select an address."),
     scheduled_at: z.string().refine((date) => new Date(date) > new Date(), {
         message: "Date must be in the future.",
@@ -53,43 +57,31 @@ const bookingSchema = z.object({
     notes: z.string().optional(),
 });
 
-// Service Prices Mapping
-const SERVICE_PRICES = {
-    "Standard Clean": 50,
-    "Deep Clean": 100,
-    "Move-in/Move-out": 150,
-    "Office Clean": 200,
-};
-
-import { useAddress } from "@/Helper/AddressContext";
-import { useBooking } from "@/Helper/BookingContext";
-
-export default function Booking({ onSuccess }) {
-    const { createBooking } = useBooking();
-
+export default function Booking() {
+    // Context
+    const { createBooking, fetchServices, services } = useBooking(); // Fetch services from here
     const { addresses, loading: loadingAddresses } = useAddress();
-    const [totalPrice, setTotalPrice] = useState(50);
+    console.log(services);
+
+    // State
     const [isSuccess, setIsSuccess] = useState(false);
+    const navigate = useNavigate();
+
+    // Load Services on Mount
+    useEffect(() => {
+        fetchServices();
+    }, []);
 
     // --- 2. Form Setup ---
     const form = useForm({
         resolver: zodResolver(bookingSchema),
         defaultValues: {
-            service_type: "Standard Clean",
+            service_ids: [], // Array of numbers
             address_id: "",
-            scheduled_at: "", // HTML datetime-local string
+            scheduled_at: "",
             notes: "",
         },
     });
-
-    // Watch service type to update price dynamically
-    const selectedService = form.watch("service_type");
-
-    useEffect(() => {
-        if (selectedService && SERVICE_PRICES[selectedService]) {
-            setTotalPrice(SERVICE_PRICES[selectedService]);
-        }
-    }, [selectedService]);
 
     // Auto-select first address if available
     useEffect(() => {
@@ -98,22 +90,42 @@ export default function Booking({ onSuccess }) {
         }
     }, [addresses, form]);
 
+    // --- Calculate Estimated Price ---
+    // Watch the service_ids array to recalculate price dynamically
+    const selectedIds = form.watch("service_ids");
+    const estimatedTotal = services
+        .filter((s) => selectedIds.includes(s.id))
+        .reduce((sum, s) => sum + Number(s.base_price), 0);
+
+    // --- Helper to Toggle Services (Checkbox logic) ---
+    const toggleService = (serviceId) => {
+        const currentIds = form.getValues("service_ids");
+        if (currentIds.includes(serviceId)) {
+            form.setValue(
+                "service_ids",
+                currentIds.filter((id) => id !== serviceId)
+            );
+        } else {
+            form.setValue("service_ids", [...currentIds, serviceId]);
+        }
+        // Trigger validation/re-render for price
+        form.trigger("service_ids");
+    };
+
     // --- 3. Submit Handler ---
     const onSubmit = async (data) => {
         try {
-            // Add price to the payload
-            const payload = { ...data, total_price: totalPrice };
-
-            // USE CONTEXT INSTEAD OF API DIRECTLY
-            const result = await createBooking(payload);
+            // NOTE: We do NOT send total_price. The backend calculates it.
+            const result = await createBooking(data);
 
             if (result.success) {
                 setIsSuccess(true);
-                if (onSuccess) setTimeout(() => onSuccess(), 2000);
+            } else {
+                // Handle backend error (e.g., toast)
+                console.error(result.message);
             }
         } catch (error) {
             console.error("Booking Error:", error);
-            // You can set a root error here if you want
         }
     };
 
@@ -134,9 +146,10 @@ export default function Booking({ onSuccess }) {
                     </p>
                     <Button
                         variant="outline"
-                        onClick={() => (window.location.href = "/dashboard")}
+                        className="border-green-600 text-green-700 hover:bg-green-100"
+                        onClick={() => navigate("/client/dashboard")}
                     >
-                        Back to Dashboard
+                        Go to Dashboard
                     </Button>
                 </CardContent>
             </Card>
@@ -152,8 +165,7 @@ export default function Booking({ onSuccess }) {
                         ✨ Book a Service
                     </CardTitle>
                     <CardDescription>
-                        Fill in the details below to schedule your next
-                        cleaning.
+                        Select services and schedule your cleaner.
                     </CardDescription>
                 </CardHeader>
 
@@ -163,63 +175,85 @@ export default function Booking({ onSuccess }) {
                             onSubmit={form.handleSubmit(onSubmit)}
                             className="space-y-6"
                         >
-                            {/* Service Type Selection */}
+                            {/* 1. Services Selection (Checkboxes) */}
                             <FormField
                                 control={form.control}
-                                name="service_type"
-                                render={({ field }) => (
+                                name="service_ids"
+                                render={() => (
                                     <FormItem>
-                                        <FormLabel>Service Type</FormLabel>
-                                        <Select
-                                            onValueChange={field.onChange}
-                                            defaultValue={field.value}
-                                        >
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select a service" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                {Object.keys(
-                                                    SERVICE_PRICES
-                                                ).map((service) => (
-                                                    <SelectItem
-                                                        key={service}
-                                                        value={service}
+                                        <FormLabel className="text-base">
+                                            Select Services
+                                        </FormLabel>
+                                        <div className="grid gap-3 mt-2">
+                                            {services.length === 0 && (
+                                                <p className="text-sm text-muted-foreground">
+                                                    Loading services...
+                                                </p>
+                                            )}
+
+                                            {services.map((service) => {
+                                                const isChecked = form
+                                                    .getValues("service_ids")
+                                                    .includes(service.id);
+                                                return (
+                                                    <div
+                                                        key={service.id}
+                                                        onClick={() =>
+                                                            toggleService(
+                                                                service.id
+                                                            )
+                                                        }
+                                                        className={`flex items-center justify-between p-4 border rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
+                                                            isChecked
+                                                                ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                                                : "border-input"
+                                                        }`}
                                                     >
-                                                        {service}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                                        <div className="flex items-center gap-3">
+                                                            {/* Custom Checkbox Appearance */}
+                                                            <div
+                                                                className={`w-5 h-5 rounded border flex items-center justify-center ${
+                                                                    isChecked
+                                                                        ? "bg-primary border-primary text-white"
+                                                                        : "border-gray-400"
+                                                                }`}
+                                                            >
+                                                                {isChecked && (
+                                                                    <CheckCircle className="w-3.5 h-3.5" />
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium leading-none">
+                                                                    {
+                                                                        service.name
+                                                                    }
+                                                                </p>
+                                                                {service.description && (
+                                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                                        {
+                                                                            service.description
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className="ml-auto"
+                                                        >
+                                                            $
+                                                            {service.base_price}
+                                                        </Badge>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
 
-                            {/* Date & Time Picker (Native Input for simplicity/mobile support) */}
-                            <FormField
-                                control={form.control}
-                                name="scheduled_at"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Date & Time</FormLabel>
-                                        <FormControl>
-                                            <div className="relative">
-                                                <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                <Input
-                                                    type="datetime-local"
-                                                    className="pl-9"
-                                                    {...field}
-                                                />
-                                            </div>
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            {/* Address Selection (From Context) */}
+                            {/* 2. Address Selection */}
                             <FormField
                                 control={form.control}
                                 name="address_id"
@@ -235,7 +269,7 @@ export default function Booking({ onSuccess }) {
                                             <div className="text-sm text-amber-600 bg-amber-50 p-3 rounded-md border border-amber-200">
                                                 You have no saved addresses.{" "}
                                                 <a
-                                                    href="/dashboard?tab=my-addresses"
+                                                    href="/client/dashboard?tab=addresses"
                                                     className="underline font-bold"
                                                 >
                                                     Add one here
@@ -274,7 +308,29 @@ export default function Booking({ onSuccess }) {
                                 )}
                             />
 
-                            {/* Notes Field */}
+                            {/* 3. Date & Time */}
+                            <FormField
+                                control={form.control}
+                                name="scheduled_at"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Date & Time</FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <CalendarIcon className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    type="datetime-local"
+                                                    className="pl-9"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+                            {/* 4. Notes */}
                             <FormField
                                 control={form.control}
                                 name="notes"
@@ -285,7 +341,7 @@ export default function Booking({ onSuccess }) {
                                         </FormLabel>
                                         <FormControl>
                                             <Textarea
-                                                placeholder="Key is under the mat, please be careful with the cat..."
+                                                placeholder="Key is under the mat..."
                                                 className="resize-none"
                                                 {...field}
                                             />
@@ -302,11 +358,11 @@ export default function Booking({ onSuccess }) {
                                 </span>
                                 <div className="flex items-center text-2xl font-bold text-primary">
                                     <DollarSign className="w-5 h-5 mt-0.5" />
-                                    {totalPrice}
+                                    {estimatedTotal.toFixed(2)}
                                 </div>
                             </div>
 
-                            {/* Submit Button */}
+                            {/* Submit */}
                             <Button
                                 type="submit"
                                 className="w-full text-lg py-6"

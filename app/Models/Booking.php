@@ -18,6 +18,7 @@ class Booking extends Model
         'duration_hours',
         'total_price',
         'status',
+        'notes',          // Added this based on your Controller validation
     ];
 
     protected $casts = [
@@ -27,10 +28,11 @@ class Booking extends Model
         'status'         => 'string',
     ];
 
-    // Relationships
+    // --- Relationships ---
 
-    /** Client who made the booking */
-    public function client()
+    /** * FIX: Renamed from 'client' to 'user' so Controller can call ->with('user')
+     */
+    public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
@@ -47,26 +49,15 @@ class Booking extends Model
         return $this->belongsTo(Address::class);
     }
 
-   public function services()
-{
-    return $this->belongsToMany(Service::class, 'booking_service')
-                ->withPivot('price_at_booking')  // Access the snapshot price
-                ->withTimestamps();              // If you want created_at/updated_at on pivot
-}
-  public function review()
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'booking_service')
+            ->withPivot('price_at_booking')
+            ->withTimestamps();
+    }
+
+    public function review()
     {
         return $this->hasOne(Review::class);
     }
-
-    //    // Scopes for filtering
-    // public function scopePending($query)
-    // {
-    //     return $query->where('status', 'pending');
-    // }
-
-    // public function scopeCompleted($query)
-    // {
-    //     return $query->where('status', 'completed');
-    // }
-
 }
