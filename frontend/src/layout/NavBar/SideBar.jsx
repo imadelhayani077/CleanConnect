@@ -1,5 +1,7 @@
+// src/layout/NavBar/Sidebar.jsx
 import React from "react";
-import { useClientContext } from "@/Helper/ClientContext";
+import { useNavigate } from "react-router-dom";
+import { useUser, useLogout } from "@/Hooks/useAuth";
 import {
     LayoutDashboard,
     UserRoundCog,
@@ -13,13 +15,25 @@ import {
     BrushCleaning,
     MapPin,
     ListChecks,
+    Loader,
 } from "lucide-react";
 
 export default function Sidebar({ activePage, setActivePage }) {
-    const { user, logout } = useClientContext();
-    const role = user?.role || "user";
+    const navigate = useNavigate();
+    const { data: user, isLoading } = useUser();
+    const { mutateAsync: logoutUser } = useLogout();
 
-    // --- CONFIGURATION ---
+    const role = user?.role || "client";
+
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+            navigate("/login");
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
+    };
+
     const MENUS = {
         admin: [
             { id: "dashboard", label: "Overview", icon: LayoutDashboard },
@@ -27,11 +41,7 @@ export default function Sidebar({ activePage, setActivePage }) {
             { id: "users", label: "All Users", icon: Users },
             { id: "bookings", label: "All Bookings", icon: Calendar },
             { id: "services", label: "All Services", icon: Wrench },
-            {
-                id: "Applications",
-                label: "Applications Manager",
-                icon: Settings,
-            },
+            { id: "Applications", label: "Applications", icon: Settings },
         ],
         sweepstar: [
             { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
@@ -45,72 +55,76 @@ export default function Sidebar({ activePage, setActivePage }) {
             { id: "book-new", label: "Book Service", icon: PlusCircle },
             { id: "my-bookings", label: "History", icon: Briefcase },
             { id: "addresses", label: "My Addresses", icon: MapPin },
-            {
-                id: "becomSweep",
-                label: "Become a SweepStar",
-                icon: BrushCleaning,
-            },
+            { id: "becomSweep", label: "Become a Pro", icon: BrushCleaning },
         ],
     };
 
-    const currentMenu = MENUS[role] || MENUS["client"];
+    const currentMenu = MENUS[role] || MENUS.client;
+
+    if (isLoading) {
+        return (
+            <div className="sidebar flex flex-col items-center pt-10">
+                <Loader className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+        );
+    }
 
     return (
-        // Changed: bg-white -> bg-card, border-gray-200 -> border-border
-        <div className="w-64 min-h-screen bg-card border-r border-border flex flex-col shadow-sm">
-            {/* 1. Header Logo */}
+        <div className="sidebar flex flex-col shadow-sm transition-all duration-300">
+            {/* Header */}
             <div className="p-6 border-b border-border">
-                {/* Changed: text-primary handles the color automatically */}
-                <h1 className="text-xl font-bold flex items-center gap-2 text-primary">
-                    {/* Changed: bg-black -> bg-primary, text-white -> text-primary-foreground */}
-                    <div className="w-8 h-8 bg-primary text-primary-foreground rounded flex items-center justify-center text-sm font-bold">
+                <h1 className="text-xl font-bold flex items-center gap-2 text-foreground">
+                    <div className="w-8 h-8 bg-primary text-primary-foreground rounded flex items-center justify-center text-sm font-bold shadow-sm">
                         {role.charAt(0).toUpperCase()}
                     </div>
                     <span>
-                        Dash<span className="text-muted-foreground">Board</span>
+                        Dash<span className="text-primary">Board</span>
                     </span>
                 </h1>
-                <p className="text-xs text-muted-foreground mt-1 uppercase tracking-wider ml-1">
+                <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wider ml-1 font-semibold">
                     {role} Panel
                 </p>
             </div>
 
-            {/* 2. Dynamic Menu Items */}
-            <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
-                {currentMenu.map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => setActivePage(item.id)}
-                        // Changed: Hover and Active states use 'accent' and 'primary' variables
-                        className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                            activePage === item.id
-                                ? "bg-primary text-primary-foreground shadow-md"
-                                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                        }`}
-                    >
-                        <item.icon
-                            className={`w-5 h-5 ${
-                                activePage === item.id
-                                    ? "text-primary-foreground"
-                                    : "text-muted-foreground"
+            {/* Menu items */}
+            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+                {currentMenu.map((item) => {
+                    const isActive = activePage === item.id;
+                    const Icon = item.icon;
+
+                    return (
+                        <button
+                            key={item.id}
+                            onClick={() => setActivePage(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                                isActive
+                                    ? "bg-primary text-primary-foreground shadow-md"
+                                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             }`}
-                        />
-                        {item.label}
-                    </button>
-                ))}
+                        >
+                            <Icon
+                                className={`w-5 h-5 transition-colors ${
+                                    isActive
+                                        ? "text-primary-foreground"
+                                        : "text-muted-foreground group-hover:text-accent-foreground"
+                                }`}
+                            />
+                            {item.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* 3. Footer / Logout */}
-            {/* <div className="p-4 border-t border-border">
+            {/* Footer / logout */}
+            <div className="p-4 border-t border-border mt-auto">
                 <button
-                    onClick={logout}
-                    // Changed: red-50 -> hover:bg-destructive/10, text-red-600 -> text-destructive
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all duration-200 group"
                 >
-                    <LogOut className="w-5 h-5" />
+                    <LogOut className="w-5 h-5 group-hover:text-destructive" />
                     Logout
                 </button>
-            </div> */}
+            </div>
         </div>
     );
 }

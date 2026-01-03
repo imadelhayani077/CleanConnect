@@ -2,102 +2,96 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientApi from "@/Services/ClientApi";
 import AdminApi from "@/Services/AdminApi";
 
-/* ========= API helpers ========= */
+/*
+    -------------------------------------------
+    PART 1: ADMIN HOOKS (Managing Applications)
+    -------------------------------------------
+*/
 
-const fetchPendingApplicationsRequest = async () => {
-    const res = await AdminApi.getPendingApplications();
-    return res.data;
-};
+// 1. Fetch all pending applications
+// Hooks/useApplications.js (or wherever it lives)
+export const usePendingApplications = () => {
+    return useQuery({
+        queryKey: ["admin", "applications"],
+        queryFn: async () => {
+            const response = await AdminApi.getPendingApplications();
+            const data = response.data;
 
-const applyToBecomeSweepstarRequest = async (data) => {
-    const res = await ClientApi.applyToBecomeSweepstar(data);
-    return res.data;
-};
+            // Normalize possible shapes: [], { applications: [...] }, { data: [...] }
+            const list = Array.isArray(data)
+                ? data
+                : Array.isArray(data?.applications)
+                ? data.applications
+                : Array.isArray(data?.data)
+                ? data.data
+                : [];
 
-const approveApplicationRequest = async (id) => {
-    const res = await AdminApi.approveSweepstar(id);
-    return res.data;
-};
-
-const rejectApplicationRequest = async (id) => {
-    const res = await AdminApi.rejectSweepstar(id);
-    return res.data;
-};
-
-/* ========= query hook (admin) ========= */
-
-export const useSweepstarApplications = () => {
-    const {
-        data: applications,
-        isLoading,
-        isError,
-        error,
-    } = useQuery({
-        queryKey: ["sweepstar", "applications", "pending"],
-        queryFn: fetchPendingApplicationsRequest,
+            // If you only want still-pending ones:
+            return list.filter((app) => app.is_verified === false);
+        },
+        staleTime: 1000 * 60,
     });
-
-    return { applications, isLoading, isError, error };
 };
 
-/* ========= mutation hooks ========= */
-
-// client: apply
-export const useApplySweepstar = () => {
-    const {
-        mutateAsync: applyToBecomeSweepstar,
-        isLoading,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: applyToBecomeSweepstarRequest,
-    });
-
-    const errorMessage =
-        error?.response?.data?.message ||
-        (isError ? "Application failed" : null);
-
-    return { applyToBecomeSweepstar, isLoading, isError, error, errorMessage };
-};
-
-// admin: approve
-export const useApproveSweepstar = () => {
+// 2. Approve an application
+export const useApproveApplication = () => {
     const queryClient = useQueryClient();
 
-    const {
-        mutateAsync: approveApplication,
-        isLoading,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: approveApplicationRequest,
+    return useMutation({
+        mutationFn: async (id) => {
+            return await AdminApi.approveSweepstar(id);
+        },
         onSuccess: () => {
+            // AUTOMATIC UI UPDATE:
+            // When we approve someone, they are no longer "pending".
+            // We tell React Query to refresh the list, so the item disappears from the UI.
             queryClient.invalidateQueries({
-                queryKey: ["sweepstar", "applications", "pending"],
+                queryKey: ["admin", "applications"],
             });
         },
+        onError: (error) => {
+            console.error("Failed to approve application", error);
+        },
     });
-
-    return { approveApplication, isLoading, isError, error };
 };
 
-// admin: reject
-export const useRejectSweepstar = () => {
+// 3. Reject an application
+export const useRejectApplication = () => {
     const queryClient = useQueryClient();
 
-    const {
-        mutateAsync: rejectApplication,
-        isLoading,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: rejectApplicationRequest,
+    return useMutation({
+        mutationFn: async (id) => {
+            return await AdminApi.rejectSweepstar(id);
+        },
         onSuccess: () => {
+            // Refresh list to remove the rejected item
             queryClient.invalidateQueries({
-                queryKey: ["sweepstar", "applications", "pending"],
+                queryKey: ["admin", "applications"],
             });
         },
+        onError: (error) => {
+            console.error("Failed to reject application", error);
+        },
     });
+};
 
-    return { rejectApplication, isLoading, isError, error };
+/*
+    -------------------------------------------
+    PART 2: CLIENT HOOKS (Applying)
+    -------------------------------------------
+*/
+
+// 4. Client applies to become a Sweepstar
+export const useApplyForSweepstar = () => {
+    return useMutation({
+        mutationFn: async (applicationData) => {
+            return await ClientApi.applyToBecomeSweepstar(applicationData);
+        },
+        // We don't necessarily need to invalidate queries here,
+        // unless you have a "My Application Status" list on the client dashboard.
+        onError: (error) => {
+            // You can access error.response.data.message in the component
+            console.error("Application failed", error);
+        },
+    });
 };

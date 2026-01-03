@@ -37,7 +37,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // --- C. General Resources ---
     Route::get('/services', [ServiceController::class, 'index']);
     Route::post('/services', [ServiceController::class, 'store']); // Suggestion: Move to Admin group later
-    Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
     Route::put('/services/{id}', [ServiceController::class, 'update']);
     Route::apiResource('addresses', AddressController::class);
     Route::apiResource('bookings', BookingController::class);

@@ -30,7 +30,10 @@ const AdminApi = {
 
     // 1. Get all pending applications
     getPendingApplications: async () => {
-        return await axiosClient.get("/api/admin/applications");
+        const res = await axiosClient.get("/api/admin/applications");
+        console.log(res);
+
+        return res;
     },
 
     // 2. Approve a user (Upgrades them to Sweepstar)

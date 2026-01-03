@@ -1,105 +1,110 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ServiceApi from "@/Services/ServiceApi";
 
-/* ========= API helpers ========= */
+/*
+    -------------------------------------------
+    HELPER: Handle messy API responses
+    -------------------------------------------
+    Your backend might return data in different ways (Pagination, Wrappers, etc.).
+    This function cleans it up so the rest of the app just sees a simple Array.
+*/
+const parseServiceResponse = (response) => {
+    const data = response.data;
 
-const normalizeServices = (response) => {
-    if (Array.isArray(response.data)) return response.data;
-    if (response.data && Array.isArray(response.data.data))
-        return response.data.data;
-    if (response.data && Array.isArray(response.data.services))
-        return response.data.services;
+    // Case 1: Backend returns direct array [ ... ]
+    if (Array.isArray(data)) return data;
+
+    // Case 2: Laravel Pagination { data: [ ... ] }
+    if (data && Array.isArray(data.data)) return data.data;
+
+    // Case 3: Custom wrapper { services: [ ... ] }
+    if (data && Array.isArray(data.services)) return data.services;
+
+    // Default: Return empty array if nothing matches
     return [];
 };
 
-const fetchServicesRequest = async () => {
-    const response = await ServiceApi.getAllServices();
-    return normalizeServices(response);
-};
-
-const createServiceRequest = async (data) => {
-    const response = await ServiceApi.createService(data);
-    return response.data.service || response.data;
-};
-
-const updateServiceRequest = async ({ id, data }) => {
-    const response = await ServiceApi.updateService(id, data);
-    return response.data.service || response.data;
-};
-
-const deleteServiceRequest = async (id) => {
-    await ServiceApi.deleteService(id);
-    return id;
-};
-
-/* ========= query hook ========= */
-
+/*
+    -------------------------------------------
+    PART 1: FETCH SERVICES (GET)
+    -------------------------------------------
+*/
 export const useServices = () => {
-    const {
-        data: services,
-        isLoading,
-        isError,
-        error,
-    } = useQuery({
-        queryKey: ["services"],
-        queryFn: fetchServicesRequest,
+    return useQuery({
+        queryKey: ["services"], // Unique ID for cache
+        queryFn: async () => {
+            const response = await ServiceApi.getAllServices();
+            // Use our helper to extract the array cleanly
+            return parseServiceResponse(response);
+        },
+        staleTime: 1000 * 60 * 5, // Keep data fresh for 5 minutes
     });
-
-    return { services, isLoading, isError, error };
 };
 
-/* ========= mutation hooks ========= */
-
+/*
+    -------------------------------------------
+    PART 2: ADD SERVICE (POST)
+    -------------------------------------------
+*/
 export const useCreateService = () => {
     const queryClient = useQueryClient();
 
-    const {
-        mutateAsync: createService,
-        isLoading,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: createServiceRequest,
+    return useMutation({
+        mutationFn: async (newServiceData) => {
+            return await ServiceApi.createService(newServiceData);
+        },
         onSuccess: () => {
+            // Tell React Query to re-fetch the list immediately
             queryClient.invalidateQueries({ queryKey: ["services"] });
         },
+        onError: (error) => {
+            console.error("Failed to add service", error);
+        },
     });
-
-    return { createService, isLoading, isError, error };
 };
 
+/*
+    -------------------------------------------
+    PART 3: UPDATE SERVICE (PUT)
+    -------------------------------------------
+*/
 export const useUpdateService = () => {
     const queryClient = useQueryClient();
 
-    const {
-        mutateAsync: updateService,
-        isLoading,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: updateServiceRequest,
+    return useMutation({
+        // MutationFn expects ONE variable. We pass an object { id, data }.
+        mutationFn: async ({ id, data }) => {
+            return await ServiceApi.updateService(id, data);
+        },
         onSuccess: () => {
+            // Re-fetch list to show updated data
             queryClient.invalidateQueries({ queryKey: ["services"] });
         },
+        onError: (error) => {
+            console.error("Failed to update service", error);
+        },
     });
-
-    return { updateService, isLoading, isError, error };
 };
 
+/*
+    -------------------------------------------
+    PART 4: DELETE SERVICE (DELETE)
+    -------------------------------------------
+*/
 export const useDeleteService = () => {
     const queryClient = useQueryClient();
 
-    const {
-        mutateAsync: deleteService,
-        isLoading,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: deleteServiceRequest,
+    return useMutation({
+        mutationFn: async (id) => {
+            // Note: We moved the "window.confirm" logic to the UI component.
+            // Hooks should only handle data, not UI alerts.
+            return await ServiceApi.deleteService(id);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["services"] });
         },
+        onError: (error) => {
+            console.error("Failed to delete service", error);
+        },
     });
-
-    return { deleteService, isLoading, isError, error };
 };

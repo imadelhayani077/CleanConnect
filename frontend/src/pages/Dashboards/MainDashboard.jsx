@@ -1,53 +1,68 @@
 import React, { useState } from "react";
-import { useClientContext } from "@/Helper/ClientContext";
 import { Navigate } from "react-router-dom";
+import { Loader } from "lucide-react";
+// 1. Hooks
+import { useUser } from "@/Hooks/useAuth";
+
+// 2. Components
+import Sidebar from "@/layout/NavBar/SideBar"; // Check this path matches your folder structure
 import AdminDashboard from "./AdminDashboard";
 import SweepstarDashboard from "./SweepstarDashboard";
 import ClientDashboard from "./ClientDashboard";
-import Sidebar from "@/layout/NavBar/SideBar";
 
 export default function MainDashboard() {
-    const { user, authenticated, loading } = useClientContext();
+    const { data: user, isLoading } = useUser();
     const [activePage, setActivePage] = useState("dashboard");
 
-    if (loading) {
+    // 3. Loading State
+    if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="skeleton-container w-full max-w-lg">
-                    <div className="skeleton-line skeleton-line-medium w-1/3"></div>
-                    <div className="skeleton-line skeleton-line-small w-full"></div>
-                    <div className="skeleton-line skeleton-line-small w-5/6"></div>
-                </div>
+            <div className="h-full flex items-center justify-center">
+                <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
         );
     }
 
-    if (!authenticated) {
-        return <Navigate to="/login" />;
+    // 4. Security Check
+    if (!user) {
+        return <Navigate to="/login" replace />;
     }
 
-    // --- LOGIC TO SWITCH DASHBOARDS ---
+    // 5. Role-Based Rendering Logic
     const renderDashboardByRole = () => {
-        // 1. ADMIN PAGES
-
         switch (user.role) {
             case "admin":
                 return <AdminDashboard activePage={activePage} />;
             case "sweepstar":
                 return <SweepstarDashboard activePage={activePage} />;
-            case "user":
+            case "client":
+            case "user": // Handle both potential role names
             default:
                 return <ClientDashboard activePage={activePage} />;
         }
     };
 
     return (
-        <div className="flex min-h-screen bg-background">
-            {/* The Sidebar is consistent, content changes */}
-            <Sidebar activePage={activePage} setActivePage={setActivePage} />
+        <div className="flex h-full bg-background">
+            {/* SIDEBAR LEFT
+               - hidden md:block: Hides sidebar on mobile (assuming mobile users use the Navbar or a different menu)
+               - h-full: Ensures it stretches to the bottom of the viewport
+            */}
+            <div className="hidden md:block h-full border-r border-border">
+                <Sidebar
+                    activePage={activePage}
+                    setActivePage={setActivePage}
+                />
+            </div>
 
-            <main className="flex-1 text-foreground overflow-y-auto h-screen p-4">
-                {renderDashboardByRole()}
+            {/* MAIN CONTENT RIGHT
+               - flex-1: Takes remaining width
+               - overflow-y-auto: Handles scrolling for the dashboard content only (keeping sidebar fixed)
+            */}
+            <main className="flex-1 overflow-y-auto h-full p-4 md:p-8 bg-muted/10">
+                <div className="max-w-6xl mx-auto">
+                    {renderDashboardByRole()}
+                </div>
             </main>
         </div>
     );

@@ -1,127 +1,232 @@
-import { useSweepstarContext } from "@/Helper/SweepstarContext";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-// Import the context hook
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+// Icons
+import {
+    Loader2,
+    User,
+    DollarSign,
+    FileText,
+    CheckCircle2,
+    AlertCircle,
+} from "lucide-react";
+
+// UI Components
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+    FormDescription,
+} from "@/components/ui/form";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+
+// Hooks
+import { useApplyForSweepstar } from "@/Hooks/useSweepstar";
+
+// --- Validation Schema ---
+const applicationSchema = z.object({
+    id_number: z
+        .string()
+        .min(6, "ID/Passport number must be at least 6 characters."),
+    hourly_rate: z.coerce.number().min(10, "Minimum hourly rate is $10.00."),
+    bio: z.string().min(20, "Please provide a bio of at least 20 characters."),
+});
 
 export default function SweepstarApply() {
-    const [formData, setFormData] = useState({
-        bio: "",
-        id_number: "",
-        hourly_rate: 25.0,
+    const navigate = useNavigate();
+
+    const { mutateAsync: applyMutation, isPending } = useApplyForSweepstar();
+
+    const form = useForm({
+        resolver: zodResolver(applicationSchema),
+        defaultValues: {
+            id_number: "",
+            hourly_rate: 25.0,
+            bio: "",
+        },
     });
 
-    // Destructure functions and state from the Context
-    const { applyToBecomeSweepstar, loading, errors } = useSweepstarContext();
-    const navigate = useNavigate();
-    const [successMsg, setSuccessMsg] = useState("");
+    const [submitError, setSubmitError] = useState(null);
+    const [submitSuccess, setSubmitSuccess] = useState(null);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSuccessMsg("");
+    const onSubmit = async (values) => {
+        setSubmitError(null);
+        setSubmitSuccess(null);
 
-        // Call the context function
-        const success = await applyToBecomeSweepstar(formData);
+        try {
+            await applyMutation(values);
 
-        if (success) {
-            setSuccessMsg("Application submitted! Redirecting...");
-            // Redirect user to their dashboard after 2 seconds
+            setSubmitSuccess(
+                "We will review your profile and get back to you shortly."
+            );
+
             setTimeout(() => {
                 navigate("/dashboard");
             }, 2000);
+        } catch (error) {
+            console.error("Application Error:", error);
+            setSubmitError(
+                error?.response?.data?.message ||
+                    "Something went wrong. Please try again."
+            );
         }
     };
 
     return (
-        <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">
-                Become a Sweepstar
-            </h2>
+        <div className="flex justify-center items-center min-h-[80vh] p-4 animate-in fade-in slide-in-from-bottom-4">
+            <Card className="w-full max-w-lg shadow-lg border-muted/60">
+                <CardHeader className="space-y-1 text-center">
+                    <CardTitle className="text-2xl font-bold">
+                        Join as a Sweepstar
+                    </CardTitle>
+                    <CardDescription>
+                        Turn your cleaning skills into income. Fill out the
+                        details below.
+                    </CardDescription>
+                </CardHeader>
 
-            {/* Show Success Message */}
-            {successMsg && (
-                <div className="p-3 mb-4 bg-green-100 text-green-700 rounded border border-green-200">
-                    {successMsg}
-                </div>
-            )}
+                <CardContent>
+                    {submitError && (
+                        <div className="mb-4">
+                            <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Submission Failed</AlertTitle>
+                                <AlertDescription>
+                                    {submitError}
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    )}
 
-            {/* Show Error Message from Context */}
-            {errors && (
-                <div className="p-3 mb-4 bg-red-100 text-red-700 rounded border border-red-200">
-                    {errors}
-                </div>
-            )}
+                    {submitSuccess && (
+                        <div className="mb-4">
+                            <Alert className="border-green-200 bg-green-50 text-green-800">
+                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                <AlertTitle>Application Submitted!</AlertTitle>
+                                <AlertDescription>
+                                    {submitSuccess}
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    )}
 
-            <form onSubmit={handleSubmit}>
-                {/* ID Number */}
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium">
-                        ID / Passport Number
-                    </label>
-                    <input
-                        type="text"
-                        required
-                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={formData.id_number}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                id_number: e.target.value,
-                            })
-                        }
-                        placeholder="e.g. 900101 5000 089"
-                    />
-                </div>
+                    <Form {...form}>
+                        <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="space-y-5"
+                        >
+                            {/* Field: ID Number */}
+                            <FormField
+                                control={form.control}
+                                name="id_number"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            ID / Passport Number
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="e.g. 900101 5000 089"
+                                                    className="pl-9"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                {/* Hourly Rate */}
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium">
-                        Desired Hourly Rate ($)
-                    </label>
-                    <input
-                        type="number"
-                        min="10"
-                        step="0.50"
-                        required
-                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={formData.hourly_rate}
-                        onChange={(e) =>
-                            setFormData({
-                                ...formData,
-                                hourly_rate: e.target.value,
-                            })
-                        }
-                    />
-                </div>
+                            {/* Field: Hourly Rate */}
+                            <FormField
+                                control={form.control}
+                                name="hourly_rate"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Desired Hourly Rate ($)
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    type="number"
+                                                    step="0.50"
+                                                    className="pl-9"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormDescription>
+                                            We deduct a small service fee from
+                                            this rate.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                {/* Bio */}
-                <div className="mb-4">
-                    <label className="block text-gray-700 mb-2 font-medium">
-                        Why should we hire you? (Bio)
-                    </label>
-                    <textarea
-                        required
-                        rows="4"
-                        className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={formData.bio}
-                        onChange={(e) =>
-                            setFormData({ ...formData, bio: e.target.value })
-                        }
-                        placeholder="Tell us about your experience..."
-                    ></textarea>
-                </div>
+                            {/* Field: Bio */}
+                            <FormField
+                                control={form.control}
+                                name="bio"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>
+                                            Why should we hire you?
+                                        </FormLabel>
+                                        <FormControl>
+                                            <div className="relative">
+                                                <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                                <Textarea
+                                                    placeholder="Tell us about your experience, reliability, and cleaning skills..."
+                                                    className="pl-9 min-h-[120px] resize-none"
+                                                    {...field}
+                                                />
+                                            </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
 
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full text-white py-2 rounded transition font-semibold ${
-                        loading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : "bg-blue-600 hover:bg-blue-700"
-                    }`}
-                >
-                    {loading ? "Submitting..." : "Submit Application"}
-                </button>
-            </form>
+                            {/* Submit Button */}
+                            <Button
+                                type="submit"
+                                className="w-full text-lg"
+                                disabled={isPending}
+                            >
+                                {isPending ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    "Submit Application"
+                                )}
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
         </div>
     );
 }

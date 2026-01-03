@@ -1,5 +1,5 @@
 import React from "react";
-import ClientRegisterForm from "@/components/ClientComponent/ClientRegisterForm";
+import ClientRegisterForm from "@/pages/auth/ClientRegisterForm";
 
 export default function Signup() {
     return (

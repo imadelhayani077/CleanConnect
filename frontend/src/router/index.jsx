@@ -11,11 +11,15 @@ import Contact from "../pages/contact";
 import MainDashboard from "@/pages/Dashboards/MainDashboard";
 import NotFound from "../pages/notFound";
 import UsersList from "@/pages/Admin/UsersListe";
+import MySchedule from "../pages/Sweepstar/MySchedule"; // Assuming you have this now
+import { useUser } from "@/Hooks/useAuth";
 
-// Helper to redirect logged-in users away from Login page
+// --- Guest Only Guard ---
+// Redirects to Dashboard if "Authenticated" is found in storage.
 const GuestOnly = ({ children }) => {
-    const isAuth = window.localStorage.getItem("Authenticated") === "true";
-    return isAuth ? <Navigate to="/dashboard" /> : children;
+    const { data: user, isLoading } = useUser();
+    if (isLoading) return null;
+    return user ? <Navigate to="/dashboard" replace /> : children;
 };
 
 export const AppRouter = createBrowserRouter([
@@ -23,11 +27,15 @@ export const AppRouter = createBrowserRouter([
         path: "/",
         element: <MasterLayout />,
         children: [
-            // --- PUBLIC ROUTES ---
+            // ==========================================
+            // PUBLIC ROUTES
+            // ==========================================
             { path: "/", element: <Homepage /> },
             { path: "contact", element: <Contact /> },
 
-            // --- GUEST ONLY (Login/Signup) ---
+            // ==========================================
+            // GUEST ONLY (Login/Signup)
+            // ==========================================
             {
                 path: "login",
                 element: (
@@ -45,29 +53,31 @@ export const AppRouter = createBrowserRouter([
                 ),
             },
 
-            // --- PROTECTED: SHARED DASHBOARD (ALL ROLES) ---
-            // We use RoleRoute without 'requiredRole' just to check if they are logged in.
+            // ==========================================
+            // PROTECTED: SHARED DASHBOARD
+            // ==========================================
             {
+                // No 'requiredRole' = Accessible by any logged-in user
                 element: <RoleRoute />,
                 children: [
                     {
                         path: "dashboard",
-                        element: <MainDashboard />, // <--- MainDashboard handles the role switching
+                        element: <MainDashboard />,
                     },
                 ],
             },
 
-            // --- PROTECTED: SPECIFIC ADMIN PAGES ---
-            // Only put pages here that ONLY admins can see (e.g. /admin/users)
+            // ==========================================
+            // PROTECTED: ADMIN ONLY
+            // ==========================================
             {
                 element: <RoleRoute requiredRole="admin" />,
-                children: [
-                    { path: "admin/users", element: <UsersList /> },
-                    // { path: "admin/settings", element: <AdminSettings /> },
-                ],
+                children: [{ path: "admin/users", element: <UsersList /> }],
             },
 
-            // --- PROTECTED: SPECIFIC CLIENT PAGES ---
+            // ==========================================
+            // PROTECTED: CLIENT ONLY
+            // ==========================================
             {
                 element: <RoleRoute requiredRole="client" />,
                 children: [
@@ -75,7 +85,17 @@ export const AppRouter = createBrowserRouter([
                 ],
             },
 
-            // --- 404 ---
+            // ==========================================
+            // PROTECTED: SWEEPSTAR ONLY
+            // ==========================================
+            {
+                element: <RoleRoute requiredRole="sweepstar" />,
+                children: [{ path: "schedule", element: <MySchedule /> }],
+            },
+
+            // ==========================================
+            // 404 FALLBACK
+            // ==========================================
             { path: "*", element: <NotFound /> },
         ],
     },

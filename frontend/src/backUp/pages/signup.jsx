@@ -1,6 +1,6 @@
 import React from "react";
-import ClientLoginForm from "@/components/ClientComponent/ClientRegisterForm";
-import ClientRegisterForm from "@/components/ClientComponent/ClientRegisterForm";
+import ClientLoginForm from "@/pages/auth/ClientRegisterForm";
+import ClientRegisterForm from "@/pages/auth/ClientRegisterForm";
 export default function Signup() {
     return (
         <div className="max-w-3xl mx-auto p-6">
