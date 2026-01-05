@@ -18,7 +18,8 @@ class Booking extends Model
         'duration_hours',
         'total_price',
         'status',
-        'notes',          // Added this based on your Controller validation
+        'notes',
+        'cancellation_reason',
     ];
 
     protected $casts = [

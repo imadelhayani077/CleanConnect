@@ -12,6 +12,10 @@ const SweepstarApi = {
     acceptJob: async (bookingId) => {
         return await axiosClient.post(`/api/bookings/${bookingId}/accept`);
     },
+    // Add this function to the object
+    completeJob: async (bookingId) => {
+        return await axiosClient.post(`/api/bookings/${bookingId}/complete`);
+    },
 };
 
 export default SweepstarApi;

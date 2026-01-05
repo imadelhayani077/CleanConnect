@@ -53,6 +53,22 @@ export const useMySchedule = () => {
         },
     });
 };
+export const useCompleteJob = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (bookingId) => {
+            return await SweepstarApi.completeJob(bookingId);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["sweepstar", "schedule"],
+            });
+            // Also invalidate history if needed
+            queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        },
+    });
+};
 
 /*
     -------------------------------------------
@@ -113,6 +129,18 @@ export const useAcceptJob = () => {
         },
         onError: (error) => {
             console.error("Hook: Accept Job Failed", error);
+        },
+    });
+};
+export const useCancelBooking = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, reason }) => {
+            return await ClientApi.cancelBooking(id, reason);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["bookings"] });
         },
     });
 };

@@ -1,3 +1,4 @@
+// src/api/ClientApi.js (or wherever this file is located)
 import { axiosClient } from "@/api/axios";
 
 const ClientApi = {
@@ -25,6 +26,15 @@ const ClientApi = {
         // MATCHES YOUR ROUTE LIST: api/user
         return await axiosClient.get("/api/user");
     },
+
+    // --- USER PROFILE MANAGEMENT ---
+    // Update user profile (added for your UserInfo component)
+    updateProfile: async (id, data) => {
+        // Standard RESTful route: PUT /api/users/{id}
+        // If your backend uses Fortify, this might be /user/profile-information
+        return await axiosClient.put(`/api/users/${id}`, data);
+    },
+
     // --- ADDRESSES ---
     // Get all my addresses
     getMyAddresses: async () => {
@@ -52,8 +62,25 @@ const ClientApi = {
     updateBooking: async (id, data) => {
         return await axiosClient.put(`/api/bookings/${id}`, data);
     },
+    // Cancel a booking
+    cancelBooking: async (id, reason) => {
+        return await axiosClient.post(`/api/bookings/${id}/cancel`, { reason });
+    },
+
+    // --- SWEEPSTAR APPLICATION ---
     applyToBecomeSweepstar: async (data) => {
         return await axiosClient.post("/api/sweepstar/apply", data);
+    },
+
+    // --- REVIEWS ---
+    submitReview: async (data) => {
+        return await axiosClient.post("/api/reviews", data);
+    },
+    updateReview: async (id, data) => {
+        return await axiosClient.put(`/api/reviews/${id}`, data);
+    },
+    deleteReview: async (id) => {
+        return await axiosClient.delete(`/api/reviews/${id}`);
     },
 };
 

@@ -16,19 +16,27 @@ import {
     CardHeader,
     CardTitle,
     CardDescription,
+    CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 // --- HOOKS (Single Source of Truth) ---
-import { useMySchedule } from "@/Hooks/useBookings";
+import { useCompleteJob, useMySchedule } from "@/Hooks/useBookings";
 
 export default function MySchedule() {
     const navigate = useNavigate();
 
     // 1. Fetch Data
     const { data: jobs = [], isLoading } = useMySchedule();
+    const { mutateAsync: completeJob, isPending } = useCompleteJob();
+
+    const handleComplete = async (id) => {
+        if (window.confirm("Are you sure you have finished this job?")) {
+            await completeJob(id);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -140,6 +148,29 @@ export default function MySchedule() {
                                     </div>
                                 )}
                             </CardContent>
+                            <CardFooter>
+                                {job.status === "confirmed" && (
+                                    <Button
+                                        className="w-full bg-blue-600 hover:bg-blue-700"
+                                        onClick={() => handleComplete(job.id)}
+                                        disabled={isPending}
+                                    >
+                                        {isPending
+                                            ? "Updating..."
+                                            : "Mark as Completed"}
+                                    </Button>
+                                )}
+                                {job.status === "completed" && (
+                                    <Button
+                                        variant="outline"
+                                        className="w-full text-green-600 border-green-200 bg-green-50"
+                                        disabled
+                                    >
+                                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                                        Job Completed
+                                    </Button>
+                                )}
+                            </CardFooter>
                         </Card>
                     ))
                 )}

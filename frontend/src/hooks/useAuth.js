@@ -1,9 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import ClientApi from "@/Services/ClientApi";
+import ClientApi from "@/Services/ClientApi"; // Ensure this path matches your file structure
 import { useNavigate } from "react-router-dom";
 
 // 1. Helper to check if we should even try fetching the user
-// This prevents 401 errors on the login page by checking LocalStorage first
 const getStoredAuth = () =>
     window.localStorage.getItem("Authenticated") === "true";
 
@@ -15,25 +14,20 @@ const getStoredAuth = () =>
 export const useUser = () => {
     return useQuery({
         queryKey: ["user"],
-
-        // Only run this query if LocalStorage says we are logged in.
-        // This stops the app from constantly checking the API if the user is a guest.
         enabled: getStoredAuth(),
-
         queryFn: async () => {
             try {
                 const { data } = await ClientApi.getClient();
-                return data; // This becomes your 'user' object
+                return data;
             } catch (error) {
-                // If the session expired (401), clean up localStorage
                 if (error.response?.status === 401) {
                     window.localStorage.removeItem("Authenticated");
                 }
                 throw error;
             }
         },
-        retry: false, // If 401, fail immediately. Don't retry.
-        staleTime: Infinity, // User data doesn't change often, keep it fresh forever
+        retry: false,
+        staleTime: Infinity,
     });
 };
 
@@ -42,7 +36,6 @@ export const useUser = () => {
     PART 2: LOGIN (Mutation)
     -------------------------------------------
 */
-// in useAuth.js
 export const useLogin = () => {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -54,7 +47,6 @@ export const useLogin = () => {
         },
         onSuccess: async () => {
             localStorage.setItem("Authenticated", "true");
-            // refetch user and wait until it's there
             await queryClient.invalidateQueries({ queryKey: ["user"] });
             navigate("/dashboard", { replace: true });
         },
@@ -95,15 +87,29 @@ export const useLogout = () => {
             return await ClientApi.logout();
         },
         onSettled: () => {
-            // "onSettled" runs whether the API succeeded or failed.
-            // We always want to clear local state.
-
             window.localStorage.removeItem("Authenticated");
-
-            // WIPE the user data from the cache immediately
             queryClient.setQueryData(["user"], null);
-
             navigate("/login");
+        },
+    });
+};
+
+/*
+    -------------------------------------------
+    PART 5: UPDATE PROFILE (Mutation)
+    -------------------------------------------
+*/
+export const useUpdateProfile = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        // Expects an object with { id, data } when you call .mutate()
+        mutationFn: async ({ id, data }) => {
+            return await ClientApi.updateProfile(id, data);
+        },
+        onSuccess: () => {
+            // Crucial: This refreshes the "user" query so the UI updates instantly
+            queryClient.invalidateQueries({ queryKey: ["user"] });
         },
     });
 };

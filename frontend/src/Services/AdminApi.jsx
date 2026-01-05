@@ -6,6 +6,9 @@ const AdminApi = {
     getAllUsers: async () => {
         return await axiosClient.get("/api/admin/users");
     },
+    getUserDetails: async (id) => {
+        return await axiosClient.get(`/api/admin/users/${id}`);
+    },
 
     // --- BOOKINGS ---
     // Fetch all bookings for Admin Dashboard

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useUsers } from "@/Hooks/useUsers"; // Import your new hook
+import { useUsers } from "@/Hooks/useUsers";
 import {
     Loader2,
     Search,
@@ -8,8 +8,9 @@ import {
     Briefcase,
     FilterX,
     RefreshCcw,
+    Eye, // Import Eye icon
 } from "lucide-react";
-
+import { getRoleStyles } from "@/utils/roleStyles";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,13 +38,19 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+// --- IMPORT THE MODAL ---
+import UserDetailModal from "./components/UserDetailModal";
+
 export default function UsersList() {
     // 1. Use the Custom Hook
     const { users, loading, error, refetch } = useUsers();
 
-    // 2. Local UI State (Filtering & Searching)
+    // 2. Local UI State
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
+
+    // 3. Modal State
+    const [selectedUserId, setSelectedUserId] = useState(null);
 
     // Helper: Filter Logic
     const filteredUsers = users.filter((user) => {
@@ -69,28 +76,15 @@ export default function UsersList() {
             : "U";
 
     // Helper: Role Badge
-    const getRoleBadge = (role) => {
-        switch (role) {
-            case "admin":
-                return (
-                    <Badge className="bg-red-600 hover:bg-red-700 capitalize">
-                        <ShieldAlert className="w-3 h-3 mr-1" /> {role}
-                    </Badge>
-                );
-            case "sweepstar":
-                return (
-                    <Badge className="bg-blue-600 hover:bg-blue-700 capitalize">
-                        <Briefcase className="w-3 h-3 mr-1" /> sweepstar
-                    </Badge>
-                );
-            default:
-                return (
-                    <Badge className="bg-green-600 hover:bg-green-700 capitalize">
-                        <User className="w-3 h-3 mr-1" /> Client
-                    </Badge>
-                );
-        }
-    };
+    const getRoleBadge = (role) => (
+        <Badge
+            className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getRoleStyles(
+                role
+            )}`}
+        >
+            {role}
+        </Badge>
+    );
 
     // Loading State
     if (loading) {
@@ -129,7 +123,6 @@ export default function UsersList() {
                         Manage {users.length} registered users.
                     </p>
                 </div>
-                {/* Refresh Button using the hook's refetch function */}
                 <Button variant="outline" size="sm" onClick={refetch}>
                     <RefreshCcw className="mr-2 h-4 w-4" /> Refresh Data
                 </Button>
@@ -183,6 +176,10 @@ export default function UsersList() {
                                     <TableHead>User</TableHead>
                                     <TableHead>Role</TableHead>
                                     <TableHead>Joined</TableHead>
+                                    {/* Added Actions Column */}
+                                    <TableHead className="text-right">
+                                        Actions
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -219,12 +216,27 @@ export default function UsersList() {
                                                     user.created_at
                                                 ).toLocaleDateString()}
                                             </TableCell>
+                                            {/* Action Button */}
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setSelectedUserId(
+                                                            user.id
+                                                        )
+                                                    }
+                                                >
+                                                    <Eye className="w-4 h-4 mr-2" />
+                                                    Details
+                                                </Button>
+                                            </TableCell>
                                         </TableRow>
                                     ))
                                 ) : (
                                     <TableRow>
                                         <TableCell
-                                            colSpan={4}
+                                            colSpan={5}
                                             className="h-24 text-center"
                                         >
                                             <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -239,6 +251,15 @@ export default function UsersList() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* --- RENDER MODAL --- */}
+            {selectedUserId && (
+                <UserDetailModal
+                    userId={selectedUserId}
+                    isOpen={!!selectedUserId}
+                    onClose={() => setSelectedUserId(null)}
+                />
+            )}
         </div>
     );
 }

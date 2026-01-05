@@ -14,20 +14,25 @@ class BookingController extends Controller
     /**
      * Fetch all bookings (Admin View & Client History)
      */
-    public function index(Request $request)
+public function index(Request $request)
     {
+        // We define the relationships here to use them in both spots.
+        // Added 'sweepstar' so you can see who accepted the job.
+        $relationships = ['user', 'address', 'services', 'review', 'sweepstar'];
+
         // 1. Client View: Only show THEIR bookings
-        if ($request->user()->role === 'user') {
+        if ($request->user()->role === 'client') {
              return response()->json([
                 'bookings' => Booking::where('user_id', $request->user()->id)
-                                     ->with(['user', 'address', 'services'])
+                                     ->with($relationships)
                                      ->orderBy('created_at', 'desc')
                                      ->get()
              ]);
         }
 
         // 2. Admin View: Show EVERYTHING
-        $bookings = Booking::with(['user', 'address', 'services'])
+        // This will now include the Client (user), the Worker (sweepstar), and the Cancellation Reason (part of the main table)
+        $bookings = Booking::with($relationships)
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -101,24 +106,65 @@ class BookingController extends Controller
     /**
      * Update booking (Admin or Client)
      */
-    public function update(Request $request, Booking $booking)
+public function update(Request $request, Booking $booking)
     {
+        // 1. Authorization: Ensure user is Admin OR the Owner of the booking
         if ($request->user()->role !== 'admin' && $request->user()->id !== $booking->user_id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
+        // 2. State Check: Prevent editing finalized bookings
         if (in_array($booking->status, ['completed', 'cancelled'])) {
             return response()->json(['message' => 'Cannot edit a finalized booking.'], 400);
         }
 
+        // 3. Validation
         $validated = $request->validate([
-            'scheduled_at' => 'sometimes|date|after:now',
-            'address_id'   => 'sometimes|exists:addresses,id',
-            'notes'        => 'nullable|string',
-            'status'       => 'sometimes|string'
+            'scheduled_at'  => 'sometimes|date|after:now',
+            'notes'         => 'nullable|string',
+            'status'        => 'sometimes|string|in:pending,confirmed,cancelled', // Add 'in' rule for safety
+
+            // Validate Address exists AND belongs to the user
+            'address_id'    => [
+                'sometimes',
+                'exists:addresses,id',
+                function ($attribute, $value, $fail) use ($booking) {
+                    $address = \App\Models\Address::find($value);
+                    if ($address && $address->user_id !== $booking->user_id) {
+                        $fail('The selected address does not belong to you.');
+                    }
+                }
+            ],
+
+            // Validate Services (Array of IDs)
+            'service_ids'   => 'sometimes|array',
+            'service_ids.*' => 'exists:services,id',
         ]);
 
-        $booking->update($validated);
+        // 4. Update Basic Fields
+        $booking->fill($request->only(['scheduled_at', 'notes', 'address_id', 'status']));
+
+        // 5. Handle Service Changes (CRITICAL: Recalculate Price)
+        if ($request->has('service_ids')) {
+            // Fetch the actual service models to get their prices
+            $services = \App\Models\Service::whereIn('id', $validated['service_ids'])->get();
+
+            // A. Recalculate Total Price
+            $newTotal = $services->sum('base_price');
+            $booking->total_price = $newTotal;
+
+            // B. Prepare Pivot Data (snapshotting the price)
+            $syncData = [];
+            foreach ($services as $service) {
+                $syncData[$service->id] = ['price_at_booking' => $service->base_price];
+            }
+
+            // C. Sync database relationships
+            $booking->services()->sync($syncData);
+        }
+
+        // 6. Save changes
+        $booking->save();
 
         return response()->json([
             'message' => 'Booking updated successfully',
@@ -193,5 +239,48 @@ class BookingController extends Controller
 
             return response()->json(['message' => 'Job accepted! It is now in your schedule.']);
         });
+    }
+    // Add this method inside the BookingController class
+public function completeJob(Request $request, $id)
+{
+    $booking = Booking::findOrFail($id);
+
+    // Security: Only the assigned Sweepstar can complete it
+    if ($booking->sweepstar_id !== $request->user()->id) {
+        return response()->json(['message' => 'Unauthorized'], 403);
+    }
+
+    if ($booking->status !== 'confirmed') {
+        return response()->json(['message' => 'Job is not in progress.'], 400);
+    }
+
+    $booking->update(['status' => 'completed']);
+
+    return response()->json(['message' => 'Job marked as completed!']);
+}
+
+public function cancel(Request $request, $id)
+    {
+        $booking = Booking::findOrFail($id);
+
+        if ($request->user()->id !== $booking->user_id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if (in_array($booking->status, ['completed', 'cancelled'])) {
+            return response()->json(['message' => 'Booking is already finalized.'], 400);
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|min:5|max:500',
+        ]);
+
+        // UPDATE: Save to the dedicated column
+        $booking->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $validated['reason']
+        ]);
+
+        return response()->json(['message' => 'Booking cancelled successfully.']);
     }
 }

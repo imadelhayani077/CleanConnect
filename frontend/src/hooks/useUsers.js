@@ -28,3 +28,13 @@ export function useUsers() {
         refetch,
     };
 }
+export const useUserDetails = (userId) => {
+    return useQuery({
+        queryKey: ["user", userId],
+        queryFn: async () => {
+            const response = await AdminApi.getUserDetails(userId);
+            return response.data;
+        },
+        enabled: !!userId, // Only run if an ID is provided
+    });
+};
