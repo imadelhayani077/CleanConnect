@@ -86,6 +86,7 @@ public function update(Request $request, string $id)
             'phone' => 'nullable|string|max:20',
             'email' => ['required', 'email', Rule::unique('users')->ignore($targetUser->id)],
             'password' => 'nullable|string|min:8',
+            'role'     => 'nullable|in:client,sweepstar,admin',
         ]);
 
         // 4. PREPARE DATA
@@ -97,6 +98,9 @@ public function update(Request $request, string $id)
         // Only Admin can change email
         if ($currentUser->role === 'admin') {
             $data['email'] = $request->email;
+            if ($request->filled('role')) {
+                $data['role'] = $request->role;
+    }
         }
 
         // Handle Password Reset (Changing the target user's password)

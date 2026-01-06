@@ -129,6 +129,7 @@ export default function UserInfo() {
             {/* The Edit Modal */}
             <UserEditProfileModal
                 user={user}
+                editor={user} // IMPORTANT: self edit
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
             />

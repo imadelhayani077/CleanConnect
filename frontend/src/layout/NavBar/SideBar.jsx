@@ -1,7 +1,8 @@
-// src/layout/NavBar/Sidebar.jsx
+// src/layout/Sidebar/Sidebar.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser, useLogout } from "@/Hooks/useAuth";
+
 import {
     LayoutDashboard,
     UserRoundCog,
@@ -15,8 +16,10 @@ import {
     BrushCleaning,
     MapPin,
     ListChecks,
-    Loader,
+    Loader2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { getRoleStyles } from "@/utils/roleStyles";
 
 export default function Sidebar({ activePage, setActivePage }) {
     const navigate = useNavigate();
@@ -63,68 +66,87 @@ export default function Sidebar({ activePage, setActivePage }) {
 
     if (isLoading) {
         return (
-            <div className="sidebar flex flex-col items-center pt-10">
-                <Loader className="w-6 h-6 animate-spin text-muted-foreground" />
+            <div className="w-64 border-r border-border/60 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center pt-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
         );
     }
 
     return (
-        <div className="sidebar flex flex-col shadow-sm transition-all duration-300">
+        <aside className="w-64 border-r border-border/60 bg-background/95 backdrop-blur-sm flex flex-col shadow-sm transition-all duration-300">
             {/* Header */}
-            <div className="p-6 border-b border-border">
-                <h1 className="text-xl font-bold flex items-center gap-2 text-foreground">
-                    <div className="w-8 h-8 bg-primary text-primary-foreground rounded flex items-center justify-center text-sm font-bold shadow-sm">
+            <div className="p-6 border-b border-border/60">
+                <h2 className="text-lg font-bold flex items-center gap-3 text-foreground">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground rounded-lg flex items-center justify-center text-sm font-bold shadow-md">
                         {role.charAt(0).toUpperCase()}
                     </div>
                     <span>
                         Dash<span className="text-primary">Board</span>
                     </span>
-                </h1>
-                <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wider ml-1 font-semibold">
+                </h2>
+                <p className="text-xs text-muted-foreground mt-2 uppercase tracking-widest font-semibold">
                     {role} Panel
                 </p>
             </div>
 
             {/* Menu items */}
-            <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+            <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
                 {currentMenu.map((item) => {
                     const isActive = activePage === item.id;
                     const Icon = item.icon;
 
                     return (
-                        <button
+                        <Button
                             key={item.id}
                             onClick={() => setActivePage(item.id)}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group ${
+                            variant={isActive ? "default" : "ghost"}
+                            className={`w-full justify-start gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 group ${
                                 isActive
-                                    ? "bg-primary text-primary-foreground shadow-md"
+                                    ? "bg-primary text-primary-foreground shadow-md hover:bg-primary hover:shadow-lg"
                                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                             }`}
                         >
                             <Icon
-                                className={`w-5 h-5 transition-colors ${
+                                className={`w-5 h-5 flex-shrink-0 transition-colors ${
                                     isActive
                                         ? "text-primary-foreground"
                                         : "text-muted-foreground group-hover:text-accent-foreground"
                                 }`}
                             />
-                            {item.label}
-                        </button>
+                            <span className="truncate">{item.label}</span>
+                        </Button>
                     );
                 })}
-            </div>
+            </nav>
 
-            {/* Footer / logout */}
-            <div className="p-4 border-t border-border mt-auto">
-                <button
+            {/* User Info */}
+            <div className="p-4 border-t border-border/60 bg-muted/30">
+                <div className="rounded-lg bg-background/60 border border-border/60 p-3 mb-3">
+                    <p className="text-xs font-semibold text-foreground truncate">
+                        {user?.name || "User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                        {user?.email || "no email"}
+                    </p>
+                    <div
+                        className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${getRoleStyles(
+                            user?.role
+                        )}`}
+                    >
+                        {role}
+                    </div>
+                </div>
+
+                {/* Logout Button */}
+                <Button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg transition-all duration-200 group"
+                    variant="ghost"
+                    className="w-full justify-start gap-3 px-4 py-2.5 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200 group"
                 >
                     <LogOut className="w-5 h-5 group-hover:text-destructive" />
                     Logout
-                </button>
+                </Button>
             </div>
-        </div>
+        </aside>
     );
 }
