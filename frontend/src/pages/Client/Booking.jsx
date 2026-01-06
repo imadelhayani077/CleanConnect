@@ -32,11 +32,13 @@ export default function Booking() {
     // Ideally, show a skeleton here, but a spinner is fine for now
     if (loadingServices || loadingAddresses) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-muted-foreground mt-4">
-                    Loading booking details...
-                </p>
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <p className="text-sm text-muted-foreground">
+                        Loading booking details...
+                    </p>
+                </div>
             </div>
         );
     }
@@ -76,7 +78,7 @@ export default function Booking() {
                     <Button
                         variant="outline"
                         className="border-green-600 text-green-700 hover:bg-green-100"
-                        onClick={() => navigate("/client/dashboard")}
+                        onClick={() => navigate("/dashboard")}
                     >
                         Go to Dashboard
                     </Button>

@@ -107,7 +107,7 @@ export default function UsersList() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+            <div className="flex flex-col p-6items-center justify-center min-h-[400px] space-y-4 ">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 <p className="text-muted-foreground animate-pulse">
                     Loading users...
@@ -131,7 +131,7 @@ export default function UsersList() {
 
     return (
         <>
-            <div className="space-y-6 animate-in fade-in duration-500">
+            <div className="space-y-6 animate-in fade-in duration-500 p-6">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">

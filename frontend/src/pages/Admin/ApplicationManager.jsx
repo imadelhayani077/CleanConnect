@@ -48,9 +48,13 @@ export default function ApplicationManager() {
     // Loading state
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground animate-pulse">
-                <Loader className="w-8 h-8 animate-spin mb-4 text-primary" />
-                <p>Reviewing applications...</p>
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <p className="text-sm text-muted-foreground">
+                        Reviewing applications...
+                    </p>
+                </div>
             </div>
         );
     }
@@ -75,7 +79,7 @@ export default function ApplicationManager() {
     });
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 p-6">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div>

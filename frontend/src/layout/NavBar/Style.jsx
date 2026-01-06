@@ -1,8 +1,8 @@
 // src/layout/Sidebar/Sidebar.jsx
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser, useLogout } from "@/Hooks/useAuth";
-
+import { getRoleStyles } from "@/utils/getRoleStyles"; // Adjust path to your utils
 import {
     LayoutDashboard,
     UserRoundCog,
@@ -19,12 +19,10 @@ import {
     Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getRoleStyles } from "@/utils/roleStyles";
 
-export default function Sidebar() {
+export default function Sidebar({ activePage, setActivePage }) {
     const navigate = useNavigate();
     const { data: user, isLoading } = useUser();
-    const [activePage, setActivePage] = useState("dashboard");
     const { mutateAsync: logoutUser } = useLogout();
 
     const role = user?.role || "client";
@@ -41,21 +39,21 @@ export default function Sidebar() {
     const MENUS = {
         admin: [
             { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-            { id: "myinfo", label: "My Info", icon: UserRoundCog },
+            { id: "my-info", label: "My Info", icon: UserRoundCog },
             { id: "users", label: "All Users", icon: Users },
             { id: "bookings", label: "All Bookings", icon: Calendar },
             { id: "services", label: "All Services", icon: Wrench },
-            { id: "applications", label: "Applications", icon: Settings },
+            { id: "Applications", label: "Applications", icon: Settings },
         ],
         sweepstar: [
             { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
-            { id: "myinfo", label: "My Info", icon: UserRoundCog },
+            { id: "my-info", label: "My Info", icon: UserRoundCog },
             { id: "available", label: "My Jobs", icon: ListChecks },
             { id: "schedule", label: "My Schedule", icon: Calendar },
         ],
         client: [
             { id: "dashboard", label: "Home", icon: LayoutDashboard },
-            { id: "myinfo", label: "My Info", icon: UserRoundCog },
+            { id: "my-info", label: "My Info", icon: UserRoundCog },
             { id: "book-new", label: "Book Service", icon: PlusCircle },
             { id: "my-bookings", label: "History", icon: Briefcase },
             { id: "addresses", label: "My Addresses", icon: MapPin },
@@ -64,41 +62,11 @@ export default function Sidebar() {
     };
 
     const currentMenu = MENUS[role] || MENUS.client;
-    const routeMap = {
-        // shared
-        dashboard: "/dashboard",
-        myinfo: "/dashboard/my-info",
-
-        // admin
-        users: "/dashboard/users",
-        bookings: "/dashboard/bookings",
-        services: "/dashboard/services",
-        applications: "/dashboard/applications",
-
-        // sweepstar
-        available: "/dashboard/available",
-        schedule: "/dashboard/schedule",
-
-        // client
-        "book-new": "/dashboard/booking",
-        "my-bookings": "/dashboard/booking-history",
-        addresses: "/dashboard/address",
-        becomSweep: "/dashboard/become-sweepstar",
-    };
-
-    const handleMenuClick = (id) => {
-        setActivePage(id);
-        const to = routeMap[id] || "/dashboard";
-        navigate(to);
-    };
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                    <p className="text-sm text-muted-foreground">Loading...</p>
-                </div>
+            <div className="w-64 border-r border-border/60 bg-background/95 backdrop-blur-sm flex flex-col items-center justify-center pt-10">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
         );
     }
@@ -129,7 +97,7 @@ export default function Sidebar() {
                     return (
                         <Button
                             key={item.id}
-                            onClick={() => handleMenuClick(item.id)}
+                            onClick={() => setActivePage(item.id)}
                             variant={isActive ? "default" : "ghost"}
                             className={`w-full justify-start gap-3 px-4 py-2.5 text-sm font-medium transition-all duration-200 group ${
                                 isActive

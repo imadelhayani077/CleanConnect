@@ -23,8 +23,13 @@ export default function BookingHistory() {
 
     if (isLoading)
         return (
-            <div className="p-8 text-center">
-                <Loader2 className="animate-spin mx-auto" />
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <p className="text-sm text-muted-foreground">
+                        Booking history is Loading...
+                    </p>
+                </div>
             </div>
         );
 

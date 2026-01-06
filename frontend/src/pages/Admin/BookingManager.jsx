@@ -71,15 +71,19 @@ export default function BookingManager() {
 
     if (isLoading) {
         return (
-            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground animate-pulse">
-                <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
-                <p>Syncing booking data...</p>
+            <div className="min-h-screen flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <p className="text-sm text-muted-foreground">
+                        Syncing booking data...
+                    </p>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative p-6">
             {/* Header & Filter Bar */}
             <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                 <div>
