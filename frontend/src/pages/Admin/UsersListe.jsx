@@ -8,7 +8,8 @@ import {
     Briefcase,
     FilterX,
     RefreshCcw,
-    Eye, // Import Eye icon
+    Eye,
+    Pencil, // 1. IMPORT PENCIL ICON
 } from "lucide-react";
 import { getRoleStyles } from "@/utils/roleStyles";
 import { Input } from "@/components/ui/input";
@@ -37,22 +38,20 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-// --- IMPORT THE MODAL ---
 import UserDetailModal from "./components/UserDetailModal";
 
 export default function UsersList() {
-    // 1. Use the Custom Hook
     const { users, loading, error, refetch } = useUsers();
-
-    // 2. Local UI State
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
-
-    // 3. Modal State
     const [selectedUserId, setSelectedUserId] = useState(null);
 
-    // Helper: Filter Logic
+    // 2. ADD EDIT HANDLER (Placeholder logic)
+    const handleEditUser = (user) => {
+        console.log("Editing user:", user.id);
+        // Add your logic to open an edit modal or navigate to edit page here
+    };
+
     const filteredUsers = users.filter((user) => {
         const matchesSearch =
             user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -64,7 +63,6 @@ export default function UsersList() {
         return matchesSearch && matchesRole;
     });
 
-    // Helper: Get Initials
     const getInitials = (name) =>
         name
             ? name
@@ -75,7 +73,6 @@ export default function UsersList() {
                   .slice(0, 2)
             : "U";
 
-    // Helper: Role Badge
     const getRoleBadge = (role) => (
         <Badge
             className={`px-3 py-1 rounded-full text-xs font-semibold uppercase ${getRoleStyles(
@@ -86,7 +83,6 @@ export default function UsersList() {
         </Badge>
     );
 
-    // Loading State
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
@@ -98,7 +94,6 @@ export default function UsersList() {
         );
     }
 
-    // Error State
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-red-500 space-y-4">
@@ -136,7 +131,6 @@ export default function UsersList() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {/* Filters */}
                     <div className="flex flex-col md:flex-row gap-4 mb-6">
                         <div className="relative flex-1">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -165,7 +159,6 @@ export default function UsersList() {
                         </Select>
                     </div>
 
-                    {/* Table */}
                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>
@@ -176,7 +169,6 @@ export default function UsersList() {
                                     <TableHead>User</TableHead>
                                     <TableHead>Role</TableHead>
                                     <TableHead>Joined</TableHead>
-                                    {/* Added Actions Column */}
                                     <TableHead className="text-right">
                                         Actions
                                     </TableHead>
@@ -216,20 +208,37 @@ export default function UsersList() {
                                                     user.created_at
                                                 ).toLocaleDateString()}
                                             </TableCell>
-                                            {/* Action Button */}
+
+                                            {/* 3. UPDATED ACTIONS COLUMN */}
                                             <TableCell className="text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    onClick={() =>
-                                                        setSelectedUserId(
-                                                            user.id
-                                                        )
-                                                    }
-                                                >
-                                                    <Eye className="w-4 h-4 mr-2" />
-                                                    Details
-                                                </Button>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {/* Edit Button */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            handleEditUser(user)
+                                                        }
+                                                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                    >
+                                                        <Pencil className="w-4 h-4 mr-2" />
+                                                        Edit
+                                                    </Button>
+
+                                                    {/* Details Button */}
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            setSelectedUserId(
+                                                                user.id
+                                                            )
+                                                        }
+                                                    >
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        Details
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -252,7 +261,6 @@ export default function UsersList() {
                 </CardContent>
             </Card>
 
-            {/* --- RENDER MODAL --- */}
             {selectedUserId && (
                 <UserDetailModal
                     userId={selectedUserId}
