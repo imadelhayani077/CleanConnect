@@ -115,4 +115,48 @@ public function update(Request $request, string $id)
             'user' => $targetUser
         ]);
     }
+    // User toggles between 'active' and 'disabled'
+public function toggleStatus(Request $request)
+{
+    $user = $request->user();
+
+    // Prevent suspended users from re-activating themselves
+    if ($user->status === 'suspended') {
+        return response()->json(['message' => 'Account is suspended.'], 403);
+    }
+
+    // Toggle logic
+    $user->status = ($user->status === 'active') ? 'disabled' : 'active';
+    $user->save();
+
+    return response()->json(['status' => $user->status]);
+}
+
+// User deletes their own account
+public function destroySelf(Request $request)
+{
+    $user = $request->user();
+    // Optional: Delete related profiles/bookings logic here
+    $user->delete();
+    return response()->json(['message' => 'Account deleted successfully.']);
+}
+
+// Admin changes status (Active/Suspended/Disabled)
+public function adminUpdateStatus(Request $request, $id)
+{
+    $request->validate(['status' => 'required|in:active,suspended,disabled']);
+
+    $user = User::findOrFail($id);
+    $user->status = $request->status;
+    $user->save();
+
+    return response()->json(['message' => "User status updated to {$user->status}"]);
+}
+
+// Admin deletes a user
+public function adminDestroyUser($id)
+{
+    User::findOrFail($id)->delete();
+    return response()->json(['message' => 'User deleted by admin.']);
+}
 }

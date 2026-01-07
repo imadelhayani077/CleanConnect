@@ -113,3 +113,27 @@ export const useUpdateProfile = () => {
         },
     });
 };
+export const useToggleStatus = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async () => await ClientApi.toggleStatus(),
+        onSuccess: () => {
+            // Refresh user data so the UI updates immediately
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
+    });
+};
+
+// NEW: Delete Account Hook
+export const useDeleteAccount = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async () => await ClientApi.deleteSelf(),
+        onSuccess: () => {
+            // Logout logic
+            window.localStorage.removeItem("Authenticated");
+            queryClient.setQueryData(["user"], null);
+            window.location.href = "/login"; // Force redirect
+        },
+    });
+};

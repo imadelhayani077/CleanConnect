@@ -74,9 +74,7 @@ export default function MySchedule() {
                             You have no upcoming jobs assigned to you.
                         </p>
                         <Button
-                            onClick={() =>
-                                navigate("/dashboard?tab=available-jobs")
-                            }
+                            onClick={() => navigate("/dashboard/available")}
                         >
                             Find Available Jobs
                         </Button>

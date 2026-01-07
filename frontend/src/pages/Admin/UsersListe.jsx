@@ -1,16 +1,17 @@
-// src/.../UsersListe.jsx
-
 import React, { useState } from "react";
-
-import { useUsers } from "@/Hooks/useUsers";
 import { useUser } from "@/Hooks/useAuth";
-
+import {
+    useUsers,
+    useAdminUpdateStatus,
+    useAdminDeleteUser,
+} from "@/Hooks/useUsers";
 import {
     Loader2,
     Search,
     ShieldAlert,
-    User,
-    Briefcase,
+    Trash2,
+    Ban,
+    CheckCircle,
     FilterX,
     RefreshCcw,
     Eye,
@@ -64,6 +65,34 @@ export default function UsersList() {
 
     const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const updateStatusMutation = useAdminUpdateStatus();
+    const deleteUserMutation = useAdminDeleteUser();
+
+    // --- Helper for Status Colors ---
+    const getStatusStyles = (status) => {
+        switch (status) {
+            case "active":
+                return "bg-green-100 text-green-700 border-green-200 hover:bg-green-100";
+            case "suspended":
+                return "bg-red-100 text-red-700 border-red-200 hover:bg-red-100";
+            case "disabled":
+                return "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100";
+            default:
+                return "bg-gray-100 text-gray-700 border-gray-200";
+        }
+    };
+
+    const handleStatusChange = (userId, newStatus) => {
+        if (window.confirm(`Change user status to ${newStatus}?`)) {
+            updateStatusMutation.mutate({ id: userId, status: newStatus });
+        }
+    };
+
+    const handleDeleteUser = (userId) => {
+        if (window.confirm("Permanently delete this user?")) {
+            deleteUserMutation.mutate(userId);
+        }
+    };
 
     const handleOpenDetails = (userId) => {
         setSelectedUserId(userId);
@@ -107,7 +136,7 @@ export default function UsersList() {
 
     if (loading) {
         return (
-            <div className="flex flex-col p-6items-center justify-center min-h-[400px] space-y-4 ">
+            <div className="flex flex-col p-6 items-center justify-center min-h-[400px] space-y-4 ">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 <p className="text-muted-foreground animate-pulse">
                     Loading users...
@@ -215,6 +244,8 @@ export default function UsersList() {
                                         </TableHead>
                                         <TableHead>User</TableHead>
                                         <TableHead>Role</TableHead>
+                                        {/* NEW STATUS COLUMN HEADER */}
+                                        <TableHead>Status</TableHead>
                                         <TableHead>Joined</TableHead>
                                         <TableHead className="text-right">
                                             Actions
@@ -225,7 +256,7 @@ export default function UsersList() {
                                     {filteredUsers.length === 0 ? (
                                         <TableRow>
                                             <TableCell
-                                                colSpan={5}
+                                                colSpan={6} // Increased colSpan for new column
                                                 className="h-24 text-center"
                                             >
                                                 <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -268,6 +299,20 @@ export default function UsersList() {
                                                         {user.role}
                                                     </Badge>
                                                 </TableCell>
+
+                                                {/* NEW STATUS CELL */}
+                                                <TableCell>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={`capitalize ${getStatusStyles(
+                                                            user.status
+                                                        )}`}
+                                                    >
+                                                        {user.status ||
+                                                            "Active"}
+                                                    </Badge>
+                                                </TableCell>
+
                                                 <TableCell className="text-muted-foreground text-sm">
                                                     {user.created_at
                                                         ? new Date(
@@ -336,6 +381,58 @@ export default function UsersList() {
                                                             <span className="hidden sm:inline text-xs">
                                                                 Edit
                                                             </span>
+                                                        </Button>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    {/* Status Actions */}
+                                                    <div className="flex items-center gap-2">
+                                                        {user.status !==
+                                                            "suspended" && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                                                                title="Suspend User"
+                                                                onClick={() =>
+                                                                    handleStatusChange(
+                                                                        user.id,
+                                                                        "suspended"
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Ban className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+                                                        {user.status ===
+                                                            "suspended" && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="text-green-500 hover:text-green-600 hover:bg-green-50"
+                                                                title="Activate User"
+                                                                onClick={() =>
+                                                                    handleStatusChange(
+                                                                        user.id,
+                                                                        "active"
+                                                                    )
+                                                                }
+                                                            >
+                                                                <CheckCircle className="w-4 h-4" />
+                                                            </Button>
+                                                        )}
+
+                                                        <Button
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                            onClick={() =>
+                                                                handleDeleteUser(
+                                                                    user.id
+                                                                )
+                                                            }
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
                                                         </Button>
                                                     </div>
                                                 </TableCell>

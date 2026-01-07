@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import AdminApi from "@/Services/AdminApi";
 
 const fetchUsers = async () => {
@@ -36,5 +36,27 @@ export const useUserDetails = (userId) => {
             return response.data;
         },
         enabled: !!userId, // Only run if an ID is provided
+    });
+};
+// Add these mutations
+export const useAdminUpdateStatus = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, status }) =>
+            await AdminApi.updateUserStatus(id, status),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
+    });
+};
+
+export const useAdminDeleteUser = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id) => await AdminApi.deleteUser(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["users"] });
+        },
     });
 };

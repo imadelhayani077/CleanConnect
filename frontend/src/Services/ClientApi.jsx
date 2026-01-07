@@ -34,6 +34,15 @@ const ClientApi = {
         // If your backend uses Fortify, this might be /user/profile-information
         return await axiosClient.put(`/api/users/${id}`, data);
     },
+    // Toggle Active/Disabled
+    toggleStatus: async () => {
+        return await axiosClient.post("/api/user/toggle-status");
+    },
+
+    // Delete Own Account
+    deleteSelf: async () => {
+        return await axiosClient.delete("/api/user/delete");
+    },
 
     // --- ADDRESSES ---
     // Get all my addresses

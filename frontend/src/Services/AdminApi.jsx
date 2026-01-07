@@ -48,6 +48,16 @@ const AdminApi = {
     rejectSweepstar: async (id) => {
         return await axiosClient.delete(`/api/admin/applications/${id}/reject`);
     },
+    updateUserStatus: async (id, status) => {
+        return await axiosClient.put(`/api/admin/users/${id}/status`, {
+            status,
+        });
+    },
+
+    // Admin delete user
+    deleteUser: async (id) => {
+        return await axiosClient.delete(`/api/admin/users/${id}`);
+    },
 };
 
 export default AdminApi;

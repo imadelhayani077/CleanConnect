@@ -12,6 +12,7 @@ import {
     Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import DisabledOverlay from "../auth/DisabledOverlay";
 
 export default function ClientDashboard() {
     const { data: user } = useUser();
@@ -69,6 +70,10 @@ export default function ClientDashboard() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
+    }
+    // ADD THIS CHECK AT THE TOP OF THE RETURN
+    if (user?.status === "disabled") {
+        return <DisabledOverlay />;
     }
 
     return (

@@ -16,6 +16,7 @@ import {
     ArrowRight,
 } from "lucide-react";
 import { useToggleAvailability } from "@/Hooks/useSweepstar";
+import DisabledOverlay from "../auth/DisabledOverlay";
 export default function SweepstarDashboard() {
     const { data: user } = useUser();
     const navigate = useNavigate();
@@ -56,6 +57,10 @@ export default function SweepstarDashboard() {
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
         );
+    }
+    // ADD THIS CHECK AT THE TOP OF THE RETURN
+    if (user?.status === "disabled") {
+        return <DisabledOverlay />;
     }
 
     const upcomingJobs = sweepstarStats?.upcoming_jobs || [];

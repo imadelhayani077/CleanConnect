@@ -32,6 +32,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/users/{id}', [UserController::class, 'update']);
     Route::get('/user/dashboard-stats', [DashboardController::class, 'clientStats']);
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    // 1. User toggles their own status (Active <-> Disabled)
+    Route::post('/user/toggle-status', [UserController::class, 'toggleStatus']);
+
+    // 2. Delete Account (Self)
+    Route::delete('/user/delete', [UserController::class, 'destroySelf']);
 
     // --- B. Reviews ---
     Route::post('/reviews', [ReviewController::class, 'store']);
@@ -60,6 +65,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/admin/dashboard-stats', [DashboardController::class, 'adminStats']);
         Route::get('/admin/users', [UserController::class, 'index']);
         Route::get('/admin/users/{id}', [UserController::class, 'show']);
+        Route::put('/admin/users/{id}/status', [UserController::class, 'adminUpdateStatus']);
+        Route::delete('/admin/users/{id}', [UserController::class, 'adminDestroyUser']); // Admin delete
 
         // 2. Service Management (MOVED HERE FOR SECURITY)
         Route::post('/services', [ServiceController::class, 'store']);
