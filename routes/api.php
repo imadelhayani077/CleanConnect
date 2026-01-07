@@ -30,6 +30,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         return $request->user();
     });
     Route::put('/users/{id}', [UserController::class, 'update']);
+    Route::get('/user/dashboard-stats', [DashboardController::class, 'clientStats']);
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 
     // --- B. Reviews ---
@@ -75,7 +76,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // --- F. SWEEPSTAR Routes (Role: Sweepstar) ---
     Route::middleware(['role:sweepstar'])->group(function () {
         // Dashboard
-        Route::get('/sweepstar/dashboard', [DashboardController::class, 'sweepstarJobs']);
+        Route::get('/sweepstar/dashboard-stats', [DashboardController::class, 'sweepstarJobs']);
 
         // Job Operations
         Route::get('/sweepstar/available-jobs', [BookingController::class, 'availableJobs']);

@@ -1,5 +1,6 @@
 import React from "react";
 import { useUser } from "@/Hooks/useAuth";
+import { useDashboard } from "@/Hooks/useDashboard"; // <--- IMPORT THIS
 import {
     Sparkles,
     Calendar,
@@ -7,14 +8,36 @@ import {
     ArrowRight,
     Clock,
     ShieldCheck,
+    Loader2,
+    Wallet,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function ClientDashboard() {
     const { data: user } = useUser();
+
+    // 1. Fetch Real Stats
+    const { clientStats, isClientLoading } = useDashboard();
+    console.log(clientStats);
+
     const navigate = useNavigate();
+
+    // Helper: Format Currency
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+        }).format(amount || 0);
+    };
+
     // Helper component for the Dashboard Cards
-    const DashboardCard = ({ title, description, icon: Icon, onClick }) => (
+    const DashboardCard = ({
+        title,
+        value,
+        description,
+        icon: Icon,
+        onClick,
+    }) => (
         <div
             onClick={onClick}
             className="group p-6 bg-card border border-border rounded-xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
@@ -24,7 +47,11 @@ export default function ClientDashboard() {
                     <h3 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
                         {title}
                     </h3>
-                    <p className="text-muted-foreground mt-2 text-sm">
+                    {/* Display the Big Number (Value) */}
+                    <p className="text-3xl font-bold text-primary mt-2">
+                        {value}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm">
                         {description}
                     </p>
                 </div>
@@ -34,6 +61,15 @@ export default function ClientDashboard() {
             </div>
         </div>
     );
+
+    // 2. Loading State
+    if (isClientLoading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 p-6">
@@ -53,11 +89,8 @@ export default function ClientDashboard() {
                     </p>
 
                     <div className="mt-8 flex flex-wrap gap-4">
-                        {/* Note: In a real app, this button should likely toggle the activePage state via a parent handler */}
                         <button
-                            onClick={() => {
-                                navigate("/dashboard/booking");
-                            }}
+                            onClick={() => navigate("/dashboard/booking")}
                             className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
                         >
                             Book a Cleaning
@@ -70,22 +103,35 @@ export default function ClientDashboard() {
                 <Sparkles className="absolute -bottom-10 -right-10 w-64 h-64 text-primary/5 rotate-12" />
             </div>
 
-            {/* 2. Quick Status Cards */}
+            {/* 2. Quick Status Cards (DYNAMIC DATA) */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Active Bookings Card */}
                 <DashboardCard
                     title="Active Bookings"
-                    description="You have no upcoming bookings scheduled."
+                    value={clientStats?.data.active_bookings || 0}
+                    description="Upcoming jobs in your schedule."
                     icon={Calendar}
+                    onClick={() => navigate("/dashboard/booking-history")}
                 />
+
+                {/* Saved Addresses Card */}
                 <DashboardCard
                     title="Saved Addresses"
-                    description="Manage your home and office locations."
+                    value={clientStats?.data.address_count || 0}
+                    description="Locations currently managed."
                     icon={MapPin}
+                    onClick={() => navigate("/dashboard/address")}
                 />
+
+                {/* Total Spent / History Card */}
                 <DashboardCard
-                    title="Previous History"
-                    description="View receipts and past cleaning details."
-                    icon={Clock}
+                    title="Total Spent"
+                    value={formatCurrency(clientStats?.data.total_spent)}
+                    description={`Across ${
+                        clientStats?.total_bookings || 0
+                    } completed cleanings.`}
+                    icon={Wallet} // Changed icon to Wallet/Clock
+                    onClick={() => navigate("/dashboard/booking-history")}
                 />
             </div>
 

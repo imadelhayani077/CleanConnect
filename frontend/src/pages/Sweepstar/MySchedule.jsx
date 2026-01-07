@@ -40,7 +40,7 @@ export default function MySchedule() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="min-h-screen flexitems-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-3">
                     <div className="h-10 w-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                     <p className="text-sm text-muted-foreground">
@@ -52,7 +52,7 @@ export default function MySchedule() {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 animate-in p-6 fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold flex items-center gap-2">
                     <Calendar className="h-6 w-6 text-primary" />
