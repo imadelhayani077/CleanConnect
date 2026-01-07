@@ -25,17 +25,25 @@ Route::post('/register', [RegisteredUserController::class, 'store'])->name('regi
 // 2. Protected Routes (Must be logged in)
 Route::middleware(['auth:sanctum'])->group(function () {
 
-    // --- A. Core Data ---
+    // --- A. Core User Data ---
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+
+    // Update Profile
     Route::put('/users/{id}', [UserController::class, 'update']);
+
+    // Dashboard Stats (Client)
     Route::get('/user/dashboard-stats', [DashboardController::class, 'clientStats']);
+
+    // Logout
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
-    // 1. User toggles their own status (Active <-> Disabled)
+
+    // 1. Toggle Status (Active <-> Disabled)
     Route::post('/user/toggle-status', [UserController::class, 'toggleStatus']);
 
     // 2. Delete Account (Self)
+    // FIX: Changed from '/user/delete' to '/user/me' to match REST standards
     Route::delete('/user/delete', [UserController::class, 'destroySelf']);
 
     // --- B. Reviews ---
@@ -43,16 +51,19 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::put('/reviews/{id}', [ReviewController::class, 'update']);
     Route::delete('/reviews/{id}', [ReviewController::class, 'destroy']);
 
-    // --- C. General Resources (Accessible by Clients & Sweepstars) ---
+    // --- C. General Resources ---
+
     // Services (READ ONLY for standard users)
     Route::get('/services', [ServiceController::class, 'index']);
 
-    // Addresses
+    // Addresses (CRUD)
     Route::apiResource('addresses', AddressController::class);
 
-    // Bookings (Standard CRUD + Cancel)
-    // Note: The 'index' method in BookingController now handles the Admin view too.
+    // Bookings (Standard CRUD)
+    // Note: The 'index' method in BookingController handles Client vs Admin view logic.
     Route::apiResource('bookings', BookingController::class);
+
+    // Specific Booking Action (Cancel)
     Route::post('/bookings/{id}/cancel', [BookingController::class, 'cancel']);
 
     // --- D. User Actions ---
@@ -63,12 +74,16 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         // 1. Dashboard & Users
         Route::get('/admin/dashboard-stats', [DashboardController::class, 'adminStats']);
+
+        // User Management
         Route::get('/admin/users', [UserController::class, 'index']);
         Route::get('/admin/users/{id}', [UserController::class, 'show']);
-        Route::put('/admin/users/{id}/status', [UserController::class, 'adminUpdateStatus']);
-        Route::delete('/admin/users/{id}', [UserController::class, 'adminDestroyUser']); // Admin delete
 
-        // 2. Service Management (MOVED HERE FOR SECURITY)
+        // Admin Actions on Users
+        Route::put('/admin/users/{id}/status', [UserController::class, 'adminUpdateStatus']);
+        Route::delete('/admin/users/{id}', [UserController::class, 'adminDestroyUser']);
+
+        // 2. Service Management (Admin Create/Update/Delete)
         Route::post('/services', [ServiceController::class, 'store']);
         Route::put('/services/{id}', [ServiceController::class, 'update']);
         Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
@@ -82,12 +97,17 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // --- F. SWEEPSTAR Routes (Role: Sweepstar) ---
     Route::middleware(['role:sweepstar'])->group(function () {
-        // Dashboard
+        // Dashboard Stats
         Route::get('/sweepstar/dashboard-stats', [DashboardController::class, 'sweepstarJobs']);
+
+        // Availability Toggle
         Route::post('/sweepstar/availability', [SweepstarProfileController::class, 'toggleAvailability']);
+
         // Job Operations
         Route::get('/sweepstar/available-jobs', [BookingController::class, 'availableJobs']);
         Route::get('/sweepstar/my-schedule', [BookingController::class, 'mySchedule']);
+
+        // Job Actions
         Route::post('/bookings/{id}/accept', [BookingController::class, 'acceptJob']);
         Route::post('/bookings/{id}/complete', [BookingController::class, 'completeJob']);
     });

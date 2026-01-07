@@ -40,8 +40,10 @@ const ClientApi = {
     },
 
     // Delete Own Account
-    deleteSelf: async () => {
-        return await axiosClient.delete("/api/user/delete");
+    deleteSelf: async (data) => {
+        // data = { password, reason }
+        // Note: We use 'data' config in axios for DELETE requests with body
+        return await axiosClient.delete("/api/user/delete", { data });
     },
 
     // --- ADDRESSES ---

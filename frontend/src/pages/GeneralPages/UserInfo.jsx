@@ -22,11 +22,13 @@ import {
 import { useDeleteAccount, useToggleStatus, useUser } from "@/Hooks/useAuth";
 import { getRoleStyles } from "@/utils/roleStyles";
 import UserEditProfileModal from "./components/UserEditProfileModal";
+import DeleteAccountModal from "./components/DeleteAccountModal";
 
 export default function UserInfo() {
     const { data: user, isLoading } = useUser();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { mutate: toggleStatus } = useToggleStatus();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const { mutate: deleteAccount, isPending: isDeleting } = useDeleteAccount();
 
     const handleDelete = () => {
@@ -140,70 +142,75 @@ export default function UserInfo() {
                             <Edit2 className="w-4 h-4" /> Edit Profile
                         </Button>
                     </div>
-                    <div className="mt-8 pt-6 border-t border-border space-y-6">
-                        <h3 className="font-semibold text-lg flex items-center gap-2">
-                            <Power className="w-5 h-5" /> Account Settings
-                        </h3>
 
-                        {/* Status Toggle */}
-                        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                            <div>
-                                <p className="font-medium">Account Status</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {user.status === "active"
-                                        ? "Your account is visible and active."
-                                        : "Your account is disabled."}
-                                </p>
+                    {/* --- ACCOUNT SETTINGS SECTION --- */}
+                    {/* HIDDEN FOR ADMINS (Admins cannot toggle status or delete account) */}
+                    {user.role !== "admin" && (
+                        <div className="mt-8 pt-6 border-t border-border space-y-6">
+                            <h3 className="font-semibold text-lg flex items-center gap-2">
+                                <Power className="w-5 h-5" /> Account Settings
+                            </h3>
+
+                            {/* Status Toggle */}
+                            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                                <div>
+                                    <p className="font-medium">
+                                        Account Status
+                                    </p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {user.status === "active"
+                                            ? "Your account is visible and active."
+                                            : "Your account is disabled."}
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={`text-sm font-bold ${
+                                            user.status === "active"
+                                                ? "text-green-600"
+                                                : "text-gray-500"
+                                        }`}
+                                    >
+                                        {user.status === "active"
+                                            ? "Active"
+                                            : "Disabled"}
+                                    </span>
+                                    <Button
+                                        variant={
+                                            user.status === "active"
+                                                ? "destructive"
+                                                : "default"
+                                        }
+                                        size="sm"
+                                        onClick={() => toggleStatus()}
+                                    >
+                                        {user.status === "active"
+                                            ? "Disable"
+                                            : "Enable"}
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <span
-                                    className={`text-sm font-bold ${
-                                        user.status === "active"
-                                            ? "text-green-600"
-                                            : "text-gray-500"
-                                    }`}
-                                >
-                                    {user.status === "active"
-                                        ? "Active"
-                                        : "Disabled"}
-                                </span>
-                                {/* You might need to install Switch from shadcn, or use a simple button */}
+
+                            {/* Delete Account */}
+                            <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 rounded-lg">
+                                <div>
+                                    <p className="font-medium text-red-700">
+                                        Danger Zone
+                                    </p>
+                                    <p className="text-sm text-red-600/80">
+                                        Permanently delete your account.
+                                    </p>
+                                </div>
                                 <Button
-                                    variant={
-                                        user.status === "active"
-                                            ? "destructive"
-                                            : "default"
-                                    }
-                                    size="sm"
-                                    onClick={() => toggleStatus()}
+                                    variant="destructive"
+                                    onClick={() => setIsDeleteModalOpen(true)}
                                 >
-                                    {user.status === "active"
-                                        ? "Disable"
-                                        : "Enable"}
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete Account
                                 </Button>
                             </div>
                         </div>
-
-                        {/* Delete Account */}
-                        <div className="flex items-center justify-between p-4 border border-red-200 bg-red-50 dark:bg-red-900/10 rounded-lg">
-                            <div>
-                                <p className="font-medium text-red-700 dark:text-red-400">
-                                    Danger Zone
-                                </p>
-                                <p className="text-sm text-red-600/80 dark:text-red-400/80">
-                                    Permanently delete your account and data.
-                                </p>
-                            </div>
-                            <Button
-                                variant="destructive"
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                            >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                {isDeleting ? "Deleting..." : "Delete Account"}
-                            </Button>
-                        </div>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
 
@@ -213,6 +220,10 @@ export default function UserInfo() {
                 editor={user} // IMPORTANT: self edit
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
+            />
+            <DeleteAccountModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
             />
         </>
     );

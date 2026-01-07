@@ -55,8 +55,11 @@ const AdminApi = {
     },
 
     // Admin delete user
-    deleteUser: async (id) => {
-        return await axiosClient.delete(`/api/admin/users/${id}`);
+    deleteUser: async (id, password) => {
+        // Send admin password in body
+        return await axiosClient.delete(`/api/admin/users/${id}`, {
+            data: { password },
+        });
     },
 };
 

@@ -1,10 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "@/Hooks/useAuth";
-import {
-    useUsers,
-    useAdminUpdateStatus,
-    useAdminDeleteUser,
-} from "@/Hooks/useUsers";
+import { useUsers, useAdminUpdateStatus } from "@/Hooks/useUsers";
 import {
     Loader2,
     Search,
@@ -52,8 +48,10 @@ import {
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+// Components
 import UserDetailModal from "./components/UserDetailModal";
 import UserEditProfileModal from "../GeneralPages/components/UserEditProfileModal";
+import AdminDeleteUserModal from "./components/AdminDeleteUserModal";
 
 export default function UsersList() {
     const { users, loading, error, refetch } = useUsers();
@@ -61,36 +59,34 @@ export default function UsersList() {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
-    const [selectedUserId, setSelectedUserId] = useState(null);
 
+    // Modal States
+    const [selectedUserId, setSelectedUserId] = useState(null);
     const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState(null); // State for Secure Delete Modal
+
     const updateStatusMutation = useAdminUpdateStatus();
-    const deleteUserMutation = useAdminDeleteUser();
 
     // --- Helper for Status Colors ---
-    const getStatusStyles = (status) => {
+    const getStatusStyles = (status, deletedAt) => {
+        if (deletedAt)
+            return "bg-gray-200 text-gray-500 border-gray-300 line-through decoration-gray-500";
         switch (status) {
             case "active":
-                return "bg-green-100 text-green-700 border-green-200 hover:bg-green-100";
+                return "bg-green-100 text-green-700 border-green-200";
             case "suspended":
-                return "bg-red-100 text-red-700 border-red-200 hover:bg-red-100";
+                return "bg-red-100 text-red-700 border-red-200";
             case "disabled":
-                return "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100";
+                return "bg-orange-100 text-orange-700 border-orange-200";
             default:
-                return "bg-gray-100 text-gray-700 border-gray-200";
+                return "bg-gray-100 text-gray-700";
         }
     };
 
     const handleStatusChange = (userId, newStatus) => {
         if (window.confirm(`Change user status to ${newStatus}?`)) {
             updateStatusMutation.mutate({ id: userId, status: newStatus });
-        }
-    };
-
-    const handleDeleteUser = (userId) => {
-        if (window.confirm("Permanently delete this user?")) {
-            deleteUserMutation.mutate(userId);
         }
     };
 
@@ -113,6 +109,7 @@ export default function UsersList() {
         refetch();
     };
 
+    // Filter Logic
     const filteredUsers = users.filter((user) => {
         const matchesSearch =
             user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -244,7 +241,6 @@ export default function UsersList() {
                                         </TableHead>
                                         <TableHead>User</TableHead>
                                         <TableHead>Role</TableHead>
-                                        {/* NEW STATUS COLUMN HEADER */}
                                         <TableHead>Status</TableHead>
                                         <TableHead>Joined</TableHead>
                                         <TableHead className="text-right">
@@ -256,7 +252,7 @@ export default function UsersList() {
                                     {filteredUsers.length === 0 ? (
                                         <TableRow>
                                             <TableCell
-                                                colSpan={6} // Increased colSpan for new column
+                                                colSpan={6}
                                                 className="h-24 text-center"
                                             >
                                                 <div className="flex flex-col items-center justify-center text-muted-foreground">
@@ -300,17 +296,29 @@ export default function UsersList() {
                                                     </Badge>
                                                 </TableCell>
 
-                                                {/* NEW STATUS CELL */}
+                                                {/* STATUS CELL */}
                                                 <TableCell>
-                                                    <Badge
-                                                        variant="outline"
-                                                        className={`capitalize ${getStatusStyles(
-                                                            user.status
-                                                        )}`}
-                                                    >
-                                                        {user.status ||
-                                                            "Active"}
-                                                    </Badge>
+                                                    {user.role === "admin" ? (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className="bg-purple-50 text-purple-700 border-purple-200"
+                                                        >
+                                                            System
+                                                        </Badge>
+                                                    ) : (
+                                                        <Badge
+                                                            variant="outline"
+                                                            className={`capitalize ${getStatusStyles(
+                                                                user.status,
+                                                                user.deleted_at
+                                                            )}`}
+                                                        >
+                                                            {user.deleted_at
+                                                                ? "Deleted"
+                                                                : user.status ||
+                                                                  "Active"}
+                                                        </Badge>
+                                                    )}
                                                 </TableCell>
 
                                                 <TableCell className="text-muted-foreground text-sm">
@@ -320,9 +328,11 @@ export default function UsersList() {
                                                           ).toLocaleDateString()
                                                         : "—"}
                                                 </TableCell>
+
+                                                {/* ACTIONS CELL */}
                                                 <TableCell className="text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        {/* Details toggle */}
+                                                        {/* Details */}
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
@@ -335,105 +345,101 @@ export default function UsersList() {
                                                                         : user.id
                                                                 )
                                                             }
-                                                            title={
-                                                                selectedUserId ===
-                                                                user.id
-                                                                    ? "Close details"
-                                                                    : "View details"
-                                                            }
                                                         >
                                                             {selectedUserId ===
                                                             user.id ? (
-                                                                <>
-                                                                    <X className="w-4 h-4 mr-1" />
-                                                                    <span className="hidden sm:inline text-xs">
-                                                                        Close
-                                                                    </span>
-                                                                </>
+                                                                <X className="w-4 h-4" />
                                                             ) : (
-                                                                <>
-                                                                    <Eye className="w-4 h-4 mr-1" />
-                                                                    <span className="hidden sm:inline text-xs">
-                                                                        Details
-                                                                    </span>
-                                                                </>
+                                                                <Eye className="w-4 h-4" />
                                                             )}
                                                         </Button>
 
-                                                        {/* Edit button (admin only) */}
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="sm"
-                                                            className="px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                            onClick={() =>
-                                                                handleEditUser(
-                                                                    user
-                                                                )
-                                                            }
-                                                            title="Edit user"
-                                                            disabled={
-                                                                !currentUser ||
-                                                                currentUser.role !==
-                                                                    "admin"
-                                                            }
-                                                        >
-                                                            <Pencil className="w-4 h-4 mr-1" />
-                                                            <span className="hidden sm:inline text-xs">
-                                                                Edit
-                                                            </span>
-                                                        </Button>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    {/* Status Actions */}
-                                                    <div className="flex items-center gap-2">
-                                                        {user.status !==
-                                                            "suspended" && (
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                                                                title="Suspend User"
-                                                                onClick={() =>
-                                                                    handleStatusChange(
-                                                                        user.id,
-                                                                        "suspended"
-                                                                    )
-                                                                }
-                                                            >
-                                                                <Ban className="w-4 h-4" />
-                                                            </Button>
-                                                        )}
-                                                        {user.status ===
-                                                            "suspended" && (
-                                                            <Button
-                                                                size="icon"
-                                                                variant="ghost"
-                                                                className="text-green-500 hover:text-green-600 hover:bg-green-50"
-                                                                title="Activate User"
-                                                                onClick={() =>
-                                                                    handleStatusChange(
-                                                                        user.id,
-                                                                        "active"
-                                                                    )
-                                                                }
-                                                            >
-                                                                <CheckCircle className="w-4 h-4" />
-                                                            </Button>
+                                                        {/* Hide Edit/Suspend if Deleted */}
+                                                        {!user.deleted_at && (
+                                                            <>
+                                                                {/* Edit */}
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    className="px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                                                    onClick={() =>
+                                                                        handleEditUser(
+                                                                            user
+                                                                        )
+                                                                    }
+                                                                    disabled={
+                                                                        !currentUser ||
+                                                                        currentUser.role !==
+                                                                            "admin"
+                                                                    }
+                                                                >
+                                                                    <Pencil className="w-4 h-4" />
+                                                                </Button>
+
+                                                                {/* Status Toggle (Suspend/Active) */}
+                                                                {/* Hide for Admins & Self */}
+                                                                {user.role !==
+                                                                    "admin" &&
+                                                                    user.id !==
+                                                                        currentUser?.id && (
+                                                                        <>
+                                                                            {user.status !==
+                                                                                "suspended" && (
+                                                                                <Button
+                                                                                    size="icon"
+                                                                                    variant="ghost"
+                                                                                    className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
+                                                                                    title="Suspend User"
+                                                                                    onClick={() =>
+                                                                                        handleStatusChange(
+                                                                                            user.id,
+                                                                                            "suspended"
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <Ban className="w-4 h-4" />
+                                                                                </Button>
+                                                                            )}
+                                                                            {user.status ===
+                                                                                "suspended" && (
+                                                                                <Button
+                                                                                    size="icon"
+                                                                                    variant="ghost"
+                                                                                    className="text-green-500 hover:text-green-600 hover:bg-green-50"
+                                                                                    title="Activate User"
+                                                                                    onClick={() =>
+                                                                                        handleStatusChange(
+                                                                                            user.id,
+                                                                                            "active"
+                                                                                        )
+                                                                                    }
+                                                                                >
+                                                                                    <CheckCircle className="w-4 h-4" />
+                                                                                </Button>
+                                                                            )}
+                                                                        </>
+                                                                    )}
+                                                            </>
                                                         )}
 
-                                                        <Button
-                                                            size="icon"
-                                                            variant="ghost"
-                                                            className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                            onClick={() =>
-                                                                handleDeleteUser(
-                                                                    user.id
-                                                                )
-                                                            }
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                        </Button>
+                                                        {/* Delete Button (Secure Modal) */}
+                                                        {/* Hide if Deleted OR Self */}
+                                                        {!user.deleted_at &&
+                                                            currentUser?.id !==
+                                                                user.id && (
+                                                                <Button
+                                                                    size="icon"
+                                                                    variant="ghost"
+                                                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                                    onClick={() =>
+                                                                        setUserToDelete(
+                                                                            user
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" />
+                                                                </Button>
+                                                            )}
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
@@ -462,6 +468,15 @@ export default function UsersList() {
                     editor={currentUser}
                     isOpen={isEditModalOpen}
                     onClose={handleCloseEditModal}
+                />
+            )}
+
+            {/* Secure Delete Modal */}
+            {userToDelete && (
+                <AdminDeleteUserModal
+                    isOpen={!!userToDelete}
+                    user={userToDelete}
+                    onClose={() => setUserToDelete(null)}
                 />
             )}
         </>

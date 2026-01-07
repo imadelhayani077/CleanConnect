@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -13,23 +14,22 @@ class UserController extends Controller
      * Display a listing of the resource.
      * Accessible only by Admin.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Fetch all users from database
-        // You might want to hide sensitive fields explicitly,
-        // though 'hidden' property in User model usually handles password/token.
-        $users = User::all();
+        // 1. Check if admin
+        if ($request->user()->role !== 'admin') {
+            abort(403, 'Unauthorized');
+        }
 
-        // 2. Return as JSON
-        return response()->json($users);
+        // 2. Fetch users including soft-deleted ones
+        $users = User::withTrashed()->get();
+
+        return response()->json(['users' => $users]);
     }
 
     /**
      * Display the specified resource.
-     */
-    /**
-     * Display the specified resource.
-     * NOW WITH DETAILS: Bookings, Reviews, Profile
+     * Includes Bookings, Reviews, and Profile details.
      */
     public function show(string $id)
     {
@@ -38,37 +38,40 @@ class UserController extends Controller
         // 1. Load data if user is a SWEEPSTAR
         if ($user->role === 'sweepstar') {
             $user->load([
-                'sweepstarProfile',                 // Bio, Hourly Rate, ID Number
-                'sweepstarBookings.user',           // Jobs they did + Client info
-                'sweepstarBookings.address',        // Where they worked
-                'reviewsReceived.reviewer'          // Reviews people wrote about them
+                'sweepstarProfile',
+                'sweepstarBookings.user',
+                'sweepstarBookings.address',
+                'reviewsReceived.reviewer'
             ]);
         }
 
         // 2. Load data if user is a CLIENT
         elseif ($user->role === 'client') {
             $user->load([
-                'clientBookings.sweepstar',         // Bookings they made + Worker info
-                'clientBookings.services',          // Services requested
-                'reviewsWritten.target'             // Reviews they wrote
+                'clientBookings.sweepstar',
+                'clientBookings.services',
+                'reviewsWritten.target'
             ]);
         }
 
         return response()->json($user);
     }
 
-public function update(Request $request, string $id)
+    /**
+     * Update User Profile (Self or Admin)
+     */
+    public function update(Request $request, string $id)
     {
-        $targetUser = User::findOrFail($id); // The profile being edited
-        $currentUser = $request->user();     // The Admin or User doing the editing
+        $targetUser = User::findOrFail($id);
+        $currentUser = $request->user();
 
         // 1. AUTHORIZATION
         if ($currentUser->id !== $targetUser->id && $currentUser->role !== 'admin') {
             return response()->json(['message' => 'Unauthorized access.'], 403);
         }
 
-        // 2. SECURITY VERIFICATION (New Logic)
-        // REQUIRE the password of the person Logged In (The $currentUser)
+        // 2. SECURITY VERIFICATION
+        // Require current password to confirm changes
         $request->validate([
             'current_password' => 'required|string',
         ]);
@@ -95,15 +98,15 @@ public function update(Request $request, string $id)
             'phone' => $request->phone,
         ];
 
-        // Only Admin can change email
+        // Only Admin can change email or role
         if ($currentUser->role === 'admin') {
             $data['email'] = $request->email;
             if ($request->filled('role')) {
                 $data['role'] = $request->role;
-    }
+            }
         }
 
-        // Handle Password Reset (Changing the target user's password)
+        // Handle Password Reset
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
@@ -115,48 +118,122 @@ public function update(Request $request, string $id)
             'user' => $targetUser
         ]);
     }
-    // User toggles between 'active' and 'disabled'
-public function toggleStatus(Request $request)
-{
-    $user = $request->user();
 
-    // Prevent suspended users from re-activating themselves
-    if ($user->status === 'suspended') {
-        return response()->json(['message' => 'Account is suspended.'], 403);
+    /**
+     * User toggles their own status (Active <-> Disabled)
+     * SECURITY: Admins cannot disable themselves.
+     */
+    public function toggleStatus(Request $request)
+    {
+        $user = $request->user();
+
+        // 1. Admins are always active
+        if ($user->role === 'admin') {
+            return response()->json(['message' => 'Admins cannot disable their account.'], 403);
+        }
+
+        // 2. Prevent suspended users from re-activating themselves
+        if ($user->status === 'suspended') {
+            return response()->json(['message' => 'Account is suspended.'], 403);
+        }
+
+        // 3. Toggle logic
+        $user->status = ($user->status === 'active') ? 'disabled' : 'active';
+        $user->save();
+
+        return response()->json(['status' => $user->status]);
     }
 
-    // Toggle logic
-    $user->status = ($user->status === 'active') ? 'disabled' : 'active';
-    $user->save();
+    /**
+     * User deletes their own account
+     * Requires: Password + Reason
+     * SECURITY: Admins cannot delete themselves here.
+     */
+    public function destroySelf(Request $request)
+    {
+        $user = $request->user();
 
-    return response()->json(['status' => $user->status]);
-}
+        // 1. Admin Protection
+        if ($user->role === 'admin') {
+            return response()->json(['message' => 'Admins cannot delete their own account.'], 403);
+        }
 
-// User deletes their own account
-public function destroySelf(Request $request)
-{
-    $user = $request->user();
-    // Optional: Delete related profiles/bookings logic here
-    $user->delete();
-    return response()->json(['message' => 'Account deleted successfully.']);
-}
+        // 2. Validate Input
+        $request->validate([
+            'password' => 'required|string',
+            'reason'   => 'required|string|min:5',
+        ]);
 
-// Admin changes status (Active/Suspended/Disabled)
-public function adminUpdateStatus(Request $request, $id)
-{
-    $request->validate(['status' => 'required|in:active,suspended,disabled']);
+        // 3. Verify Password
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Incorrect password.'],
+            ]);
+        }
 
-    $user = User::findOrFail($id);
-    $user->status = $request->status;
-    $user->save();
+        // 4. Save Reason & Soft Delete
+        $user->delete_reason = $request->reason;
+        $user->status = 'deleted';
+        $user->save();
+        $user->delete();
 
-    return response()->json(['message' => "User status updated to {$user->status}"]);
-}
+        return response()->json(['message' => 'Account deleted successfully.']);
+    }
 
-// Admin deletes a user
-public function adminDestroyUser($id)
-{
-    User::findOrFail($id)->delete();
-    return response()->json(['message' => 'User deleted by admin.']);
-}
+    /**
+     * Admin Changes User Status (Suspend/Activate)
+     * SECURITY: Cannot suspend other Admins or themselves.
+     */
+    public function adminUpdateStatus(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:active,suspended,disabled']);
+
+        $targetUser = User::findOrFail($id);
+
+        // 1. SECURITY: Cannot change status of an Admin
+        if ($targetUser->role === 'admin') {
+            return response()->json(['message' => 'You cannot change the status of an Admin.'], 403);
+        }
+
+        // 2. Update Status
+        $targetUser->status = $request->status;
+        $targetUser->save();
+
+        return response()->json(['message' => "User status updated to {$targetUser->status}"]);
+    }
+
+    /**
+     * Admin deletes a user
+     * Requires: Admin Password
+     * SECURITY: Cannot delete themselves.
+     */
+    public function adminDestroyUser(Request $request, $id)
+    {
+        $admin = $request->user();
+
+        // 1. Validate Admin Password
+        $request->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!Hash::check($request->password, $admin->password)) {
+             throw ValidationException::withMessages([
+                'password' => ['Incorrect admin password.'],
+            ]);
+        }
+
+        $targetUser = User::findOrFail($id);
+
+        // 2. SECURITY: Prevent deleting self
+        if ($targetUser->id === $admin->id) {
+            return response()->json(['message' => 'You cannot delete your own account here.'], 403);
+        }
+
+        // 3. Perform Delete
+        $targetUser->status = 'deleted';
+        $targetUser->save();
+        $targetUser->delete();
+
+        return response()->json(['message' => 'User deleted successfully.']);
+    }
 }

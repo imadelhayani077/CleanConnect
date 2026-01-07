@@ -54,7 +54,9 @@ export const useAdminUpdateStatus = () => {
 export const useAdminDeleteUser = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: async (id) => await AdminApi.deleteUser(id),
+        // Accepts object { id, password }
+        mutationFn: async ({ id, password }) =>
+            await AdminApi.deleteUser(id, password),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["users"] });
         },

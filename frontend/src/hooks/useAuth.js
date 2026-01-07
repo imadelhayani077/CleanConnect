@@ -127,13 +127,14 @@ export const useToggleStatus = () => {
 // NEW: Delete Account Hook
 export const useDeleteAccount = () => {
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     return useMutation({
-        mutationFn: async () => await ClientApi.deleteSelf(),
+        // Accepts object { password, reason }
+        mutationFn: async (data) => await ClientApi.deleteSelf(data),
         onSuccess: () => {
-            // Logout logic
             window.localStorage.removeItem("Authenticated");
-            queryClient.setQueryData(["user"], null);
-            window.location.href = "/login"; // Force redirect
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+            navigate("/login");
         },
     });
 };

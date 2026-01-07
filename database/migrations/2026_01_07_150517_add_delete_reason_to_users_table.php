@@ -9,20 +9,17 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
-    }
+   public function up()
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->text('delete_reason')->nullable()->after('status');
+    });
+}
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
-    }
+public function down()
+{
+    Schema::table('users', function (Blueprint $table) {
+        $table->dropColumn('delete_reason');
+    });
+}
 };
