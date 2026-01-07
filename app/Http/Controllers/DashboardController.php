@@ -38,6 +38,7 @@ class DashboardController extends Controller
     public function sweepstarJobs(Request $request)
     {
         $user = $request->user();
+        $user->load('sweepstarProfile');
 
         $upcoming = Booking::where('sweepstar_id', $user->id)
             ->where('status', 'confirmed')
@@ -55,6 +56,7 @@ class DashboardController extends Controller
             ->sum('total_price');
 
         return response()->json([
+            'is_available' => $user->sweepstarProfile ? $user->sweepstarProfile->is_available : false,
             'upcoming_jobs' => $upcoming,
             'stats' => [
                 'completed' => $completedCount,

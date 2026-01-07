@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useUser } from "@/Hooks/useAuth";
 import { useDashboard } from "@/Hooks/useDashboard"; // <--- Import the hook
 import { useNavigate } from "react-router-dom";
@@ -15,16 +15,20 @@ import {
     User,
     ArrowRight,
 } from "lucide-react";
-
-export default function SweepstarDashboard({ activePage }) {
+import { useToggleAvailability } from "@/Hooks/useSweepstar";
+export default function SweepstarDashboard() {
     const { data: user } = useUser();
     const navigate = useNavigate();
 
     // 1. Fetch Real Data
     const { sweepstarStats, isSweepstarLoading } = useDashboard();
+    const { mutate: toggleAvailability, isPending: isToggling } =
+        useToggleAvailability();
+    // 3. Get Status from Backend (Default to false if loading)
+    const isAvailable = sweepstarStats?.data?.is_available ?? false;
 
-    // Local state for the toggle (Backend integration for this specific toggle is in "Next Steps")
-    const [isAvailable, setIsAvailable] = useState(true);
+    // Debugging: This should now print 'true' or 'false', not 'undefined'
+    console.log("Current Status:", isAvailable);
 
     // Helper: Currency Formatter
     const formatCurrency = (amount) => {
@@ -60,6 +64,7 @@ export default function SweepstarDashboard({ activePage }) {
     return (
         <div className="max-w-5xl mx-auto p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* 1. Availability Status Card */}
+
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-6 p-6 rounded-xl border border-border bg-card shadow-sm">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -67,7 +72,7 @@ export default function SweepstarDashboard({ activePage }) {
                         <Briefcase className="w-6 h-6 text-primary" />
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Hello {user?.name || "Sweepstar"}, ready to earn today?
+                        Hello {user?.name}, ready to earn today?
                     </p>
                 </div>
 
@@ -89,7 +94,8 @@ export default function SweepstarDashboard({ activePage }) {
                     </div>
 
                     <button
-                        onClick={() => setIsAvailable(!isAvailable)}
+                        onClick={() => toggleAvailability()}
+                        disabled={isToggling} // Disable while saving
                         className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                             isAvailable
                                 ? "bg-green-500"
@@ -101,13 +107,18 @@ export default function SweepstarDashboard({ activePage }) {
                                 isAvailable ? "translate-x-7" : "translate-x-1"
                             }`}
                         >
-                            <Power
-                                className={`w-4 h-4 absolute top-1 left-1 ${
-                                    isAvailable
-                                        ? "text-green-600"
-                                        : "text-gray-400"
-                                }`}
-                            />
+                            {/* Show Loader if Toggling, else Show Power Icon */}
+                            {isToggling ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-primary absolute top-1 left-1" />
+                            ) : (
+                                <Power
+                                    className={`w-4 h-4 absolute top-1 left-1 ${
+                                        isAvailable
+                                            ? "text-green-600"
+                                            : "text-gray-400"
+                                    }`}
+                                />
+                            )}
                         </span>
                     </button>
                 </div>

@@ -19,10 +19,12 @@ class SweepstarProfile extends Model
         'hourly_rate',
         'is_verified',
         'total_jobs_completed',
+        'is_available',
     ];
 
     protected $casts = [
         'is_verified' => 'boolean',
+        'is_available' => 'boolean',
         'hourly_rate' => 'decimal:2',
         'total_jobs_completed' => 'integer',
     ];

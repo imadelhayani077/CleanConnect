@@ -16,6 +16,9 @@ const SweepstarApi = {
     completeJob: async (bookingId) => {
         return await axiosClient.post(`/api/bookings/${bookingId}/complete`);
     },
+    toggleAvailability: async () => {
+        return await axiosClient.post("/api/sweepstar/availability");
+    },
 };
 
 export default SweepstarApi;

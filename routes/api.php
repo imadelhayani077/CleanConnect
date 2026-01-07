@@ -77,7 +77,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::middleware(['role:sweepstar'])->group(function () {
         // Dashboard
         Route::get('/sweepstar/dashboard-stats', [DashboardController::class, 'sweepstarJobs']);
-
+        Route::post('/sweepstar/availability', [SweepstarProfileController::class, 'toggleAvailability']);
         // Job Operations
         Route::get('/sweepstar/available-jobs', [BookingController::class, 'availableJobs']);
         Route::get('/sweepstar/my-schedule', [BookingController::class, 'mySchedule']);

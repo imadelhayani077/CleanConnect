@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ClientApi from "@/Services/ClientApi";
 import AdminApi from "@/Services/AdminApi";
+import SweepstarApi from "@/Services/SweepstarApi";
 
 /*
     -------------------------------------------
@@ -92,6 +93,24 @@ export const useApplyForSweepstar = () => {
         onError: (error) => {
             // You can access error.response.data.message in the component
             console.error("Application failed", error);
+        },
+    });
+};
+export const useToggleAvailability = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async () => {
+            return await SweepstarApi.toggleAvailability();
+        },
+        onSuccess: (response) => {
+            // We need to update the Dashboard data immediately so the switch doesn't flip back
+            queryClient.invalidateQueries({
+                queryKey: ["dashboard", "sweepstar"],
+            });
+        },
+        onError: (error) => {
+            console.error("Failed to toggle availability", error);
         },
     });
 };

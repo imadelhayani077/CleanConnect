@@ -98,4 +98,29 @@ class SweepstarProfileController extends Controller
     {
         return SweepstarProfile::with('user')->findOrFail($id);
     }
+    // ... existing code ...
+
+    /**
+     * TOGGLE AVAILABILITY
+     * Allows the Sweepstar to go Online/Offline
+     */
+    public function toggleAvailability(Request $request)
+    {
+        $user = $request->user();
+
+        // Ensure user has a profile
+        if (!$user->sweepstarProfile) {
+            return response()->json(['message' => 'Profile not found.'], 404);
+        }
+
+        // Toggle the status
+        $profile = $user->sweepstarProfile;
+        $profile->is_available = !$profile->is_available;
+        $profile->save();
+
+        return response()->json([
+            'message' => $profile->is_available ? 'You are now Online.' : 'You are now Offline.',
+            'is_available' => $profile->is_available
+        ]);
+    }
 }
