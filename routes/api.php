@@ -22,8 +22,9 @@ use App\Http\Controllers\SweepstarProfileController;
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
 Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
 
-// 2. Protected Routes (Must be logged in)
-Route::middleware(['auth:sanctum'])->group(function () {
+// 2. Protected Routes (Must be logged in AND Active)
+// Added 'active_user' middleware to enforce suspension/disabling logic
+Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
 
     // --- A. Core User Data ---
     Route::get('/user', function (Request $request) {
@@ -43,8 +44,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/user/toggle-status', [UserController::class, 'toggleStatus']);
 
     // 2. Delete Account (Self)
-    // FIX: Changed from '/user/delete' to '/user/me' to match REST standards
-    Route::delete('/user/delete', [UserController::class, 'destroySelf']);
+    // FIX: Updated to match Frontend API call
+    Route::delete('/user/me', [UserController::class, 'destroySelf']);
 
     // --- B. Reviews ---
     Route::post('/reviews', [ReviewController::class, 'store']);
@@ -60,7 +61,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('addresses', AddressController::class);
 
     // Bookings (Standard CRUD)
-    // Note: The 'index' method in BookingController handles Client vs Admin view logic.
     Route::apiResource('bookings', BookingController::class);
 
     // Specific Booking Action (Cancel)
@@ -82,6 +82,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         // Admin Actions on Users
         Route::put('/admin/users/{id}/status', [UserController::class, 'adminUpdateStatus']);
         Route::delete('/admin/users/{id}', [UserController::class, 'adminDestroyUser']);
+
+        // NEW: Restore Deleted User
+        Route::post('/admin/users/{id}/restore', [UserController::class, 'restoreUser']);
 
         // 2. Service Management (Admin Create/Update/Delete)
         Route::post('/services', [ServiceController::class, 'store']);

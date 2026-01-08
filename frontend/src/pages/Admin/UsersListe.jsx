@@ -1,3 +1,4 @@
+// src/pages/admin/UsersList.jsx
 import React, { useState } from "react";
 import { useUser } from "@/Hooks/useAuth";
 import { useUsers, useAdminUpdateStatus } from "@/Hooks/useUsers";
@@ -11,8 +12,11 @@ import {
     FilterX,
     RefreshCcw,
     Eye,
-    X,
+    EyeOff,
     Pencil,
+    Users,
+    TrendingUp,
+    AlertCircle,
 } from "lucide-react";
 
 import { getRoleStyles } from "@/utils/roleStyles";
@@ -47,6 +51,7 @@ import {
 } from "@/components/ui/select";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Components
 import UserDetailModal from "./components/UserDetailModal";
@@ -55,26 +60,32 @@ import AdminDeleteUserModal from "./components/AdminDeleteUserModal";
 
 export default function UsersList() {
     const { users, loading, error, refetch } = useUsers();
-    const { data: currentUser } = useUser(); // logged-in user (admin)
+    const { data: currentUser } = useUser();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [roleFilter, setRoleFilter] = useState("all");
-
-    // Modal States
     const [selectedUserId, setSelectedUserId] = useState(null);
     const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState(null); // State for Secure Delete Modal
+    const [userToDelete, setUserToDelete] = useState(null);
 
     const updateStatusMutation = useAdminUpdateStatus();
 
-    // --- Helper for Status Colors ---
+    // Statistics
+    const stats = {
+        total: users.length,
+        active: users.filter((u) => u.status === "active" && !u.deleted_at)
+            .length,
+        suspended: users.filter((u) => u.status === "suspended").length,
+        deleted: users.filter((u) => u.deleted_at).length,
+    };
+
     const getStatusStyles = (status, deletedAt) => {
         if (deletedAt)
-            return "bg-gray-200 text-gray-500 border-gray-300 line-through decoration-gray-500";
+            return "bg-gray-200 text-gray-500 border-gray-300 line-through";
         switch (status) {
             case "active":
-                return "bg-green-100 text-green-700 border-green-200";
+                return "bg-emerald-100 text-emerald-700 border-emerald-200";
             case "suspended":
                 return "bg-red-100 text-red-700 border-red-200";
             case "disabled":
@@ -91,7 +102,7 @@ export default function UsersList() {
     };
 
     const handleOpenDetails = (userId) => {
-        setSelectedUserId(userId);
+        setSelectedUserId(selectedUserId === userId ? null : userId);
     };
 
     const handleCloseDetails = () => {
@@ -109,7 +120,6 @@ export default function UsersList() {
         refetch();
     };
 
-    // Filter Logic
     const filteredUsers = users.filter((user) => {
         const matchesSearch =
             user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -133,9 +143,9 @@ export default function UsersList() {
 
     if (loading) {
         return (
-            <div className="flex flex-col p-6 items-center justify-center min-h-[400px] space-y-4 ">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                <p className="text-muted-foreground animate-pulse">
+            <div className="flex flex-col items-center justify-center min-h-[500px] space-y-4 p-6">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <p className="text-muted-foreground text-lg">
                     Loading users...
                 </p>
             </div>
@@ -144,13 +154,13 @@ export default function UsersList() {
 
     if (error) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-red-500 space-y-4">
-                <ShieldAlert className="h-12 w-12" />
-                <p className="text-lg font-semibold">Error Loading Users</p>
-                <p className="text-sm text-muted-foreground">{error}</p>
-                <Button variant="outline" onClick={refetch}>
-                    Try Again
-                </Button>
+            <div className="p-6">
+                <Alert className="border-red-200/60 bg-red-50/50 dark:bg-red-900/20 dark:border-red-800/60">
+                    <AlertCircle className="h-4 w-4 text-red-600" />
+                    <AlertDescription className="text-red-800 dark:text-red-300">
+                        {error}
+                    </AlertDescription>
+                </Alert>
             </div>
         );
     }
@@ -158,37 +168,109 @@ export default function UsersList() {
     return (
         <>
             <div className="space-y-6 animate-in fade-in duration-500 p-6">
+                {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">
+                        <h1 className="text-4xl font-bold tracking-tight text-foreground flex items-center gap-3">
+                            <div className="p-2 rounded-lg bg-primary/10">
+                                <Users className="w-6 h-6 text-primary" />
+                            </div>
                             User Management
-                        </h2>
-                        <p className="text-muted-foreground">
-                            Manage {users.length} registered users.
+                        </h1>
+                        <p className="text-muted-foreground mt-1">
+                            Manage and monitor {users.length} registered users
                         </p>
                     </div>
-                    <Button variant="outline" size="sm" onClick={refetch}>
-                        <RefreshCcw className="mr-2 h-4 w-4" />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-lg gap-2 border-border/60 hover:bg-muted/50"
+                        onClick={refetch}
+                    >
+                        <RefreshCcw className="h-4 w-4" />
                         Refresh Data
                     </Button>
                 </div>
 
-                <Card>
-                    <CardHeader className="pb-3">
-                        <CardTitle>Directory</CardTitle>
-                        <CardDescription>
-                            Filter clients and sweepstars.
-                        </CardDescription>
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[
+                        {
+                            label: "Total Users",
+                            value: stats.total,
+                            icon: Users,
+                            color: "bg-primary/10 text-primary",
+                        },
+                        {
+                            label: "Active",
+                            value: stats.active,
+                            icon: CheckCircle,
+                            color: "bg-emerald-100/60 text-emerald-600",
+                        },
+                        {
+                            label: "Suspended",
+                            value: stats.suspended,
+                            icon: Ban,
+                            color: "bg-red-100/60 text-red-600",
+                        },
+                        {
+                            label: "Deleted",
+                            value: stats.deleted,
+                            icon: Trash2,
+                            color: "bg-gray-100/60 text-gray-600",
+                        },
+                    ].map((stat, index) => {
+                        const Icon = stat.icon;
+                        return (
+                            <Card
+                                key={index}
+                                className="rounded-xl border-border/60 bg-background/50 backdrop-blur-sm hover:shadow-lg transition-all duration-300"
+                            >
+                                <CardContent className="pt-6">
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <p className="text-sm font-medium text-muted-foreground">
+                                                {stat.label}
+                                            </p>
+                                            <p className="text-3xl font-bold text-foreground mt-2">
+                                                {stat.value}
+                                            </p>
+                                        </div>
+                                        <div
+                                            className={`p-3 rounded-lg ${stat.color}`}
+                                        >
+                                            <Icon className="w-5 h-5" />
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
+                </div>
+
+                {/* Main Card */}
+                <Card className="rounded-xl border-border/60 bg-background/50 backdrop-blur-sm">
+                    <CardHeader className="border-b border-border/60 pb-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <CardTitle className="text-2xl">
+                                    User Directory
+                                </CardTitle>
+                                <CardDescription>
+                                    Filter and manage all users in the system
+                                </CardDescription>
+                            </div>
+                        </div>
                     </CardHeader>
 
-                    <CardContent>
+                    <CardContent className="pt-6">
                         {/* Filters */}
                         <div className="flex flex-col md:flex-row gap-4 mb-6">
                             <div className="relative flex-1">
-                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Search users..."
-                                    className="pl-9"
+                                    placeholder="Search by name, email or ID..."
+                                    className="pl-10 rounded-lg bg-muted/40 border-border/60 focus:border-primary/50"
                                     value={searchTerm}
                                     onChange={(e) =>
                                         setSearchTerm(e.target.value)
@@ -200,8 +282,8 @@ export default function UsersList() {
                                 value={roleFilter}
                                 onValueChange={(value) => setRoleFilter(value)}
                             >
-                                <SelectTrigger className="w-full md:w-[180px]">
-                                    <SelectValue placeholder="Role" />
+                                <SelectTrigger className="w-full md:w-[180px] rounded-lg bg-muted/40 border-border/60">
+                                    <SelectValue placeholder="Filter by role" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
@@ -222,28 +304,46 @@ export default function UsersList() {
                             <Button
                                 variant="outline"
                                 size="icon"
+                                className="rounded-lg border-border/60 hover:bg-muted/50"
                                 onClick={() => {
                                     setSearchTerm("");
                                     setRoleFilter("all");
                                 }}
+                                title="Clear filters"
                             >
                                 <FilterX className="h-4 w-4" />
                             </Button>
                         </div>
 
+                        {/* Results count */}
+                        <div className="mb-4">
+                            <p className="text-sm text-muted-foreground">
+                                Showing {filteredUsers.length} of {users.length}{" "}
+                                users
+                            </p>
+                        </div>
+
                         {/* Table */}
-                        <div className="rounded-md border">
+                        <div className="rounded-lg border border-border/60 overflow-hidden">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[80px]">
+                                    <TableRow className="border-b border-border/60 bg-muted/30">
+                                        <TableHead className="w-[80px] font-semibold">
                                             ID
                                         </TableHead>
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Joined</TableHead>
-                                        <TableHead className="text-right">
+                                        <TableHead className="font-semibold">
+                                            User
+                                        </TableHead>
+                                        <TableHead className="font-semibold">
+                                            Role
+                                        </TableHead>
+                                        <TableHead className="font-semibold">
+                                            Status
+                                        </TableHead>
+                                        <TableHead className="font-semibold">
+                                            Joined
+                                        </TableHead>
+                                        <TableHead className="text-right font-semibold">
                                             Actions
                                         </TableHead>
                                     </TableRow>
@@ -253,31 +353,40 @@ export default function UsersList() {
                                         <TableRow>
                                             <TableCell
                                                 colSpan={6}
-                                                className="h-24 text-center"
+                                                className="h-32"
                                             >
-                                                <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                                    <FilterX className="h-6 w-6 mb-2 opacity-20" />
-                                                    <p>No users found.</p>
+                                                <div className="flex flex-col items-center justify-center text-muted-foreground h-full">
+                                                    <FilterX className="h-8 w-8 mb-2 opacity-30" />
+                                                    <p className="font-medium">
+                                                        No users found
+                                                    </p>
+                                                    <p className="text-xs mt-1">
+                                                        Try adjusting your
+                                                        filters
+                                                    </p>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ) : (
                                         filteredUsers.map((user) => (
-                                            <TableRow key={user.id}>
-                                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                            <TableRow
+                                                key={user.id}
+                                                className="border-b border-border/40 hover:bg-muted/30 transition-colors"
+                                            >
+                                                <TableCell className="font-mono text-xs text-muted-foreground font-medium">
                                                     #{user.id}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
-                                                        <Avatar className="h-9 w-9">
-                                                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                                                        <Avatar className="h-9 w-9 border border-border/60">
+                                                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-bold">
                                                                 {getInitials(
                                                                     user.name
                                                                 )}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         <div className="flex flex-col">
-                                                            <span className="font-medium text-sm">
+                                                            <span className="font-semibold text-sm text-foreground">
                                                                 {user.name}
                                                             </span>
                                                             <span className="text-xs text-muted-foreground">
@@ -288,7 +397,7 @@ export default function UsersList() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge
-                                                        className={`uppercase px-3 py-1 text-xs font-semibold tracking-wide ${getRoleStyles(
+                                                        className={`uppercase px-2.5 py-1 text-xs font-semibold tracking-wide ${getRoleStyles(
                                                             user.role
                                                         )}`}
                                                     >
@@ -296,12 +405,11 @@ export default function UsersList() {
                                                     </Badge>
                                                 </TableCell>
 
-                                                {/* STATUS CELL */}
                                                 <TableCell>
                                                     {user.role === "admin" ? (
                                                         <Badge
                                                             variant="outline"
-                                                            className="bg-purple-50 text-purple-700 border-purple-200"
+                                                            className="bg-purple-50/60 text-purple-700 border-purple-200/60 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800/60"
                                                         >
                                                             System
                                                         </Badge>
@@ -325,117 +433,119 @@ export default function UsersList() {
                                                     {user.created_at
                                                         ? new Date(
                                                               user.created_at
-                                                          ).toLocaleDateString()
+                                                          ).toLocaleDateString(
+                                                              "en-US",
+                                                              {
+                                                                  year: "numeric",
+                                                                  month: "short",
+                                                                  day: "numeric",
+                                                              }
+                                                          )
                                                         : "—"}
                                                 </TableCell>
 
-                                                {/* ACTIONS CELL */}
                                                 <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {/* Details */}
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        {/* Details Button */}
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="px-2"
+                                                            className="h-8 w-8 p-0 hover:bg-muted/70"
                                                             onClick={() =>
-                                                                setSelectedUserId(
-                                                                    selectedUserId ===
-                                                                        user.id
-                                                                        ? null
-                                                                        : user.id
+                                                                handleOpenDetails(
+                                                                    user.id
                                                                 )
                                                             }
+                                                            title="View details"
                                                         >
                                                             {selectedUserId ===
                                                             user.id ? (
-                                                                <X className="w-4 h-4" />
+                                                                <EyeOff className="w-4 h-4 text-muted-foreground" />
                                                             ) : (
-                                                                <Eye className="w-4 h-4" />
+                                                                <Eye className="w-4 h-4 text-muted-foreground" />
                                                             )}
                                                         </Button>
 
-                                                        {/* Hide Edit/Suspend if Deleted */}
+                                                        {/* Edit Button */}
                                                         {!user.deleted_at && (
-                                                            <>
-                                                                {/* Edit */}
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="px-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                                                    onClick={() =>
-                                                                        handleEditUser(
-                                                                            user
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        !currentUser ||
-                                                                        currentUser.role !==
-                                                                            "admin"
-                                                                    }
-                                                                >
-                                                                    <Pencil className="w-4 h-4" />
-                                                                </Button>
-
-                                                                {/* Status Toggle (Suspend/Active) */}
-                                                                {/* Hide for Admins & Self */}
-                                                                {user.role !==
-                                                                    "admin" &&
-                                                                    user.id !==
-                                                                        currentUser?.id && (
-                                                                        <>
-                                                                            {user.status !==
-                                                                                "suspended" && (
-                                                                                <Button
-                                                                                    size="icon"
-                                                                                    variant="ghost"
-                                                                                    className="text-orange-500 hover:text-orange-600 hover:bg-orange-50"
-                                                                                    title="Suspend User"
-                                                                                    onClick={() =>
-                                                                                        handleStatusChange(
-                                                                                            user.id,
-                                                                                            "suspended"
-                                                                                        )
-                                                                                    }
-                                                                                >
-                                                                                    <Ban className="w-4 h-4" />
-                                                                                </Button>
-                                                                            )}
-                                                                            {user.status ===
-                                                                                "suspended" && (
-                                                                                <Button
-                                                                                    size="icon"
-                                                                                    variant="ghost"
-                                                                                    className="text-green-500 hover:text-green-600 hover:bg-green-50"
-                                                                                    title="Activate User"
-                                                                                    onClick={() =>
-                                                                                        handleStatusChange(
-                                                                                            user.id,
-                                                                                            "active"
-                                                                                        )
-                                                                                    }
-                                                                                >
-                                                                                    <CheckCircle className="w-4 h-4" />
-                                                                                </Button>
-                                                                            )}
-                                                                        </>
-                                                                    )}
-                                                            </>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50/60 dark:hover:bg-blue-900/20"
+                                                                onClick={() =>
+                                                                    handleEditUser(
+                                                                        user
+                                                                    )
+                                                                }
+                                                                disabled={
+                                                                    !currentUser ||
+                                                                    currentUser.role !==
+                                                                        "admin"
+                                                                }
+                                                                title="Edit user"
+                                                            >
+                                                                <Pencil className="w-4 h-4" />
+                                                            </Button>
                                                         )}
 
-                                                        {/* Delete Button (Secure Modal) */}
-                                                        {/* Hide if Deleted OR Self */}
+                                                        {/* Status Toggle */}
+                                                        {!user.deleted_at &&
+                                                            user.role !==
+                                                                "admin" &&
+                                                            user.id !==
+                                                                currentUser?.id && (
+                                                                <>
+                                                                    {user.status !==
+                                                                        "suspended" && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="ghost"
+                                                                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50/60 dark:hover:bg-orange-900/20"
+                                                                            title="Suspend user"
+                                                                            onClick={() =>
+                                                                                handleStatusChange(
+                                                                                    user.id,
+                                                                                    "suspended"
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Ban className="w-4 h-4" />
+                                                                        </Button>
+                                                                    )}
+                                                                    {user.status ===
+                                                                        "suspended" && (
+                                                                        <Button
+                                                                            size="sm"
+                                                                            variant="ghost"
+                                                                            className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20"
+                                                                            title="Activate user"
+                                                                            onClick={() =>
+                                                                                handleStatusChange(
+                                                                                    user.id,
+                                                                                    "active"
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <CheckCircle className="w-4 h-4" />
+                                                                        </Button>
+                                                                    )}
+                                                                </>
+                                                            )}
+
+                                                        {/* Delete Button */}
                                                         {!user.deleted_at &&
                                                             currentUser?.id !==
                                                                 user.id && (
                                                                 <Button
-                                                                    size="icon"
+                                                                    size="sm"
                                                                     variant="ghost"
-                                                                    className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50/60 dark:hover:bg-red-900/20"
                                                                     onClick={() =>
                                                                         setUserToDelete(
                                                                             user
                                                                         )
                                                                     }
+                                                                    title="Delete user"
                                                                 >
                                                                     <Trash2 className="w-4 h-4" />
                                                                 </Button>
@@ -452,7 +562,7 @@ export default function UsersList() {
                 </Card>
             </div>
 
-            {/* Detail modal */}
+            {/* Modals */}
             {selectedUserId && (
                 <UserDetailModal
                     userId={selectedUserId}
@@ -461,7 +571,6 @@ export default function UsersList() {
                 />
             )}
 
-            {/* Edit modal (shared with profile) */}
             {selectedUserForEdit && currentUser && (
                 <UserEditProfileModal
                     user={selectedUserForEdit}
@@ -471,7 +580,6 @@ export default function UsersList() {
                 />
             )}
 
-            {/* Secure Delete Modal */}
             {userToDelete && (
                 <AdminDeleteUserModal
                     isOpen={!!userToDelete}
