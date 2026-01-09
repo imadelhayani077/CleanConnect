@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Notifications\ApplicationUpdate; // <--- The new class
+use Illuminate\Support\Facades\Notification; // <--- To notify multiple admins
 
 class SweepstarProfileController extends Controller
 {
@@ -36,6 +38,12 @@ class SweepstarProfileController extends Controller
             'is_verified' => false, // Important: Admin must approve
             'total_jobs_completed' => 0
         ]);
+        $admins = User::where('role', 'admin')->get();
+
+        Notification::send($admins, new ApplicationUpdate(
+        "New Sweepstar Application from " . $request->user()->name,
+        'info'
+    ));
 
         return response()->json([
             'message' => 'Application submitted successfully! Waiting for Admin approval.',
@@ -72,7 +80,10 @@ class SweepstarProfileController extends Controller
             // 3. Upgrade the User Role to 'sweepstar'
             $user = User::findOrFail($profile->user_id);
             $user->update(['role' => 'sweepstar']);
-
+            $user->notify(new ApplicationUpdate(
+            "Congratulations! Your Sweepstar application has been approved. You can now accept jobs.",
+            'success'
+                    ));
             return response()->json([
                 'message' => 'Application approved. User is now a Sweepstar!',
                 'user' => $user
@@ -86,6 +97,13 @@ class SweepstarProfileController extends Controller
     public function reject($id)
     {
         $profile = SweepstarProfile::findOrFail($id);
+        $user = User::find($profile->user_id);
+        if ($user) {
+        $user->notify(new ApplicationUpdate(
+            "We are sorry, but your Sweepstar application was not successful at this time.",
+            'error'
+        ));
+    }
         $profile->delete(); // Soft delete or force delete based on preference
 
         return response()->json(['message' => 'Application rejected.']);

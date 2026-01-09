@@ -19,7 +19,6 @@ export default function ClientDashboard() {
 
     // 1. Fetch Real Stats
     const { clientStats, isClientLoading } = useDashboard();
-    console.log(clientStats);
 
     const navigate = useNavigate();
 

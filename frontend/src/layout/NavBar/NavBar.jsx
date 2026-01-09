@@ -33,6 +33,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { getRoleStyles } from "@/utils/roleStyles";
 
+// ✅ IMPORT THE BELL (Make sure the path matches where you saved the file)
+import NotificationBell from "./NotificationBell";
+
 export default function NavBar() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -126,6 +129,9 @@ export default function NavBar() {
                 <div className="hidden md:flex items-center gap-3">
                     <ModeButton />
 
+                    {/* ✅ FIXED: Added Bell here for Desktop View */}
+                    {user && <NotificationBell />}
+
                     {isLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     ) : !user ? (
@@ -201,6 +207,10 @@ export default function NavBar() {
                 {/* Mobile: theme + hamburger */}
                 <div className="flex items-center gap-3 md:hidden">
                     <ModeButton />
+
+                    {/* ✅ Note: This was already here, which is why it worked on Mobile */}
+                    {user && <NotificationBell />}
+
                     <Button
                         variant="ghost"
                         size="icon"

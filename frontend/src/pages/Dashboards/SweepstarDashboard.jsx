@@ -28,9 +28,6 @@ export default function SweepstarDashboard() {
     // 3. Get Status from Backend (Default to false if loading)
     const isAvailable = sweepstarStats?.data?.is_available ?? false;
 
-    // Debugging: This should now print 'true' or 'false', not 'undefined'
-    console.log("Current Status:", isAvailable);
-
     // Helper: Currency Formatter
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat("en-US", {
