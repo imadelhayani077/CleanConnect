@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useCancelBooking } from "@/Hooks/useBookings";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function CancelBookingModal({
     booking,
@@ -44,15 +45,20 @@ export default function CancelBookingModal({
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-destructive">
-                        <AlertTriangle className="w-5 h-5" />
-                        Cancel Booking
-                    </DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to cancel this booking? This
-                        action cannot be undone.
-                    </DialogDescription>
+                <DialogHeader className="border-b border-border/60 pb-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-red-100/60 dark:bg-red-900/20">
+                            <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-2xl text-red-600 dark:text-red-400">
+                                Cancel Booking
+                            </DialogTitle>
+                            <DialogDescription className="mt-1">
+                                Are you sure? This action cannot be undone.
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 <div className="grid gap-4 py-4">
@@ -69,12 +75,15 @@ export default function CancelBookingModal({
                                 setReason(e.target.value);
                                 setError(null);
                             }}
-                            className="resize-none h-32"
+                            className="resize-none h-32 rounded-lg bg-muted/40 border-border/60"
                         />
                         {error && (
-                            <p className="text-sm text-red-500 font-medium">
-                                {error}
-                            </p>
+                            <Alert className="border-red-200/60 bg-red-50/50 dark:bg-red-900/20 dark:border-red-800/60 rounded-lg">
+                                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                <AlertDescription className="text-red-800 dark:text-red-300 text-sm">
+                                    {error}
+                                </AlertDescription>
+                            </Alert>
                         )}
                     </div>
                 </div>

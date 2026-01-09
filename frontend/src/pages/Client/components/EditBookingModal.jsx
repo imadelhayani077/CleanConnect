@@ -1,7 +1,14 @@
+// src/components/booking/EditBookingModal.jsx
 import React, { useEffect, useMemo } from "react";
 import { format } from "date-fns";
-import { useForm, Controller } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { useForm } from "react-hook-form";
+import {
+    Loader2,
+    AlertCircle,
+    DollarSign,
+    Calendar,
+    CheckCircle2,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +29,6 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-
 import {
     Form,
     FormField,
@@ -31,6 +37,8 @@ import {
     FormControl,
     FormMessage,
 } from "@/components/ui/form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 import { useServices } from "@/Hooks/useServices";
 import { useAddress } from "@/Hooks/useAddress";
@@ -51,11 +59,10 @@ export default function EditBookingModal({
             address_id: "",
             scheduled_at: "",
             notes: "",
-            service_ids: [], // array of ids (numbers)
+            service_ids: [],
         },
     });
 
-    // When booking or modal opens, reset form with existing booking values
     useEffect(() => {
         if (booking && isOpen) {
             form.reset({
@@ -75,7 +82,6 @@ export default function EditBookingModal({
     }, [booking, isOpen, form]);
 
     const isLoading = loadingServices || loadingAddresses;
-
     const serviceIds = form.watch("service_ids");
 
     const total = useMemo(
@@ -93,7 +99,6 @@ export default function EditBookingModal({
                 !values.address_id ||
                 !values.service_ids.length
             ) {
-                // let RHF show errors if you add rules, but we guard anyway
                 return;
             }
 
@@ -105,10 +110,9 @@ export default function EditBookingModal({
             };
 
             await updateBooking({ id: booking.id, data: payload });
-            onSuccess?.("Booking updated successfully.");
+            onSuccess?.("Booking updated successfully!");
             onClose();
         } catch (err) {
-            // You can set form-level error via setError if desired
             form.setError("root", {
                 type: "server",
                 message: err?.response?.data?.message || "Update failed",
@@ -118,23 +122,37 @@ export default function EditBookingModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Edit Booking</DialogTitle>
-                    <DialogDescription>
-                        Update the booking details and save your changes.
-                    </DialogDescription>
+            <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto rounded-2xl border-border/60 bg-background/80 backdrop-blur-xl">
+                <DialogHeader className="border-b border-border/60 pb-4">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 rounded-lg bg-primary/10">
+                            <Calendar className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                            <DialogTitle className="text-2xl">
+                                Edit Booking
+                            </DialogTitle>
+                            <DialogDescription className="mt-1">
+                                Update the booking details and save your changes
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
                 {isLoading ? (
-                    <div className="flex items-center justify-center py-10">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <div className="flex items-center justify-center py-12">
+                        <div className="flex flex-col items-center gap-3">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <p className="text-muted-foreground text-sm">
+                                Loading booking details...
+                            </p>
+                        </div>
                     </div>
                 ) : (
                     <Form {...form}>
                         <form
                             onSubmit={form.handleSubmit(onSubmit)}
-                            className="grid gap-6 py-4"
+                            className="space-y-6 py-6"
                         >
                             {/* Address */}
                             <FormField
@@ -143,13 +161,15 @@ export default function EditBookingModal({
                                 rules={{ required: "Address is required" }}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Address</FormLabel>
+                                        <FormLabel className="text-sm font-semibold">
+                                            Service Location
+                                        </FormLabel>
                                         <Select
                                             value={field.value}
                                             onValueChange={field.onChange}
                                         >
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="rounded-lg bg-muted/40 border-border/60 h-10">
                                                     <SelectValue placeholder="Select address" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -165,26 +185,32 @@ export default function EditBookingModal({
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <FormMessage />
+                                        <FormMessage className="text-xs" />
                                     </FormItem>
                                 )}
                             />
 
-                            {/* Date & time */}
+                            {/* Date & Time */}
                             <FormField
                                 control={form.control}
                                 name="scheduled_at"
                                 rules={{ required: "Date & time is required" }}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Date & time</FormLabel>
+                                        <FormLabel className="text-sm font-semibold">
+                                            Date & Time
+                                        </FormLabel>
                                         <FormControl>
-                                            <Input
-                                                type="datetime-local"
-                                                {...field}
-                                            />
+                                            <div className="relative">
+                                                <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    type="datetime-local"
+                                                    className="pl-10 rounded-lg bg-muted/40 border-border/60 h-10"
+                                                    {...field}
+                                                />
+                                            </div>
                                         </FormControl>
-                                        <FormMessage />
+                                        <FormMessage className="text-xs" />
                                     </FormItem>
                                 )}
                             />
@@ -200,8 +226,10 @@ export default function EditBookingModal({
                                 }}
                                 render={() => (
                                     <FormItem>
-                                        <FormLabel>Services</FormLabel>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        <FormLabel className="text-sm font-semibold">
+                                            Services
+                                        </FormLabel>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             {services.map((service) => {
                                                 const checked =
                                                     serviceIds?.includes(
@@ -211,7 +239,13 @@ export default function EditBookingModal({
                                                     <FormControl
                                                         key={service.id}
                                                     >
-                                                        <label className="flex items-center space-x-2 rounded-md border border-border/60 bg-background px-3 py-2 cursor-pointer">
+                                                        <label
+                                                            className={`flex items-center gap-3 p-4 rounded-lg border transition-all cursor-pointer ${
+                                                                checked
+                                                                    ? "border-primary bg-primary/5 dark:bg-primary/10 ring-2 ring-primary/50"
+                                                                    : "border-border/60 bg-background/50 hover:border-primary/30"
+                                                            }`}
+                                                        >
                                                             <Checkbox
                                                                 checked={
                                                                     checked
@@ -245,25 +279,37 @@ export default function EditBookingModal({
                                                                     }
                                                                 }}
                                                             />
-                                                            <div className="flex flex-col text-sm">
-                                                                <span className="font-medium">
+                                                            <div className="flex-1">
+                                                                <p className="font-semibold text-foreground">
                                                                     {
                                                                         service.name
                                                                     }
-                                                                </span>
-                                                                <span className="text-xs text-muted-foreground">
-                                                                    {
-                                                                        service.base_price
-                                                                    }{" "}
-                                                                    MAD
-                                                                </span>
+                                                                </p>
+                                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                                    Description:{" "}
+                                                                    {service.description ||
+                                                                        "No description"}
+                                                                </p>
                                                             </div>
+                                                            <Badge
+                                                                variant="outline"
+                                                                className={`ml-auto font-bold text-sm border-border/60 ${
+                                                                    checked
+                                                                        ? "bg-primary/10 text-primary"
+                                                                        : ""
+                                                                }`}
+                                                            >
+                                                                $
+                                                                {
+                                                                    service.base_price
+                                                                }
+                                                            </Badge>
                                                         </label>
                                                     </FormControl>
                                                 );
                                             })}
                                         </div>
-                                        <FormMessage />
+                                        <FormMessage className="text-xs" />
                                     </FormItem>
                                 )}
                             />
@@ -274,49 +320,80 @@ export default function EditBookingModal({
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Notes (optional)</FormLabel>
+                                        <FormLabel className="text-sm font-semibold">
+                                            Special Instructions (Optional)
+                                        </FormLabel>
                                         <FormControl>
                                             <Textarea
                                                 rows={3}
                                                 placeholder="Extra details for the sweepstar..."
+                                                className="resize-none rounded-lg bg-muted/40 border-border/60"
                                                 {...field}
                                             />
                                         </FormControl>
-                                        <FormMessage />
+                                        <FormMessage className="text-xs" />
                                     </FormItem>
                                 )}
                             />
 
                             {/* Total */}
-                            <div className="space-y-1">
-                                <p className="text-sm font-medium">
-                                    Estimated total
-                                </p>
-                                <p className="text-lg font-semibold">
-                                    {total.toFixed(2)} MAD
-                                </p>
+                            <div className="bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 p-4 rounded-xl border border-primary/20 dark:border-primary/30">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">
+                                            Estimated Total
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            {serviceIds?.length} service
+                                            {serviceIds?.length !== 1
+                                                ? "s"
+                                                : ""}{" "}
+                                            selected
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-2xl font-bold text-primary">
+                                        <DollarSign className="w-6 h-6" />
+                                        {total.toFixed(2)}
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Form-level error */}
+                            {/* Form Error */}
                             {form.formState.errors.root && (
-                                <p className="text-sm text-red-500">
-                                    {form.formState.errors.root.message}
-                                </p>
+                                <Alert className="border-red-200/60 bg-red-50/50 dark:bg-red-900/20 dark:border-red-800/60 rounded-lg">
+                                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                    <AlertDescription className="text-red-800 dark:text-red-300 text-sm">
+                                        {form.formState.errors.root.message}
+                                    </AlertDescription>
+                                </Alert>
                             )}
 
-                            <DialogFooter>
+                            <DialogFooter className="pt-4 border-t border-border/60">
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={onClose}
+                                    disabled={isPending}
+                                    className="rounded-lg border-border/60"
                                 >
                                     Cancel
                                 </Button>
-                                <Button type="submit" disabled={isPending}>
-                                    {isPending && (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                <Button
+                                    type="submit"
+                                    disabled={isPending}
+                                    className="rounded-lg bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all gap-2 font-semibold"
+                                >
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle2 className="h-4 w-4" />
+                                            Save Changes
+                                        </>
                                     )}
-                                    Save changes
                                 </Button>
                             </DialogFooter>
                         </form>

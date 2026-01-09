@@ -1,13 +1,12 @@
+// src/components/address/AddAddressForm.jsx
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MapPin, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { MapPin, Loader2, AlertCircle, CheckCircle2, Home } from "lucide-react";
 
-// Hooks
 import { useAddress } from "@/Hooks/useAddress";
 
-// UI Components
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,17 +17,26 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
 
-// --- Validation Schema ---
+// Validation Schema
 const addressSchema = z.object({
-    street_address: z.string().min(5, "Address must be at least 5 characters."),
-    city: z.string().min(2, "City name is too short."),
+    street_address: z.string().min(5, "Address must be at least 5 characters"),
+    city: z.string().min(2, "City name is too short"),
     postal_code: z.string().optional(),
 });
 
 export default function AddAddressForm({ onSuccess }) {
     const { addAddress, isAdding } = useAddress();
+    const [submitError, setSubmitError] = useState(null);
+    const [submitSuccess, setSubmitSuccess] = useState(null);
 
     const form = useForm({
         resolver: zodResolver(addressSchema),
@@ -39,109 +47,158 @@ export default function AddAddressForm({ onSuccess }) {
         },
     });
 
-    const [submitError, setSubmitError] = useState(null);
-    const [submitSuccess, setSubmitSuccess] = useState(null);
-
     const onSubmit = async (data) => {
         setSubmitError(null);
         setSubmitSuccess(null);
 
         try {
             await addAddress(data);
-            setSubmitSuccess("Address saved successfully.");
+            setSubmitSuccess("Address saved successfully!");
             form.reset();
-            // Optional: wait a moment before closing to show success message
             setTimeout(() => {
                 if (onSuccess) onSuccess();
-            }, 1000);
+            }, 1500);
         } catch (error) {
             console.error(error);
-            setSubmitError("Failed to save address. Please try again.");
+            setSubmitError(
+                error.response?.data?.message ||
+                    "Failed to save address. Please try again."
+            );
         }
     };
 
     return (
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="street_address"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Street Address</FormLabel>
-                            <FormControl>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="123 Hassan II Avenue"
-                                        className="pl-9"
-                                        {...field}
-                                    />
-                                </div>
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>City</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Casablanca"
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-
-                    <FormField
-                        control={form.control}
-                        name="postal_code"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Postal Code</FormLabel>
-                                <FormControl>
-                                    <Input placeholder="20000" {...field} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+        <Card className="rounded-2xl border-border/60 bg-background/50 backdrop-blur-sm">
+            <CardHeader className="border-b border-border/60 pb-4">
+                <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                        <Home className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-lg">
+                            Add New Address
+                        </CardTitle>
+                        <CardDescription className="mt-0.5">
+                            Save a new delivery or service address
+                        </CardDescription>
+                    </div>
                 </div>
+            </CardHeader>
 
-                {submitError && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertTitle>Error</AlertTitle>
-                        <AlertDescription>{submitError}</AlertDescription>
-                    </Alert>
-                )}
+            <CardContent className="pt-6">
+                <Form {...form}>
+                    <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-6"
+                    >
+                        {/* Street Address */}
+                        <FormField
+                            control={form.control}
+                            name="street_address"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-sm font-semibold text-foreground">
+                                        Street Address
+                                    </FormLabel>
+                                    <FormControl>
+                                        <div className="relative">
+                                            <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="123 Hassan II Avenue"
+                                                className="pl-10 rounded-lg bg-muted/40 border-border/60 focus:border-primary/50 h-10"
+                                                {...field}
+                                            />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage className="text-xs" />
+                                </FormItem>
+                            )}
+                        />
 
-                {submitSuccess && (
-                    <Alert className="bg-green-50 text-green-800 border-green-200">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <AlertTitle>Success</AlertTitle>
-                        <AlertDescription>{submitSuccess}</AlertDescription>
-                    </Alert>
-                )}
+                        {/* City & Postal Code */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <FormField
+                                control={form.control}
+                                name="city"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-semibold text-foreground">
+                                            City
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Casablanca"
+                                                className="rounded-lg bg-muted/40 border-border/60 focus:border-primary/50 h-10"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
 
-                <div className="flex justify-end pt-4">
-                    <Button type="submit" disabled={isAdding}>
-                        {isAdding && (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <FormField
+                                control={form.control}
+                                name="postal_code"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel className="text-sm font-semibold text-foreground">
+                                            Postal Code
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="20000"
+                                                className="rounded-lg bg-muted/40 border-border/60 focus:border-primary/50 h-10"
+                                                {...field}
+                                            />
+                                        </FormControl>
+                                        <FormMessage className="text-xs" />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+
+                        {/* Error Alert */}
+                        {submitError && (
+                            <Alert className="border-red-200/60 bg-red-50/50 dark:bg-red-900/20 dark:border-red-800/60 rounded-lg">
+                                <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                                <AlertDescription className="text-red-800 dark:text-red-300 text-sm">
+                                    {submitError}
+                                </AlertDescription>
+                            </Alert>
                         )}
-                        Save Address
-                    </Button>
-                </div>
-            </form>
-        </Form>
+
+                        {/* Success Alert */}
+                        {submitSuccess && (
+                            <Alert className="border-emerald-200/60 bg-emerald-50/50 dark:bg-emerald-900/20 dark:border-emerald-800/60 rounded-lg">
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                                <AlertDescription className="text-emerald-800 dark:text-emerald-300 text-sm">
+                                    {submitSuccess}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {/* Submit Button */}
+                        <Button
+                            type="submit"
+                            disabled={isAdding}
+                            className="w-full rounded-lg h-10 font-semibold bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all duration-200 group gap-2"
+                        >
+                            {isAdding ? (
+                                <>
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    Saving Address...
+                                </>
+                            ) : (
+                                <>
+                                    <MapPin className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                                    Save Address
+                                </>
+                            )}
+                        </Button>
+                    </form>
+                </Form>
+            </CardContent>
+        </Card>
     );
 }

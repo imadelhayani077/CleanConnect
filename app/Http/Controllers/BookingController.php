@@ -8,6 +8,9 @@ use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB; // Required for transactions
+use App\Notifications\BookingStatusUpdated;
+use Illuminate\Support\Facades\Notification;
+use App\Models\User;
 
 class BookingController extends Controller
 {
@@ -71,14 +74,31 @@ public function index(Request $request)
             ]);
 
             // 4. Attach Services with Pivot Data
-            // We save the price at the moment of booking
+            // We save the price at the moment of booking so price changes don't affect old logs
             $pivotData = [];
             foreach ($services as $service) {
                 $pivotData[$service->id] = ['price_at_booking' => $service->base_price];
             }
             $booking->services()->attach($pivotData);
 
-            // 5. Load relationships for the frontend
+            // ====================================================
+            // NEW: NOTIFICATION SYSTEM
+            // ====================================================
+
+            // A. Find all users who are Sweepstars
+            $sweepstars = User::where('role', 'sweepstar')->get();
+
+            // B. Send the notification
+            // We use the address city to make it relevant
+            // Note: $booking->address works because of the relationship in the Booking model
+            Notification::send($sweepstars, new BookingStatusUpdated(
+                "New job available in " . $booking->address->city,
+                $booking->id
+            ));
+
+            // ====================================================
+
+            // 5. Load relationships and Return
             return response()->json([
                 'message' => 'Booking created successfully!',
                 'booking' => $booking->load(['services', 'address'])
@@ -236,28 +256,42 @@ public function update(Request $request, Booking $booking)
                 'sweepstar_id' => $request->user()->id,
                 'status' => 'confirmed'
             ]);
+            $booking->user->notify(new BookingStatusUpdated("Your booking has been accepted by " . $request->user()->name, $booking->id));
 
             return response()->json(['message' => 'Job accepted! It is now in your schedule.']);
         });
     }
     // Add this method inside the BookingController class
 public function completeJob(Request $request, $id)
-{
-    $booking = Booking::findOrFail($id);
+    {
+        $booking = Booking::findOrFail($id);
 
-    // Security: Only the assigned Sweepstar can complete it
-    if ($booking->sweepstar_id !== $request->user()->id) {
-        return response()->json(['message' => 'Unauthorized'], 403);
+        // Security: Only the assigned Sweepstar can complete it
+        if ($booking->sweepstar_id !== $request->user()->id) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($booking->status !== 'confirmed') {
+            return response()->json(['message' => 'Job is not in progress.'], 400);
+        }
+
+        // 1. Update the status
+        $booking->update(['status' => 'completed']);
+
+        // ====================================================
+        // NEW: NOTIFY THE CLIENT
+        // ====================================================
+
+        // Notify the user who made the booking
+        $booking->user->notify(new BookingStatusUpdated(
+            "Your cleaning is complete! Please review your Sweepstar.",
+            $booking->id
+        ));
+
+        // ====================================================
+
+        return response()->json(['message' => 'Job marked as completed!']);
     }
-
-    if ($booking->status !== 'confirmed') {
-        return response()->json(['message' => 'Job is not in progress.'], 400);
-    }
-
-    $booking->update(['status' => 'completed']);
-
-    return response()->json(['message' => 'Job marked as completed!']);
-}
 
 public function cancel(Request $request, $id)
     {

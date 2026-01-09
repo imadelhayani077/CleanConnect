@@ -11,12 +11,15 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SweepstarProfileController;
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 */
+
+
 
 // 1. Public Routes
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
@@ -25,6 +28,8 @@ Route::post('/register', [RegisteredUserController::class, 'store'])->name('regi
 // 2. Protected Routes (Must be logged in AND Active)
 // Added 'active_user' middleware to enforce suspension/disabling logic
 Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
 
     // --- A. Core User Data ---
     Route::get('/user', function (Request $request) {
