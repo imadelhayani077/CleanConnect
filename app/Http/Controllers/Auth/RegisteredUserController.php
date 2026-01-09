@@ -1,16 +1,17 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Notifications\RegisterUpdate;
+use Illuminate\Support\Facades\Notification; // <--- CORRECT
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-
+use Illuminate\Support\Facades\DB;
 class RegisteredUserController extends Controller
 {
     /**
@@ -36,7 +37,11 @@ class RegisteredUserController extends Controller
         ]);
 
         event(new Registered($user));
-
+        $admins = User::where('role', 'admin')->get();
+         Notification::send($admins, new RegisterUpdate(
+                "New user registered: " . $user->name,
+                $user->id
+            ));
         Auth::login($user);
         $request->session()->invalidate();
 
