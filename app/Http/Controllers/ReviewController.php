@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use App\Models\SweepstarProfile;
+use App\Notifications\ReviewUpdate;
+use Illuminate\Support\Facades\Notification;
 
 class ReviewController extends Controller
 {
@@ -28,7 +31,6 @@ class ReviewController extends Controller
     ]);
 
     $booking = Booking::findOrFail($validated['booking_id']);
-
     // Security: Only the client who booked can review
     if ($request->user()->id !== $booking->user_id) {
         return response()->json(['message' => 'Unauthorized'], 403);
@@ -56,6 +58,13 @@ class ReviewController extends Controller
         'rating'      => $validated['rating'],
         'comment'     => $validated['comment'] ?? null,
     ]);
+
+    $sweepstarProfile = SweepstarProfile::where('user_id', $booking->sweepstar_id)->first();
+
+    if ($sweepstarProfile && $sweepstarProfile->user) {
+            $message = "You received a new " . $validated['rating'] . "-star review from " . $request->user()->name;
+             $sweepstarProfile->user->notify(new ReviewUpdate($message, $booking));
+}
 
     return response()->json(['message' => 'Review submitted successfully!', 'review' => $review], 201);
 }
@@ -86,6 +95,13 @@ class ReviewController extends Controller
         ]);
 
         $review->update($validated);
+        $booking = Booking::findOrFail($review->booking_id);
+        $sweepstarProfile = SweepstarProfile::where('user_id', $booking->sweepstar_id)->first();
+
+        if ($sweepstarProfile && $sweepstarProfile->user) {
+                $message = "Your review has been updated to " . $validated['rating'] . " stars by " . $request->user()->name;
+                 $sweepstarProfile->user->notify(new ReviewUpdate($message, $booking));
+    }
 
         return response()->json(['message' => 'Review updated successfully', 'review' => $review]);
     }
@@ -103,6 +119,14 @@ class ReviewController extends Controller
         }
 
         $review->delete(); // Soft delete or force delete
+
+        $booking = Booking::findOrFail($review->booking_id);
+        $sweepstarProfile = SweepstarProfile::where('user_id', $booking->sweepstar_id)->first();
+
+        if ($sweepstarProfile && $sweepstarProfile->user) {
+                $message = "Your review has been deleted by " . $request->user()->name;
+                 $sweepstarProfile->user->notify(new ReviewUpdate($message, $booking));
+    }
 
         return response()->json(['message' => 'Review deleted successfully']);
     }

@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogFooter,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -89,6 +90,11 @@ export default function ReviewModal({ booking, isOpen, onClose, onSuccess }) {
                                     ? "Edit Your Review"
                                     : "Rate This Service"}
                             </DialogTitle>
+                            <DialogDescription>
+                                {reviewId
+                                    ? "Update your rating and feedback for this service."
+                                    : "Please rate your experience with the service provider."}
+                            </DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>

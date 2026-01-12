@@ -49,8 +49,7 @@ Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
     Route::post('/user/toggle-status', [UserController::class, 'toggleStatus']);
 
     // 2. Delete Account (Self)
-    // FIX: Updated to match Frontend API call
-    Route::delete('/user/me', [UserController::class, 'destroySelf']);
+    Route::delete('/user/delete', [UserController::class, 'destroySelf']);
 
     // --- B. Reviews ---
     Route::post('/reviews', [ReviewController::class, 'store']);

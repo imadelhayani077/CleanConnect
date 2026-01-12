@@ -26,9 +26,10 @@ class RegisterUpdate extends Notification
     public function toArray($notifiable)
     {
         return [
-            'message' => $this->message,
-            'user' => $this->user,
-            'created_at' => now(),
-        ];
+        'message' => $this->message,
+        'user_id' => $this->user->id, // <--- IMPORTANT: We need the ID
+        'type'    => 'new_user',      // <--- A tag to help React know where to go
+        'created_at' => now(),
+    ];
     }
 }

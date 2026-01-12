@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/Hooks/useNotifications";
+import { useNavigate } from "react-router-dom";
 
 // Note: If you don't have ScrollArea installed, just use a <div className="max-h-64 overflow-y-auto">
 
@@ -19,7 +20,24 @@ export default function NotificationBell() {
 
     // Count how many are unread (read_at is null)
     const unreadCount = notifications.filter((n) => !n.read_at).length;
+    const navigate = useNavigate();
+    const handleNotificationClick = (notif) => {
+        // 1. Mark as read immediately
+        markRead(notif.id);
 
+        // 2. Decide where to go based on data
+        if (notif.data.type === 'new_user') {
+            // Navigate to Users page AND pass the User ID in the "state"
+            navigate("/dashboard/users", {
+                state: { openUserId: notif.data.user_id }
+            });
+        }
+
+        else if (notif.data.type === 'booking') {
+             // Example for future: Go to bookings
+             navigate("/dashboard/bookings");
+        }
+    };
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -51,7 +69,7 @@ export default function NotificationBell() {
                         notifications.map((notif) => (
                             <DropdownMenuItem
                                 key={notif.id}
-                                onClick={() => markRead(notif.id)}
+                                onClick={() => handleNotificationClick(notif)}
                                 className={`cursor-pointer flex flex-col items-start gap-1 p-3 border-b border-border/40 ${
                                     !notif.read_at ? "bg-muted/50" : ""
                                 }`}

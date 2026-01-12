@@ -20,7 +20,8 @@ import {
 } from "lucide-react";
 
 import { getRoleStyles } from "@/utils/roleStyles";
-
+import { useLocation } from "react-router-dom"; // <--- Import This
+import { useEffect } from "react"; // <--- Import This
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,10 +69,22 @@ export default function UsersList() {
     const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
+    const location = useLocation();
 
     const updateStatusMutation = useAdminUpdateStatus();
 
-    // Statistics
+    // 2. LISTEN FOR NOTIFICATION CLICKS
+    useEffect(() => {
+        // Check if we arrived here with a "openUserId" inside the state
+        if (location.state?.openUserId) {
+            // Set the ID to open the modal
+            setSelectedUserId(location.state.openUserId);
+
+            // Optional: Clean the state so if they refresh, it doesn't reopen
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
+
     const stats = {
         total: users.length,
         active: users.filter((u) => u.status === "active" && !u.deleted_at)

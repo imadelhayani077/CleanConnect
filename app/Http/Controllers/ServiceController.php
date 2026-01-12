@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
+use App\Models\User;
+use App\Notifications\ServiceUpdated;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Notification;
 
 class ServiceController extends Controller
 {
@@ -34,6 +37,12 @@ class ServiceController extends Controller
         ]);
 
         $service = Service::create($validated);
+
+          $users = User::get();
+            Notification::send($users, new ServiceUpdated(
+                "New service created: " . $service->name,
+                $service
+            ));
 
         return response()->json(['message' => 'Service created', 'service' => $service], 201);
     }

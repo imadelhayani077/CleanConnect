@@ -87,10 +87,6 @@ public function index(Request $request)
 
             // A. Find all users who are Sweepstars
             $sweepstars = User::where('role', 'sweepstar')->get();
-
-            // B. Send the notification
-            // We use the address city to make it relevant
-            // Note: $booking->address works because of the relationship in the Booking model
             Notification::send($sweepstars, new BookingStatusUpdated(
                 "New job available in " . $booking->address->city,
                 $booking->id
