@@ -11,11 +11,13 @@ class ApplicationUpdate extends Notification
 
     public $message;
     public $status; // 'success' (approved), 'error' (rejected), or 'info' (new)
+    public $type; // 'applicationRequest' or 'applicationResponse'
 
-    public function __construct($message, $status = 'info')
+    public function __construct($message, $status = 'info', $type = 'applicationRequest')
     {
         $this->message = $message;
         $this->status = $status;
+        $this->type = $type;
     }
 
     public function via($notifiable)
@@ -28,6 +30,7 @@ class ApplicationUpdate extends Notification
         return [
             'message' => $this->message,
             'status' => $this->status,
+            'type' => $this->type,
             'created_at' => now(),
         ];
     }

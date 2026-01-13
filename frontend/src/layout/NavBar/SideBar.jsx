@@ -16,7 +16,6 @@ import {
     BrushCleaning,
     MapPin,
     ListChecks,
-    Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getRoleStyles } from "@/utils/roleStyles";
@@ -40,26 +39,63 @@ export default function Sidebar() {
 
     const MENUS = {
         admin: [
-            { id: "dashboard", label: "Overview", icon: LayoutDashboard },
-            { id: "myinfo", label: "My Info", icon: UserRoundCog },
-            { id: "users", label: "All Users", icon: Users },
-            { id: "bookings", label: "All Bookings", icon: Calendar },
-            { id: "services", label: "All Services", icon: Wrench },
-            { id: "applications", label: "Applications", icon: Settings },
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            {
+                id: "myInformations",
+                label: "My Informations",
+                icon: UserRoundCog,
+            },
+            { id: "usersList", label: "Users List", icon: Users },
+            { id: "bookingsList", label: "Bookings List", icon: Calendar },
+            { id: "services", label: "Services", icon: Wrench },
+            {
+                id: "sweepstarRequest",
+                label: "Sweepstar Requests",
+                icon: Settings,
+            },
         ],
         sweepstar: [
-            { id: "dashboard", label: "My Dashboard", icon: LayoutDashboard },
-            { id: "myinfo", label: "My Info", icon: UserRoundCog },
-            { id: "available", label: "My Jobs", icon: ListChecks },
-            { id: "schedule", label: "My Schedule", icon: Calendar },
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            {
+                id: "myInformations",
+                label: "My Informations",
+                icon: UserRoundCog,
+            },
+            {
+                id: "availableOpportunities",
+                label: "Available Opportunities",
+                icon: ListChecks,
+            },
+            {
+                id: "currentMissions",
+                label: "Current Missions",
+                icon: Calendar,
+            },
+            {
+                id: "missionsHistory",
+                label: "Missions History",
+                icon: Briefcase,
+            },
         ],
         client: [
-            { id: "dashboard", label: "Home", icon: LayoutDashboard },
-            { id: "myinfo", label: "My Info", icon: UserRoundCog },
-            { id: "book-new", label: "Book Service", icon: PlusCircle },
-            { id: "my-bookings", label: "History", icon: Briefcase },
-            { id: "addresses", label: "My Addresses", icon: MapPin },
-            { id: "becomSweep", label: "Become a Pro", icon: BrushCleaning },
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            {
+                id: "myInformations",
+                label: "My Informations",
+                icon: UserRoundCog,
+            },
+            { id: "bookService", label: "Book Service", icon: PlusCircle },
+            {
+                id: "bookingsHistory",
+                label: "Bookings History",
+                icon: Briefcase,
+            },
+            { id: "myAddresses", label: "My Addresses", icon: MapPin },
+            {
+                id: "becomeSweepstar",
+                label: "Become Sweepstar",
+                icon: BrushCleaning,
+            },
         ],
     };
 
@@ -67,23 +103,24 @@ export default function Sidebar() {
     const routeMap = {
         // shared
         dashboard: "/dashboard",
-        myinfo: "/dashboard/my-info",
+        myInformations: "/dashboard/my_informations",
 
         // admin
-        users: "/dashboard/users",
-        bookings: "/dashboard/bookings",
+        users: "/dashboard/users_list",
+        bookings: "/dashboard/bookings_list",
         services: "/dashboard/services",
-        applications: "/dashboard/applications",
+        applications: "/dashboard/sweepstar_requests",
 
         // sweepstar
-        available: "/dashboard/available",
-        schedule: "/dashboard/schedule",
+        availableOpportunities: "/dashboard/available_opportunities",
+        currentMissions: "/dashboard/current_missions",
+        missionsHistory: "/dashboard/missions_history",
 
         // client
-        "book-new": "/dashboard/booking",
-        "my-bookings": "/dashboard/booking-history",
-        addresses: "/dashboard/address",
-        becomSweep: "/dashboard/become-sweepstar",
+        bookService: "/dashboard/booking_service",
+        bookingsHistory: "/dashboard/bookings_history",
+        myAddresses: "/dashboard/my_addresses",
+        becomeSweepstar: "/dashboard/become_sweepstar",
     };
 
     const handleMenuClick = (id) => {

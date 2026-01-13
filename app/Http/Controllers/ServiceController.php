@@ -38,7 +38,7 @@ class ServiceController extends Controller
 
         $service = Service::create($validated);
 
-          $users = User::get();
+          $users = User::where('role', 'sweepstar')->orWhere('role', 'client')->get();
             Notification::send($users, new ServiceUpdated(
                 "New service created: " . $service->name,
                 $service

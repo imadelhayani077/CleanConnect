@@ -12,8 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/Hooks/useNotifications";
 import { useNavigate } from "react-router-dom";
-
-// Note: If you don't have ScrollArea installed, just use a <div className="max-h-64 overflow-y-auto">
+import { NotificationHandlers } from "./NotificationRoutes";
 
 export default function NotificationBell() {
     const { notifications = [], markRead } = useNotifications();
@@ -22,20 +21,13 @@ export default function NotificationBell() {
     const unreadCount = notifications.filter((n) => !n.read_at).length;
     const navigate = useNavigate();
     const handleNotificationClick = (notif) => {
-        // 1. Mark as read immediately
+        const handler = NotificationHandlers[notif.data.type];
+
         markRead(notif.id);
-
-        // 2. Decide where to go based on data
-        if (notif.data.type === 'new_user') {
-            // Navigate to Users page AND pass the User ID in the "state"
-            navigate("/dashboard/users", {
-                state: { openUserId: notif.data.user_id }
-            });
-        }
-
-        else if (notif.data.type === 'booking') {
-             // Example for future: Go to bookings
-             navigate("/dashboard/bookings");
+        if (handler) {
+            handler(navigate, notif.data);
+        } else {
+            navigate("/dashboard");
         }
     };
     return (

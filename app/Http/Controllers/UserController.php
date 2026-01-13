@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Notifications\EditProfileUpdate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -60,69 +62,93 @@ class UserController extends Controller
     /**
      * Update User Profile (Self or Admin)
      */
-    public function update(Request $request, string $id)
-    {
-        $targetUser = User::findOrFail($id);
-        $currentUser = $request->user();
+   public function update(Request $request, string $id)
+{
+    $targetUser = User::findOrFail($id);
+    $currentUser = $request->user();
 
-        // 1. AUTHORIZATION
-        if ($currentUser->id !== $targetUser->id && $currentUser->role !== 'admin') {
-            return response()->json(['message' => 'Unauthorized access.'], 403);
-        }
-
-        // 2. SECURITY VERIFICATION
-        // Require current password to confirm changes
-        $request->validate([
-            'current_password' => 'required|string',
-        ]);
-
-        if (!Hash::check($request->current_password, $currentUser->password)) {
-            return response()->json([
-                'message' => 'Security Check Failed.',
-                'errors' => ['current_password' => ['Incorrect password. Action denied.']]
-            ], 422);
-        }
-
-        // 3. VALIDATION
-        $request->validate([
-            'name'  => 'required|string|max:255',
-            'phone' => 'nullable|string|max:20',
-            'email' => ['required', 'email', Rule::unique('users')->ignore($targetUser->id)],
-            'password' => 'nullable|string|min:8',
-            'role'     => 'nullable|in:client,sweepstar,admin',
-        ]);
-
-        // 4. PREPARE DATA
-        $data = [
-            'name'  => $request->name,
-            'phone' => $request->phone,
-        ];
-
-        // Only Admin can change email or role
-        if ($currentUser->role === 'admin') {
-            $data['email'] = $request->email;
-            if ($request->filled('role')) {
-                $data['role'] = $request->role;
-            }
-        }
-
-        // Handle Password Reset
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
-
-        $targetUser->update($data);
-
-        return response()->json([
-            'message' => 'User updated successfully.',
-            'user' => $targetUser
-        ]);
+    // 1. AUTHORIZATION
+    if ($currentUser->id !== $targetUser->id && $currentUser->role !== 'admin') {
+        return response()->json(['message' => 'Unauthorized access.'], 403);
     }
 
-    /**
-     * User toggles their own status (Active <-> Disabled)
-     * SECURITY: Admins cannot disable themselves.
-     */
+    // 2. SECURITY VERIFICATION
+    $request->validate([
+        'current_password' => 'required|string',
+    ]);
+
+    if (!Hash::check($request->current_password, $currentUser->password)) {
+        return response()->json([
+            'message' => 'Security Check Failed.',
+            'errors' => ['current_password' => ['Incorrect password. Action denied.']]
+        ], 422);
+    }
+
+    // 3. VALIDATION
+    $request->validate([
+        'name'     => 'required|string|max:255',
+        'phone'    => 'nullable|string|max:20',
+        'email'    => ['required', 'email', Rule::unique('users')->ignore($targetUser->id)],
+        'password' => 'nullable|string|min:8',
+        'role'     => 'nullable|in:client,sweepstar,admin',
+    ]);
+
+    // 4. CAPTURE ORIGINAL DATA (For "Old vs New" notification)
+    $oldData = $targetUser->getRawOriginal();
+
+    // 5. PREPARE DATA
+    $data = [
+        'name'  => $request->name,
+        'phone' => $request->phone,
+    ];
+
+    // Only Admin can change email or role
+    if ($currentUser->role === 'admin') {
+        $data['email'] = $request->email;
+        if ($request->filled('role')) {
+            $data['role'] = $request->role;
+        }
+    }
+
+    if ($request->filled('password')) {
+        $data['password'] = Hash::make($request->password);
+    }
+
+    // 6. UPDATE AND DETECT CHANGES
+    $targetUser->fill($data);
+
+    if ($targetUser->isDirty()) {
+        $changes = [];
+
+        // Loop through everything that actually changed
+        foreach ($targetUser->getDirty() as $field => $newValue) {
+            // Don't include password in the notification for security
+            if ($field === 'password') continue;
+
+            $changes[$field] = [
+                'old' => $oldData[$field] ?? 'N/A',
+                'new' => $newValue
+            ];
+        }
+
+        $targetUser->save();
+
+        // 7. NOTIFY ADMINS
+        // Only notify if changes were made to important fields (excluding password)
+        if (!empty($changes)) {
+            $admins = User::where('role', 'admin')->get();
+            $message = "Profile update for user: " . $targetUser->name;
+
+            Notification::send($admins, new EditProfileUpdate($message, $changes, $targetUser));
+        }
+    }
+
+    return response()->json([
+        'message' => 'User updated successfully.',
+        'user' => $targetUser
+    ]);
+}
+
     public function toggleStatus(Request $request)
     {
         $user = $request->user();

@@ -28,7 +28,7 @@ class RegisterUpdate extends Notification
         return [
         'message' => $this->message,
         'user_id' => $this->user->id, // <--- IMPORTANT: We need the ID
-        'type'    => 'new_user',      // <--- A tag to help React know where to go
+        'type'    => 'newUser',      // <--- A tag to help React know where to go
         'created_at' => now(),
     ];
     }

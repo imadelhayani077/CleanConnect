@@ -83,7 +83,10 @@ export const AppRouter = createBrowserRouter([
                 element: <RoleRoute />, // just requires auth
                 children: [
                     { path: "dashboard", element: <MainDashboard /> },
-                    { path: "dashboard/my-info", element: <UserInfo /> },
+                    {
+                        path: "dashboard/my_informations",
+                        element: <UserInfo />,
+                    },
                 ],
             },
 
@@ -91,12 +94,15 @@ export const AppRouter = createBrowserRouter([
             {
                 element: <RoleRoute requiredRole="admin" />,
                 children: [
-                    { path: "dashboard/users", element: <UsersList /> },
+                    { path: "dashboard/users_list", element: <UsersList /> },
 
-                    { path: "dashboard/bookings", element: <BookingManager /> },
+                    {
+                        path: "dashboard/bookings_list",
+                        element: <BookingManager />,
+                    },
                     { path: "dashboard/services", element: <ServiceManager /> },
                     {
-                        path: "dashboard/applications",
+                        path: "dashboard/sweepstar_requests",
                         element: <ApplicationManager />,
                     },
                 ],
@@ -106,15 +112,18 @@ export const AppRouter = createBrowserRouter([
             {
                 element: <RoleRoute requiredRole="client" />,
                 children: [
-                    { path: "dashboard/booking", element: <Booking /> },
+                    { path: "dashboard/booking_service", element: <Booking /> },
 
                     {
-                        path: "dashboard/booking-history",
+                        path: "dashboard/bookings_history",
                         element: <BookingHistory />,
                     },
-                    { path: "dashboard/address", element: <AddressManager /> },
                     {
-                        path: "dashboard/become-sweepstar",
+                        path: "dashboard/my_addresses",
+                        element: <AddressManager />,
+                    },
+                    {
+                        path: "dashboard/become_sweepstar",
                         element: <SweepstarApply />,
                     },
                 ],
@@ -124,8 +133,18 @@ export const AppRouter = createBrowserRouter([
             {
                 element: <RoleRoute requiredRole="sweepstar" />,
                 children: [
-                    { path: "dashboard/schedule", element: <MySchedule /> },
-                    { path: "dashboard/available", element: <AvailableJobs /> },
+                    {
+                        path: "dashboard/available_opportunities",
+                        element: <AvailableJobs />,
+                    },
+                    {
+                        path: "dashboard/current_missions",
+                        element: <MySchedule />,
+                    },
+                    {
+                        path: "dashboard/missions_history",
+                        element: <MySchedule />,
+                    },
                 ],
             },
 

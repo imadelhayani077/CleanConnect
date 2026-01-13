@@ -14,7 +14,6 @@ import {
     XCircle,
     Database,
     Zap,
-    AlertCircle,
 } from "lucide-react";
 import { useUser } from "@/Hooks/useAuth";
 import { useDashboard } from "@/Hooks/useDashboard";

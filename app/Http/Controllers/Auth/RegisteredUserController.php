@@ -40,7 +40,7 @@ class RegisteredUserController extends Controller
         $admins = User::where('role', 'admin')->get();
          Notification::send($admins, new RegisterUpdate(
                 "New user registered: " . $user->name,
-                $user->id
+                $user
             ));
         Auth::login($user);
         $request->session()->invalidate();

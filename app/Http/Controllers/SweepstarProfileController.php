@@ -42,7 +42,7 @@ class SweepstarProfileController extends Controller
 
         Notification::send($admins, new ApplicationUpdate(
         "New Sweepstar Application from " . $request->user()->name,
-        'info'
+        'info', 'applicationRequest'
     ));
 
         return response()->json([
@@ -82,7 +82,7 @@ class SweepstarProfileController extends Controller
             $user->update(['role' => 'sweepstar']);
             $user->notify(new ApplicationUpdate(
             "Congratulations! Your Sweepstar application has been approved. You can now accept jobs.",
-            'success'
+            'success', 'applicationResponse'
                     ));
             return response()->json([
                 'message' => 'Application approved. User is now a Sweepstar!',
@@ -101,7 +101,7 @@ class SweepstarProfileController extends Controller
         if ($user) {
         $user->notify(new ApplicationUpdate(
             "We are sorry, but your Sweepstar application was not successful at this time.",
-            'error'
+            'error', 'applicationResponse'
         ));
     }
         $profile->delete(); // Soft delete or force delete based on preference
