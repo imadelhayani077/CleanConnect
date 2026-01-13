@@ -5,7 +5,6 @@ import { useUsers, useAdminUpdateStatus } from "@/Hooks/useUsers";
 import {
     Loader2,
     Search,
-    ShieldAlert,
     Trash2,
     Ban,
     CheckCircle,
@@ -15,7 +14,6 @@ import {
     EyeOff,
     Pencil,
     Users,
-    TrendingUp,
     AlertCircle,
 } from "lucide-react";
 
@@ -56,8 +54,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Components
 import UserDetailModal from "./components/UserDetailModal";
-import UserEditProfileModal from "../GeneralPages/components/UserEditProfileModal";
+
 import AdminDeleteUserModal from "./components/AdminDeleteUserModal";
+import UserEditProfileModal from "../GeneralPages/components/UserEditProfileModal";
 
 export default function UsersList() {
     const { users, loading, error, refetch } = useUsers();

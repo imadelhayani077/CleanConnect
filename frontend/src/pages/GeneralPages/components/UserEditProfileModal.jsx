@@ -1,6 +1,4 @@
-// src/layout/NavBar/component/UserEditProfileModal.jsx
 import React, { useState, useEffect } from "react";
-
 import {
     Dialog,
     DialogContent,
@@ -13,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-
 import {
     Loader2,
     User,
@@ -26,10 +23,11 @@ import {
     Save,
     X,
     Briefcase,
+    Info,
 } from "lucide-react";
-
 import { useUpdateProfile } from "@/Hooks/useAuth";
 
+// ============== EDIT PROFILE MODAL ==============
 export default function UserEditProfileModal({
     user,
     editor,
@@ -37,7 +35,6 @@ export default function UserEditProfileModal({
     onClose,
 }) {
     const updateMutation = useUpdateProfile();
-
     const [status, setStatus] = useState({ type: null, message: "" });
     const [formData, setFormData] = useState({
         name: "",
@@ -86,7 +83,7 @@ export default function UserEditProfileModal({
 
         const payload = { ...formData };
         if (!payload.password) delete payload.password;
-        if (!editorIsAdmin) delete payload.role; // only admin can send role
+        if (!editorIsAdmin) delete payload.role;
 
         updateMutation.mutate(
             { id: user.id, data: payload },
@@ -95,8 +92,8 @@ export default function UserEditProfileModal({
                     setStatus({
                         type: "success",
                         message: isSelfEdit
-                            ? "Your profile has been updated successfully."
-                            : "User profile has been updated successfully.",
+                            ? "Your profile has been updated successfully! 🎉"
+                            : "User profile has been updated successfully! 🎉",
                     });
                     setFormData((prev) => ({
                         ...prev,
@@ -135,87 +132,91 @@ export default function UserEditProfileModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
-                <DialogHeader className="p-6 pb-4 border-b bg-background">
-                    <DialogTitle className="text-xl flex items-center gap-2">
-                        <User className="w-5 h-5 text-primary" />
-                        {isSelfEdit ? "Edit your profile" : "Edit user profile"}
-                    </DialogTitle>
-                    <DialogDescription>
-                        {isSelfEdit
-                            ? "Update your personal information. For security, confirm with your current password."
-                            : "You are editing this user’s account. Confirm the changes with your admin password."}
-                    </DialogDescription>
+            <DialogContent className="sm:max-w-[550px] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+                {/* Header */}
+                <DialogHeader className="p-6 pb-4 border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-slate-100/50 dark:to-slate-900/50">
+                    <div className="flex items-start justify-between">
+                        <div>
+                            <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <User className="w-5 h-5 text-primary" />
+                                </div>
+                                {isSelfEdit
+                                    ? "Edit Your Profile"
+                                    : "Edit User Profile"}
+                            </DialogTitle>
+                            <DialogDescription className="mt-2 text-sm">
+                                {isSelfEdit
+                                    ? "Update your personal information. Confirm with your current password for security."
+                                    : "You are editing this user's account. Confirm changes with your admin password."}
+                            </DialogDescription>
+                        </div>
+                    </div>
                 </DialogHeader>
 
+                {/* Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-5">
                     {status.message && (
-                        <div className="mb-2">
-                            <Alert
-                                variant={
-                                    status.type === "success"
-                                        ? "default"
-                                        : "destructive"
-                                }
+                        <Alert
+                            className={`animate-in slide-in-from-top-2 ${
+                                status.type === "success"
+                                    ? "border-green-200 dark:border-green-800/50 bg-green-50/80 dark:bg-green-900/20"
+                                    : "border-red-200 dark:border-red-800/50 bg-red-50/80 dark:bg-red-900/20"
+                            }`}
+                        >
+                            {status.type === "success" ? (
+                                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                            ) : (
+                                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+                            )}
+                            <AlertTitle
                                 className={
                                     status.type === "success"
-                                        ? "border-green-500/50 text-green-700 bg-green-50"
-                                        : ""
+                                        ? "text-green-900 dark:text-green-300"
+                                        : "text-red-900 dark:text-red-300"
                                 }
                             >
-                                {status.type === "success" ? (
-                                    <CheckCircle2 className="h-4 w-4" />
-                                ) : (
-                                    <AlertCircle className="h-4 w-4" />
-                                )}
-                                <AlertTitle>
-                                    {status.type === "success"
-                                        ? "Success"
-                                        : "Error"}
-                                </AlertTitle>
-                                <AlertDescription>
-                                    {status.message}
-                                </AlertDescription>
-                            </Alert>
-                        </div>
+                                {status.type === "success"
+                                    ? "Success"
+                                    : "Error"}
+                            </AlertTitle>
+                            <AlertDescription
+                                className={
+                                    status.type === "success"
+                                        ? "text-green-800 dark:text-green-400"
+                                        : "text-red-800 dark:text-red-400"
+                                }
+                            >
+                                {status.message}
+                            </AlertDescription>
+                        </Alert>
                     )}
 
-                    <form
-                        onSubmit={handleSubmit}
-                        className="space-y-5"
-                        id="edit-profile-form"
-                    >
+                    <div onSubmit={handleSubmit} className="space-y-5">
                         {/* Name */}
-                        <div className="space-y-2">
-                            <Label
-                                htmlFor="name"
-                                className="flex items-center gap-2"
-                            >
-                                <User className="w-4 h-4 text-muted-foreground" />
+                        <div className="space-y-2.5">
+                            <Label className="flex items-center gap-2 font-semibold">
+                                <User className="w-4 h-4 text-primary" />
                                 Full Name
                             </Label>
                             <Input
-                                id="name"
                                 name="name"
                                 value={formData.name}
                                 onChange={handleInputChange}
-                                placeholder="Full name"
+                                placeholder="Enter your full name"
                                 required
                                 disabled={updateMutation.isPending}
+                                className="h-11 rounded-lg"
                             />
                         </div>
 
                         {/* Email */}
-                        <div className="space-y-2">
-                            <Label
-                                htmlFor="email"
-                                className="flex items-center gap-2"
-                            >
-                                <Mail className="w-4 h-4 text-muted-foreground" />
+                        <div className="space-y-2.5">
+                            <Label className="flex items-center gap-2 font-semibold">
+                                <Mail className="w-4 h-4 text-primary" />
                                 Email Address
                             </Label>
                             <Input
-                                id="email"
                                 name="email"
                                 type="email"
                                 value={formData.email}
@@ -223,157 +224,159 @@ export default function UserEditProfileModal({
                                 disabled={
                                     !canEditEmail || updateMutation.isPending
                                 }
-                                placeholder="Email address"
+                                placeholder="your@email.com"
                                 required
+                                className="h-11 rounded-lg"
                             />
                             {!canEditEmail && (
-                                <p className="text-xs text-muted-foreground">
-                                    Only an admin can change the email address.
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Info className="w-3 h-3" />
+                                    Only administrators can change email
+                                    addresses
                                 </p>
                             )}
                         </div>
 
-                        {/* Role (only when admin edits another user) */}
+                        {/* Role - Admin only */}
                         {editorIsAdmin && !isSelfEdit && (
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="role"
-                                    className="flex items-center gap-2"
-                                >
-                                    <Briefcase className="w-4 h-4 text-muted-foreground" />
-                                    Role
+                            <div className="space-y-2.5">
+                                <Label className="flex items-center gap-2 font-semibold">
+                                    <Briefcase className="w-4 h-4 text-primary" />
+                                    User Role
                                 </Label>
                                 <select
-                                    id="role"
                                     name="role"
-                                    className="w-full border rounded-md px-3 py-2 text-sm bg-background"
+                                    className="w-full h-11 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-2 text-sm bg-background hover:border-primary/40 transition-colors focus:ring-2 focus:ring-primary/20 focus:border-primary"
                                     value={formData.role}
                                     onChange={handleInputChange}
                                     disabled={updateMutation.isPending}
                                 >
-                                    <option value="client">Client</option>
-                                    <option value="sweepstar">Sweepstar</option>
-                                    <option value="admin">Admin</option>
+                                    <option value="client">👤 Client</option>
+                                    <option value="sweepstar">
+                                        ⭐ Sweepstar (Worker)
+                                    </option>
+                                    <option value="admin">
+                                        🔑 Administrator
+                                    </option>
                                 </select>
-                                <p className="text-xs text-muted-foreground">
-                                    As admin you can switch this account between
-                                    client, sweepstar, or admin.
+                                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Info className="w-3 h-3" />
+                                    Switch between client, sweepstar, or admin
+                                    roles
                                 </p>
                             </div>
                         )}
 
                         {/* Phone */}
-                        <div className="space-y-2">
-                            <Label
-                                htmlFor="phone"
-                                className="flex items-center gap-2"
-                            >
-                                <Phone className="w-4 h-4 text-muted-foreground" />
+                        <div className="space-y-2.5">
+                            <Label className="flex items-center gap-2 font-semibold">
+                                <Phone className="w-4 h-4 text-primary" />
                                 Phone Number
                             </Label>
                             <Input
-                                id="phone"
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleInputChange}
-                                placeholder="Optional phone number"
+                                placeholder="(Optional) +1 (555) 000-0000"
                                 disabled={updateMutation.isPending}
+                                className="h-11 rounded-lg"
                             />
+                            <p className="text-xs text-muted-foreground">
+                                Optional - helps clients reach you
+                            </p>
                         </div>
 
-                        {/* New Password + Current/Admin Password */}
-                        <div className="pt-4 border-t border-dashed space-y-3">
-                            <div className="space-y-2">
-                                <Label
-                                    htmlFor="password"
-                                    className="flex items-center gap-2 text-muted-foreground"
-                                >
+                        {/* Password Section */}
+                        <div className="pt-4 border-t-2 border-dashed border-slate-200 dark:border-slate-700 space-y-4">
+                            <div className="space-y-2.5">
+                                <Label className="flex items-center gap-2 font-semibold text-muted-foreground">
                                     <Lock className="w-4 h-4" />
-                                    New Password (optional)
+                                    New Password
                                 </Label>
                                 <Input
-                                    id="password"
                                     name="password"
                                     type="password"
                                     value={formData.password}
                                     onChange={handleInputChange}
                                     placeholder="Leave blank to keep current password"
                                     disabled={updateMutation.isPending}
+                                    className="h-11 rounded-lg"
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    Optional - leave blank to keep your current
+                                    password
+                                </p>
                             </div>
 
-                            <div className="p-4 bg-orange-50/50 rounded-lg border border-orange-200/50 space-y-3">
+                            {/* Security Confirmation */}
+                            <div className="p-4 rounded-xl bg-gradient-to-br from-amber-50 dark:from-amber-900/20 to-orange-50/50 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800/50 space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <Label
-                                        htmlFor="current_password"
-                                        className="flex items-center gap-2 text-foreground font-semibold"
-                                    >
-                                        <KeyRound className="w-4 h-4 text-orange-500" />
+                                    <Label className="flex items-center gap-2 text-foreground font-bold">
+                                        <KeyRound className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                                         {isSelfEdit
                                             ? "Current Password"
                                             : "Admin Password"}
-                                        <span className="text-xs text-destructive font-semibold">
-                                            *
+                                        <span className="text-xs bg-red-500/20 text-red-700 dark:text-red-400 px-2 py-0.5 rounded font-semibold">
+                                            REQUIRED
                                         </span>
                                     </Label>
-                                    <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                                        Required to save changes
-                                    </span>
                                 </div>
 
                                 <Input
-                                    id="current_password"
                                     name="current_password"
                                     type="password"
                                     value={formData.current_password}
                                     onChange={handleInputChange}
                                     placeholder={
                                         isSelfEdit
-                                            ? "Enter your current password to confirm"
-                                            : "Enter your admin password to confirm"
+                                            ? "Enter your current password"
+                                            : "Enter your admin password"
                                     }
-                                    className="bg-background border-orange-200 focus-visible:ring-orange-500"
+                                    className="h-11 rounded-lg bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-800/50 focus-visible:ring-amber-500 focus-visible:border-amber-500"
                                     required
                                     disabled={updateMutation.isPending}
                                 />
 
-                                <p className="text-xs text-muted-foreground">
-                                    For security, you must enter this password
-                                    before any changes are applied.
+                                <p className="text-xs text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                                    <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                                    For security, you must confirm with your
+                                    password before changes are applied.
                                 </p>
                             </div>
                         </div>
-                    </form>
+                    </div>
                 </div>
 
-                <DialogFooter className="p-6 pt-2 border-t bg-background">
+                {/* Footer */}
+                <DialogFooter className="p-6 pt-4 border-t border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-slate-100/50 dark:to-slate-900/50 flex gap-3 justify-end">
                     <Button
                         type="button"
                         variant="outline"
                         onClick={onClose}
                         disabled={updateMutation.isPending}
+                        className="gap-2"
                     >
-                        <X className="w-4 h-4 mr-2" />
+                        <X className="w-4 h-4" />
                         Cancel
                     </Button>
                     <Button
-                        type="submit"
-                        form="edit-profile-form"
+                        type="button"
+                        onClick={handleSubmit}
                         disabled={
                             updateMutation.isPending ||
                             !formData.current_password
                         }
-                        className="gap-2"
+                        className="gap-2 bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all"
                     >
                         {updateMutation.isPending ? (
                             <>
                                 <Loader2 className="w-4 h-4 animate-spin" />
-                                Saving...
+                                Saving Changes...
                             </>
                         ) : (
                             <>
                                 <Save className="w-4 h-4" />
-                                Save changes
+                                Save Changes
                             </>
                         )}
                     </Button>
