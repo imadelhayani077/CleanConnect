@@ -5,21 +5,23 @@ import { Calendar, Trophy, Sparkles, Zap } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-import { useCompleteJob, useMySchedule } from "@/Hooks/useBookings";
-import ScheduleJobCard from "./components/ScheduleJobCard";
-import EmptyScheduleState from "./components/EmptyScheduleState";
+import { useCompleteMission, useMissionsHistory } from "@/Hooks/useBookings";
+import MissionHistoryCard from "./components/MissionHistoryCard";
+import EmptyMissionsState from "./components/EmptyMissionsState";
 
-export default function MySchedule() {
+export default function MissionsHistory() {
     const navigate = useNavigate();
-    const { data: jobs = [], isLoading } = useMySchedule();
-    const { mutateAsync: completeJob, isPending } = useCompleteJob();
+    const { data: jobs = [], isLoading } = useMissionsHistory();
+    const { mutateAsync: completeMission, isPending } = useCompleteMission();
     const [completingId, setCompletingId] = useState(null);
 
     const handleComplete = async (id) => {
-        if (window.confirm("Excellent work! Confirm this job is completed?")) {
+        if (
+            window.confirm("Excellent work! Confirm this mission is completed?")
+        ) {
             setCompletingId(id);
             try {
-                await completeJob(id);
+                await completeMission(id);
             } finally {
                 setCompletingId(null);
             }
@@ -64,7 +66,7 @@ export default function MySchedule() {
                         </div>
                         <div>
                             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                                My Schedule
+                                Missions History
                             </h1>
                             <p className="text-muted-foreground text-sm md:text-base mt-1">
                                 {jobs.length === 0
@@ -92,7 +94,7 @@ export default function MySchedule() {
                             Amazing Progress! 🚀
                         </AlertTitle>
                         <AlertDescription className="text-green-800 dark:text-green-400 mt-1">
-                            You've completed {completedCount} job
+                            You've completed {completedCount} mission
                             {completedCount !== 1 ? "s" : ""}. Keep up the
                             momentum to boost your ratings!
                         </AlertDescription>
@@ -104,13 +106,13 @@ export default function MySchedule() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {jobs.length === 0 ? (
                     <div className="col-span-full">
-                        <EmptyScheduleState
+                        <EmptyMissionsState
                             onFindJobs={() => navigate("/dashboard/available")}
                         />
                     </div>
                 ) : (
                     jobs.map((job) => (
-                        <ScheduleJobCard
+                        <MissionHistoryCard
                             key={job.id}
                             job={job}
                             onComplete={handleComplete}

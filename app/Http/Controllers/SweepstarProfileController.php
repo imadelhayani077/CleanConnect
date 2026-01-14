@@ -140,5 +140,19 @@ class SweepstarProfileController extends Controller
             'message' => $profile->is_available ? 'You are now Online.' : 'You are now Offline.',
             'is_available' => $profile->is_available
         ]);
+
+    }
+    public function checkApplicationStatus(Request $request)
+    {
+        $profile = SweepstarProfile::where('user_id', $request->user()->id)->first();
+
+        if (!$profile) {
+            return response()->json(['status' => 'none'], 200);
+        }
+
+        return response()->json([
+            'status' => 'found',
+            'data' => $profile
+        ], 200);
     }
 }

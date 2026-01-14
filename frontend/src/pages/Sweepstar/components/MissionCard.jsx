@@ -30,7 +30,7 @@ const formatCurrency = (amount) =>
         currency: "USD",
     }).format(amount);
 
-export default function JobCard({
+export default function MissionCard({
     job,
     onAccept,
     isProcessing,
@@ -151,7 +151,7 @@ export default function JobCard({
                     ) : (
                         <>
                             <Zap className="w-4 h-4 mr-2" />
-                            Accept Job
+                            Accept Mission
                             <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-0.5 transition-transform" />
                         </>
                     )}

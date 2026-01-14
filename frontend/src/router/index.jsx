@@ -30,11 +30,11 @@ import AddressManager from "@/pages/Client/AddressManager";
 import BookingHistory from "@/pages/Client/BookingHistory";
 import SweepstarApply from "@/pages/Client/SweepstarApply";
 
-// Sweepstar
-import MySchedule from "../pages/Sweepstar/MySchedule";
-import AvailableJobs from "@/pages/Sweepstar/AvailableJobs";
+
 
 import { useUser } from "@/Hooks/useAuth";
+import MissionsHistory from "../pages/Sweepstar/MissionsHistory";
+import AvailableMissions from "@/pages/Sweepstar/AvailableMissions";
 
 // GuestOnly: redirect logged-in users away from login/signup
 const GuestOnly = ({ children }) => {
@@ -134,16 +134,16 @@ export const AppRouter = createBrowserRouter([
                 element: <RoleRoute requiredRole="sweepstar" />,
                 children: [
                     {
-                        path: "dashboard/available_opportunities",
-                        element: <AvailableJobs />,
+                        path: "dashboard/available_missions",
+                        element: <AvailableMissions />,
                     },
                     {
                         path: "dashboard/current_missions",
-                        element: <MySchedule />,
+                        element: <MissionsHistory />,
                     },
                     {
                         path: "dashboard/missions_history",
-                        element: <MySchedule />,
+                        element: <MissionsHistory/>,
                     },
                 ],
             },

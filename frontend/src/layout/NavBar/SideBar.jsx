@@ -62,8 +62,8 @@ export default function Sidebar() {
                 icon: UserRoundCog,
             },
             {
-                id: "availableOpportunities",
-                label: "Available Opportunities",
+                id: "availableMissions",
+                label: "Available Missions",
                 icon: ListChecks,
             },
             {
@@ -112,7 +112,7 @@ export default function Sidebar() {
         sweepstarRequests: "/dashboard/sweepstar_requests",
 
         // sweepstar
-        availableOpportunities: "/dashboard/available_opportunities",
+        availableMissions: "/dashboard/available_missions",
         currentMissions: "/dashboard/current_missions",
         missionsHistory: "/dashboard/missions_history",
 

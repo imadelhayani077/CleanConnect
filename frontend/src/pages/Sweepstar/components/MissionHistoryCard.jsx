@@ -45,7 +45,7 @@ const getJobStatus = (jobDate) => {
     };
 };
 
-export default function ScheduleJobCard({ job, onComplete, isCompleting }) {
+export default function MissionHistoryCard({ job, onComplete, isCompleting }) {
     const scheduledDate = new Date(job.scheduled_at);
     const status = getJobStatus(job.scheduled_at);
     const isCompleted = job.status === "completed";
@@ -225,7 +225,7 @@ export default function ScheduleJobCard({ job, onComplete, isCompleting }) {
                         className="w-full h-11 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-lg opacity-90"
                     >
                         <Trophy className="w-4 h-4 mr-2" />
-                        Job Completed! 🎉
+                        Mission Completed! 🎉
                     </Button>
                 )}
             </div>

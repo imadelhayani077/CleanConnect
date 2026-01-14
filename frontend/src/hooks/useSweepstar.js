@@ -96,6 +96,18 @@ export const useApplyForSweepstar = () => {
         },
     });
 };
+
+export const useCheckApplicationStatus = () => {
+    return useQuery({
+        queryKey: ["sweepstar", "application-status"],
+        queryFn: async () => {
+            const response = await ClientApi.checkApplicationStatus();
+            return response.data;
+        },
+        retry: false, // Don't retry if it fails (unless it's a network error)
+    });
+};
+
 export const useToggleAvailability = () => {
     const queryClient = useQueryClient();
 

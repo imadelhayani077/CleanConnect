@@ -53,9 +53,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Components
-import UserDetailModal from "./components/UserDetailModal";
+import UserDetailModal from "./components/Users/UserDetailModal";
 
-import AdminDeleteUserModal from "./components/AdminDeleteUserModal";
+import AdminDeleteUserModal from "./components/Users/AdminDeleteUserModal";
 import UserEditProfileModal from "../GeneralPages/components/UserEditProfileModal";
 
 export default function UsersList() {

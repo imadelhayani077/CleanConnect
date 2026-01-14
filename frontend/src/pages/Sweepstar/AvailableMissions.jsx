@@ -11,13 +11,13 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-import { useAvailableJobs, useAcceptJob } from "@/Hooks/useBookings";
-import JobCard from "./components/JobCard";
-import EmptyJobsState from "./components/EmptyJobsState";
+import { useAvailableMissions, useAcceptMission } from "@/Hooks/useBookings";
+import EmptyMissionsState from "./components/EmptyMissionsState";
+import MissionCard from "./components/MissionCard";
 
-export default function AvailableJobs() {
-    const { data: jobs = [], isLoading } = useAvailableJobs();
-    const { mutateAsync: acceptJob } = useAcceptJob();
+export default function AvailableMissions() {
+    const { data: jobs = [], isLoading } = useAvailableMissions();
+    const { mutateAsync: acceptMission } = useAcceptMission();
 
     const [processingId, setProcessingId] = useState(null);
     const [acceptError, setAcceptError] = useState(null);
@@ -29,9 +29,9 @@ export default function AvailableJobs() {
         setAcceptSuccess(null);
 
         try {
-            await acceptJob(jobId);
+            await acceptMission(jobId);
             setAcceptSuccess(
-                "Congratulations! You've accepted this job. Check your schedule for details."
+                "Congratulations! You've accepted this mission. Check your schedule for details."
             );
         } catch (error) {
             console.error("Acceptance failed", error);
@@ -46,7 +46,7 @@ export default function AvailableJobs() {
 
     const handleViewDetails = (jobId) => {
         // TODO: Add your function here to handle view details
-        console.log("View details for job:", jobId);
+        console.log("View details for mission:", jobId);
     };
 
     if (isLoading) {
@@ -58,10 +58,10 @@ export default function AvailableJobs() {
                     </div>
                     <div>
                         <p className="text-foreground font-semibold">
-                            Searching for opportunities...
+                            Searching for Missions...
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Finding jobs near you
+                            Finding missions near you
                         </p>
                     </div>
                 </div>
@@ -80,12 +80,12 @@ export default function AvailableJobs() {
                         </div>
                         <div>
                             <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-                                Available Opportunities
+                                Available Missions
                             </h1>
                             <p className="text-muted-foreground text-sm md:text-base mt-1">
                                 {jobs.length === 0
-                                    ? "Check back soon for new jobs"
-                                    : `${jobs.length} job${
+                                    ? "Check back soon for new missions"
+                                    : `${jobs.length} mission${
                                           jobs.length !== 1 ? "s" : ""
                                       } ready for you to grab`}
                             </p>
@@ -95,7 +95,8 @@ export default function AvailableJobs() {
                     {jobs.length > 0 && (
                         <Badge className="w-fit text-base px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-white hover:from-primary/95 hover:to-primary transition-all rounded-full font-semibold">
                             <Zap className="w-4 h-4 mr-1.5" />
-                            {jobs.length} Live Job{jobs.length !== 1 ? "s" : ""}
+                            {jobs.length} Live Mission
+                            {jobs.length !== 1 ? "s" : ""}
                         </Badge>
                     )}
                 </div>
@@ -105,11 +106,11 @@ export default function AvailableJobs() {
                     <Alert className="border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10">
                         <TrendingUp className="h-4 w-4 text-primary" />
                         <AlertTitle className="text-foreground font-semibold">
-                            Great Earning Opportunities Available! 🚀
+                            Great Earning Missions Available! 🚀
                         </AlertTitle>
                         <AlertDescription className="text-muted-foreground mt-1">
-                            Select jobs that fit your schedule. Accept quickly
-                            to boost your rating and earn more!
+                            Select missions that fit your schedule. Accept
+                            quickly to boost your rating and earn more!
                         </AlertDescription>
                     </Alert>
                 )}
@@ -123,7 +124,7 @@ export default function AvailableJobs() {
                 >
                     <AlertCircle className="h-5 w-5" />
                     <AlertTitle className="font-semibold">
-                        Could Not Accept Job
+                        Could Not Accept Mission ❌
                     </AlertTitle>
                     <AlertDescription className="mt-2 text-sm">
                         {acceptError}
@@ -135,7 +136,7 @@ export default function AvailableJobs() {
                 <Alert className="border-green-200 dark:border-green-800/50 bg-green-50/80 dark:bg-green-900/20 animate-in slide-in-from-top-2">
                     <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
                     <AlertTitle className="text-green-900 dark:text-green-300 font-semibold">
-                        Job Accepted! ✨
+                        Mission Accepted! ✨
                     </AlertTitle>
                     <AlertDescription className="text-green-800 dark:text-green-400 mt-2 text-sm">
                         {acceptSuccess}
@@ -147,11 +148,11 @@ export default function AvailableJobs() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {jobs.length === 0 ? (
                     <div className="col-span-full">
-                        <EmptyJobsState />
+                        <EmptyMissionsState />
                     </div>
                 ) : (
                     jobs.map((job) => (
-                        <JobCard
+                        <MissionCard
                             key={job.id}
                             job={job}
                             onAccept={handleAccept}

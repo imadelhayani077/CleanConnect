@@ -33,37 +33,37 @@ export const useAllBookings = () => {
     });
 };
 
-// 3. Sweepstar: Get Available Jobs
-export const useAvailableJobs = () => {
+// 3. Sweepstar: Get Available Missions
+export const useAvailableMissions = () => {
     return useQuery({
-        queryKey: ["sweepstar", "jobs"],
+        queryKey: ["sweepstar", "missions"],
         queryFn: async () => {
-            const response = await SweepstarApi.getAvailableJobs();
-            return response.data.jobs || [];
+            const response = await SweepstarApi.getAvailableMissions();
+            return response.data.missions || [];
         },
     });
 };
 
 // 4. Sweepstar: Get My Schedule
-export const useMySchedule = () => {
+export const useMissionsHistory = () => {
     return useQuery({
-        queryKey: ["sweepstar", "schedule"],
+        queryKey: ["sweepstar", "missionsHistory"],
         queryFn: async () => {
-            const response = await SweepstarApi.getMySchedule();
+            const response = await SweepstarApi.getMissionsHistory();
             return response.data.jobs || [];
         },
     });
 };
-export const useCompleteJob = () => {
+export const useCompleteMission = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (bookingId) => {
-            return await SweepstarApi.completeJob(bookingId);
+            return await SweepstarApi.completeMission(bookingId);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({
-                queryKey: ["sweepstar", "schedule"],
+                queryKey: ["sweepstar", "missionsHistory"],
             });
             // Also invalidate history if needed
             queryClient.invalidateQueries({ queryKey: ["bookings"] });
@@ -111,25 +111,27 @@ export const useEditBooking = () => {
     });
 };
 
-// 7. Sweepstar: Accept a Job
-export const useAcceptJob = () => {
+// 7. Sweepstar: Accept a Mission
+export const useAcceptMission = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
         mutationFn: async (bookingId) => {
-            return await SweepstarApi.acceptJob(bookingId);
+            return await SweepstarApi.acceptMission(bookingId);
         },
         onSuccess: () => {
             // Complex invalidation:
             // 1. The job is no longer "available", so refresh available list
-            queryClient.invalidateQueries({ queryKey: ["sweepstar", "jobs"] });
+            queryClient.invalidateQueries({
+                queryKey: ["sweepstar", "missions"],
+            });
             // 2. The job is now in "my schedule", so refresh schedule
             queryClient.invalidateQueries({
-                queryKey: ["sweepstar", "schedule"],
+                queryKey: ["sweepstar", "missionsHistory"],
             });
         },
         onError: (error) => {
-            console.error("Hook: Accept Job Failed", error);
+            console.error("Hook: Accept Mission Failed", error);
         },
     });
 };

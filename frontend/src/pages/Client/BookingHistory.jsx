@@ -12,10 +12,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { useMyBookings } from "@/Hooks/useBookings";
-import BookingCard from "./components/BookingCard";
-import ReviewModal from "./components/ReviewModal";
-import EditBookingModal from "./components/EditBookingModal";
-import CancelBookingModal from "./components/CancelBookingModal";
+import BookingCard from "./components/Booking/BookingCard";
+import ReviewModal from "./components/Review/ReviewModal";
+import EditBookingModal from "./components/Booking/EditBookingModal";
+import CancelBookingModal from "./components/Booking/CancelBookingModal";
 
 export default function BookingHistory() {
     const navigate = useNavigate();

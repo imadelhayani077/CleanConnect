@@ -159,13 +159,13 @@ export default function SweepstarDashboard() {
 
                             <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
                                 {isAvailable
-                                    ? "You're online and ready to receive job offers. Keep up the great work!"
-                                    : "Go online to start receiving job opportunities in your area."}
+                                    ? "You're online and ready to receive mission offers. Keep up the great work!"
+                                    : "Go online to start receiving mission opportunities in your area."}
                             </p>
 
                             <div className="flex items-center gap-2">
                                 <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                    {stats.completed} jobs completed
+                                    {stats.completed} Missions Completed
                                 </span>
                                 <span className="text-slate-400 dark:text-slate-600">
                                     •
@@ -238,8 +238,8 @@ export default function SweepstarDashboard() {
 
                                     <p className="text-xs text-slate-600 dark:text-slate-400 text-center">
                                         {isAvailable
-                                            ? "You will receive job notifications"
-                                            : "Activate to receive nearby job offers"}
+                                            ? "You will receive mission notifications"
+                                            : "Activate to receive nearby mission offers"}
                                     </p>
                                 </CardContent>
                             </Card>
@@ -252,7 +252,7 @@ export default function SweepstarDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                     icon={Briefcase}
-                    label="Jobs Completed"
+                    label="Missions Completed"
                     value={stats.completed}
                     subtext="Total successful cleanings"
                     color="blue"
@@ -268,7 +268,7 @@ export default function SweepstarDashboard() {
                     icon={DollarSign}
                     label="Total Earnings"
                     value={formatCurrency(stats.earnings)}
-                    subtext="From completed jobs"
+                    subtext="From completed Missions"
                     color="green"
                 />
             </div>
@@ -282,7 +282,7 @@ export default function SweepstarDashboard() {
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-foreground">
-                                Upcoming Jobs
+                                Upcoming Missions
                             </h2>
                             <p className="text-sm text-muted-foreground">
                                 {upcomingJobs.length} scheduled session
@@ -389,13 +389,13 @@ export default function SweepstarDashboard() {
                             </div>
 
                             <h3 className="text-xl font-semibold text-foreground mb-2">
-                                No Jobs Yet
+                                No Missions Yet
                             </h3>
 
                             <p className="text-muted-foreground max-w-sm mb-6">
-                                You don't have any upcoming jobs. Turn on your
-                                availability status to start receiving offers
-                                from nearby clients.
+                                You don't have any upcoming missions. Turn on
+                                your availability status to start receiving
+                                offers from nearby clients.
                             </p>
 
                             {!isAvailable && (
@@ -406,7 +406,7 @@ export default function SweepstarDashboard() {
                                     </AlertTitle>
                                     <AlertDescription className="text-yellow-800 dark:text-yellow-400 text-xs mt-1">
                                         Activate your status above to start
-                                        receiving job opportunities
+                                        receiving Mission opportunities
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -423,7 +423,7 @@ export default function SweepstarDashboard() {
                         You're Doing Great! 🚀
                     </AlertTitle>
                     <AlertDescription className="text-muted-foreground mt-2">
-                        You have {upcomingJobs.length} upcoming job
+                        You have {upcomingJobs.length} upcoming Mission
                         {upcomingJobs.length !== 1 ? "s" : ""}. Keep delivering
                         excellent service to increase your ratings and earn more
                         opportunities!

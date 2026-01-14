@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import AddressCard from "./components/AddressCard";
-import AddAddressForm from "./components/AddAddressForm";
+import AddressCard from "./components/Address/AddressCard";
+import AddAddressForm from "./components/Address/AddAddressForm";
 
 export default function AddressManager() {
     const { addresses, loading, error, deleteAddress } = useAddress();

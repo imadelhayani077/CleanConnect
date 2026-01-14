@@ -1,19 +1,19 @@
 import { axiosClient } from "@/api/axios";
 
 const SweepstarApi = {
-    getAvailableJobs: async () => {
-        return await axiosClient.get("/api/sweepstar/available-jobs");
+    getAvailableMissions: async () => {
+        return await axiosClient.get("/api/sweepstar/available-missions");
     },
 
-    getMySchedule: async () => {
-        return await axiosClient.get("/api/sweepstar/my-schedule");
+    getMissionsHistory: async () => {
+        return await axiosClient.get("/api/sweepstar/missions-history");
     },
 
-    acceptJob: async (bookingId) => {
+    acceptMission: async (bookingId) => {
         return await axiosClient.post(`/api/bookings/${bookingId}/accept`);
     },
     // Add this function to the object
-    completeJob: async (bookingId) => {
+    completeMission: async (bookingId) => {
         return await axiosClient.post(`/api/bookings/${bookingId}/complete`);
     },
     toggleAvailability: async () => {

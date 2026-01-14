@@ -82,7 +82,9 @@ const ClientApi = {
     applyToBecomeSweepstar: async (data) => {
         return await axiosClient.post("/api/sweepstar/apply", data);
     },
-
+    checkApplicationStatus: async () => {
+        return await axiosClient.get("/api/check-application");
+    },
     // --- REVIEWS ---
     submitReview: async (data) => {
         return await axiosClient.post("/api/reviews", data);

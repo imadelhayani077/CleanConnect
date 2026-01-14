@@ -260,7 +260,7 @@ export default function UserInfo() {
                                         </h3>
                                         <p className="text-muted-foreground">
                                             {isActive
-                                                ? "Your account is visible and active. You can receive jobs and bookings."
+                                                ? "Your account is visible and active. You can receive missions and bookings."
                                                 : "Your account is currently disabled. You won't receive new opportunities."}
                                         </p>
                                     </div>

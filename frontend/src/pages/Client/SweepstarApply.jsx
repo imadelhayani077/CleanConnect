@@ -1,15 +1,24 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sparkles, DollarSign, CheckCircle2, Shield } from "lucide-react";
-import { useApplyForSweepstar } from "@/Hooks/useSweepstar";
-import BecomeProForm from "./components/BecomeProForm";
+import { Sparkles, Shield, Loader2 } from "lucide-react"; // Added Loader2
+import {
+    useApplyForSweepstar,
+    useCheckApplicationStatus,
+} from "@/Hooks/useSweepstar"; // Import the new hook
+import BecomeProForm from "./components/SweepstarRequest/BecomeProForm";
+import SweepstarApplicationStatusModal from "./components/SweepstarRequest/SweepstarApplicationStatusModal";
 
 export default function SweepstarApply() {
-    const navigate = useNavigate();
-    const { mutateAsync: applyMutation, isPending } = useApplyForSweepstar();
+    // 1. Fetch current status on load
+    const { data: existingApp, isLoading: isLoadingStatus } =
+        useCheckApplicationStatus();
 
+    const { mutateAsync: applyMutation, isPending } = useApplyForSweepstar();
     const [submitError, setSubmitError] = useState(null);
     const [submitSuccess, setSubmitSuccess] = useState(null);
+
+    // 2. Check if we should show the "Pending" modal
+    // Condition: We have data from the backend AND the status is 'found'
+    const hasPendingApplication = existingApp?.status === "found";
 
     const handleSubmit = async (values) => {
         setSubmitError(null);
@@ -20,61 +29,52 @@ export default function SweepstarApply() {
             setSubmitSuccess(
                 "We will review your profile and get back to you shortly."
             );
-            setTimeout(() => {
-                navigate("/dashboard");
-            }, 2000);
+            // The query invalidation will handle the UI update,
+            // but we can also force a refresh of the status here if needed.
         } catch (error) {
             console.error("Application Error:", error);
-            setSubmitError(
-                error?.response?.data?.message ||
-                    "Something went wrong. Please try again."
-            );
+            const status = error?.response?.status;
+            // If backend says 409, it means we actually do have a pending app
+            if (status === 409) {
+                window.location.reload(); // Simple way to re-trigger the check
+            } else {
+                setSubmitError(
+                    error?.response?.data?.message || "Something went wrong."
+                );
+            }
         }
     };
 
-    return (
-        <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12 px-6 flex justify-center">
-            {/* Decorative Elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-                <div
-                    className="absolute -bottom-8 left-20 w-72 h-72 bg-secondary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"
-                    style={{ animationDelay: "2s" }}
-                ></div>
+    // 3. Show Loading State while checking backend
+    if (isLoadingStatus) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
+        );
+    }
 
-            <div className="w-full max-w-2xl relative z-10">
+    // 4. If application exists, SHOW MODAL ONLY (Hide Form)
+    if (hasPendingApplication || submitSuccess) {
+        return <SweepstarApplicationStatusModal isPendingOnly={true} />;
+    }
+
+    // 5. Otherwise, show the normal page
+    return (
+        <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-4xl mx-auto space-y-8">
                 {/* Header Section */}
-                <div className="mb-8 text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl mb-4 shadow-lg">
-                        <Sparkles className="w-8 h-8 text-primary-foreground" />
+                <div className="text-center space-y-4">
+                    <div className="inline-flex p-3 rounded-full bg-primary/10 mb-4">
+                        <Sparkles className="w-8 h-8 text-primary" />
                     </div>
-                    <h1 className="text-4xl font-bold tracking-tight text-foreground mb-2">
-                        Join as a Sweepstar
+                    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
+                        Become a <span className="text-primary">Sweepstar</span>
                     </h1>
-                    <p className="text-lg text-muted-foreground max-w-md mx-auto">
-                        Turn your cleaning expertise into a thriving income
-                        stream
+                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                        Join our elite team of professionals. Set your own
+                        rates, manage your schedule, and grow your business.
                     </p>
-                </div>
-
-                {/* Benefits Preview */}
-                <div className="grid grid-cols-3 gap-3 mb-8">
-                    {[
-                        { icon: Sparkles, label: "Flexible Work" },
-                        { icon: DollarSign, label: "Earn More" },
-                        { icon: CheckCircle2, label: "Be Your Boss" },
-                    ].map((benefit, idx) => (
-                        <div
-                            key={idx}
-                            className="bg-card border border-border rounded-lg p-4 text-center hover:shadow-md transition-all duration-200 hover:border-primary"
-                        >
-                            <benefit.icon className="w-6 h-6 text-primary mx-auto mb-2" />
-                            <p className="text-sm font-medium text-foreground">
-                                {benefit.label}
-                            </p>
-                        </div>
-                    ))}
                 </div>
 
                 {/* Form Card */}
@@ -91,9 +91,9 @@ export default function SweepstarApply() {
                         <Shield className="w-4 h-4 text-primary" />
                         <span>Secure</span>
                     </div>
-                    <div className="w-1 h-1 bg-border rounded-full"></div>
+                    <div className="w-1 h-1 bg-border rounded-full" />
                     <span>Fast Processing</span>
-                    <div className="w-1 h-1 bg-border rounded-full"></div>
+                    <div className="w-1 h-1 bg-border rounded-full" />
                     <span>No Hidden Fees</span>
                 </div>
             </div>

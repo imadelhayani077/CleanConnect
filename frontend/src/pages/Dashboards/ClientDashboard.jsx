@@ -172,7 +172,9 @@ export default function ClientDashboard() {
 
                     <div className="mt-8 flex flex-wrap gap-3">
                         <Button
-                            onClick={() => navigate("/dashboard/booking")}
+                            onClick={() =>
+                                navigate("/dashboard/booking_service")
+                            }
                             className="gap-2 h-11 bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg"
                         >
                             <Zap className="w-4 h-4" />
@@ -181,7 +183,7 @@ export default function ClientDashboard() {
                         </Button>
                         <Button
                             onClick={() =>
-                                navigate("/dashboard/booking-history")
+                                navigate("/dashboard/bookings_history")
                             }
                             variant="outline"
                             className="gap-2 h-11"
@@ -196,11 +198,11 @@ export default function ClientDashboard() {
             {/* Quick Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <DashboardCard
-                    title="Upcoming Jobs"
+                    title="Active Bookings"
                     value={clientStats?.data.active_bookings || 0}
                     description="Clean sessions scheduled for you"
                     icon={Calendar}
-                    onClick={() => navigate("/dashboard/booking-history")}
+                    onClick={() => navigate("/dashboard/bookings_history")}
                     highlight={clientStats?.data.active_bookings > 0}
                 />
 
@@ -209,7 +211,7 @@ export default function ClientDashboard() {
                     value={clientStats?.data.address_count || 0}
                     description="Locations ready for booking"
                     icon={MapPin}
-                    onClick={() => navigate("/dashboard/address")}
+                    onClick={() => navigate("/dashboard/my_addresses")}
                 />
 
                 <DashboardCard
@@ -219,7 +221,7 @@ export default function ClientDashboard() {
                         clientStats?.total_bookings || 0
                     } perfect cleanings`}
                     icon={Wallet}
-                    onClick={() => navigate("/dashboard/booking-history")}
+                    onClick={() => navigate("/dashboard/bookings_history")}
                 />
             </div>
 

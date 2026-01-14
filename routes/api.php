@@ -30,7 +30,7 @@ Route::post('/register', [RegisteredUserController::class, 'store'])->name('regi
 Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
-
+Route::get('/check-application', [SweepstarProfileController::class, 'checkApplicationStatus']);
     // --- A. Core User Data ---
     Route::get('/user', function (Request $request) {
         return $request->user();
@@ -110,9 +110,9 @@ Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
         // Availability Toggle
         Route::post('/sweepstar/availability', [SweepstarProfileController::class, 'toggleAvailability']);
 
-        // Job Operations
-        Route::get('/sweepstar/available-jobs', [BookingController::class, 'availableJobs']);
-        Route::get('/sweepstar/my-schedule', [BookingController::class, 'mySchedule']);
+        // Mission Operations
+        Route::get('/sweepstar/available-missions', [BookingController::class, 'availableJobs']);
+        Route::get('/sweepstar/missions-history', [BookingController::class, 'mySchedule']);
 
         // Job Actions
         Route::post('/bookings/{id}/accept', [BookingController::class, 'acceptJob']);
