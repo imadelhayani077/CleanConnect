@@ -1,4 +1,3 @@
-// src/components/booking/BookingsTable.jsx
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,35 +63,35 @@ export default function BookingsTable({
     isMutating,
 }) {
     return (
-        <Card className="rounded-xl border-border/60 bg-background/50 backdrop-blur-sm overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+        <Card className="rounded-xl border-slate-200 dark:border-slate-800 shadow-lg overflow-hidden">
+            <div className="w-full overflow-x-hidden">
+                <table className="w-full table-fixed">
                     <thead>
-                        <tr className="border-b border-border/60 bg-muted/30 hover:bg-muted/30">
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                        <tr className="border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-slate-100/50 dark:to-slate-900/50">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Ref ID
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Client
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Sweepstar
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Location
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Schedule
                             </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Status
                             </th>
-                            <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            <th className="px-6 py-4 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">
                                 Actions
                             </th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border/40">
+                    <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                         {bookings.length === 0 ? (
                             <tr>
                                 <td
@@ -101,11 +100,12 @@ export default function BookingsTable({
                                 >
                                     <div className="flex flex-col items-center gap-3">
                                         <CalendarDays className="w-12 h-12 text-muted-foreground/20" />
-                                        <p className="font-medium text-muted-foreground">
+                                        <p className="font-semibold text-muted-foreground">
                                             No bookings found
                                         </p>
                                         <p className="text-sm text-muted-foreground/70">
-                                            Try adjusting your filters
+                                            Try adjusting your filters or create
+                                            a new booking
                                         </p>
                                     </div>
                                 </td>
@@ -114,9 +114,9 @@ export default function BookingsTable({
                             bookings.map((booking) => (
                                 <tr
                                     key={booking.id}
-                                    className="border-b border-border/40 hover:bg-muted/20 transition-colors"
+                                    className="border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                 >
-                                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground font-medium">
+                                    <td className="px-6 py-4 font-mono text-xs font-bold text-primary">
                                         #
                                         {booking.id.toString().padStart(4, "0")}
                                     </td>
@@ -130,7 +130,7 @@ export default function BookingsTable({
                                                 ) || "U"}
                                             </div>
                                             <div className="min-w-0">
-                                                <div className="font-medium text-foreground truncate">
+                                                <div className="font-semibold text-foreground truncate text-sm">
                                                     {booking.user?.name ||
                                                         "Unknown"}
                                                 </div>
@@ -167,8 +167,8 @@ export default function BookingsTable({
                                     {/* Location */}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-1.5 text-muted-foreground max-w-[150px]">
-                                            <MapPin className="w-3.5 h-3.5 shrink-0" />
-                                            <span className="truncate text-xs">
+                                            <MapPin className="w-4 h-4 shrink-0 text-primary/60" />
+                                            <span className="truncate text-sm font-medium">
                                                 {booking.address?.city || "N/A"}
                                             </span>
                                         </div>
@@ -177,8 +177,8 @@ export default function BookingsTable({
                                     {/* Schedule */}
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-1.5 text-muted-foreground">
-                                            <Clock className="w-3.5 h-3.5 shrink-0" />
-                                            <span className="text-xs whitespace-nowrap">
+                                            <Clock className="w-4 h-4 shrink-0 text-primary/60" />
+                                            <span className="text-sm font-medium whitespace-nowrap">
                                                 {formatDate(
                                                     booking.scheduled_at
                                                 )}
@@ -190,9 +190,9 @@ export default function BookingsTable({
                                     <td className="px-6 py-4">
                                         <Badge
                                             variant="outline"
-                                            className={`text-xs font-semibold border ${getStatusColor(
+                                            className={`text-xs font-bold border ${getStatusColor(
                                                 booking.status
-                                            )} uppercase tracking-wider flex w-fit gap-1 items-center`}
+                                            )} uppercase tracking-wider flex w-fit gap-1.5 items-center`}
                                         >
                                             {getStatusIcon(booking.status)}
                                             {booking.status}
@@ -201,13 +201,13 @@ export default function BookingsTable({
 
                                     {/* Actions */}
                                     <td className="px-6 py-4 text-right">
-                                        <div className="flex justify-end gap-1">
+                                        <div className="flex justify-end gap-1.5">
                                             {booking.status === "pending" && (
                                                 <>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20"
+                                                        className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20 transition-all"
                                                         onClick={() =>
                                                             onApprove(
                                                                 booking.id
@@ -221,7 +221,7 @@ export default function BookingsTable({
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"
-                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50/60 dark:hover:bg-red-900/20"
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50/60 dark:hover:bg-red-900/20 transition-all"
                                                         onClick={() =>
                                                             onReject(booking.id)
                                                         }
@@ -235,14 +235,13 @@ export default function BookingsTable({
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                className="h-8 px-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 text-xs gap-1"
+                                                className="h-8 px-2.5 text-muted-foreground hover:text-foreground hover:bg-primary/10 text-xs gap-1.5 transition-all"
                                                 onClick={() =>
                                                     onViewDetails(booking)
                                                 }
                                                 title="View details"
                                             >
-                                                <Eye className="w-3.5 h-3.5" />
-                                                Details
+                                                <Eye className="w-4 h-4" />
                                             </Button>
                                         </div>
                                     </td>
