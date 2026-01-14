@@ -49,7 +49,7 @@ export default function Sidebar() {
             { id: "bookingsList", label: "Bookings List", icon: Calendar },
             { id: "services", label: "Services", icon: Wrench },
             {
-                id: "sweepstarRequest",
+                id: "sweepstarRequests",
                 label: "Sweepstar Requests",
                 icon: Settings,
             },
@@ -106,10 +106,10 @@ export default function Sidebar() {
         myInformations: "/dashboard/my_informations",
 
         // admin
-        users: "/dashboard/users_list",
-        bookings: "/dashboard/bookings_list",
+        usersList: "/dashboard/users_list",
+        bookingsList: "/dashboard/bookings_list",
         services: "/dashboard/services",
-        applications: "/dashboard/sweepstar_requests",
+        sweepstarRequests: "/dashboard/sweepstar_requests",
 
         // sweepstar
         availableOpportunities: "/dashboard/available_opportunities",
