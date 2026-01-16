@@ -34,6 +34,14 @@ const ClientApi = {
         // If your backend uses Fortify, this might be /user/profile-information
         return await axiosClient.put(`/api/users/${id}`, data);
     },
+    updateAvatar: async (formData) => {
+        return await axiosClient.post("/api/user/avatar", formData, {
+            headers: {
+                // crucial: override the default 'application/json'
+                "Content-Type": "multipart/form-data",
+            },
+        });
+    },
     // Toggle Active/Disabled
     toggleStatus: async () => {
         return await axiosClient.post("/api/user/toggle-status");

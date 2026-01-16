@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
     Loader2,
@@ -20,16 +19,15 @@ import {
     Trash2,
     Power,
     Sparkles,
-    ArrowRight,
     CheckCircle2,
     AlertTriangle,
     Copy,
-    Camera,
 } from "lucide-react";
 import { useDeleteAccount, useToggleStatus, useUser } from "@/Hooks/useAuth";
 import { getRoleStyles } from "@/utils/roleStyles";
 import UserEditProfileModal from "./components/UserEditProfileModal";
 import DeleteAccountModal from "./components/DeleteAccountModal";
+import AvatarUpload from "./AvatarUpload";
 
 export default function UserInfo() {
     const { data: user, isLoading } = useUser();
@@ -90,15 +88,16 @@ export default function UserInfo() {
                             {/* Profile Avatar & Basic Info */}
                             <div className="flex items-center gap-6">
                                 <div className="relative">
-                                    <Avatar className="w-24 h-24 md:w-28 md:h-28 border-4 border-white dark:border-slate-900 shadow-2xl">
+                                    <AvatarUpload user={user} />
+                                    {/* <Avatar className="w-24 h-24 md:w-28 md:h-28 border-4 border-white dark:border-slate-900 shadow-2xl">
                                         <AvatarImage src={user.avatar_url} />
                                         <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70 text-white">
                                             {user.name?.charAt(0).toUpperCase()}
                                         </AvatarFallback>
-                                    </Avatar>
-                                    <div className="absolute bottom-0 right-0 p-2 bg-white dark:bg-slate-800 rounded-full shadow-lg border-2 border-primary/20">
+                                    </Avatar> */}
+                                    {/* <div className="absolute bottom-0 right-0 p-2 bg-white dark:bg-slate-800 rounded-full shadow-lg border-2 border-primary/20">
                                         <Camera className="w-4 h-4 text-primary" />
-                                    </div>
+                                    </div> */}
                                 </div>
 
                                 <div>

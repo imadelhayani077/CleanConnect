@@ -113,6 +113,23 @@ export const useUpdateProfile = () => {
         },
     });
 };
+
+export const useUpdateAvatar = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (formData) => {
+            return await ClientApi.updateAvatar(formData);
+        },
+        onSuccess: () => {
+            // Immediately refresh the user info so the new image shows up
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
+        onError: (error) => {
+            console.error("Avatar upload failed:", error);
+        },
+    });
+};
 export const useToggleStatus = () => {
     const queryClient = useQueryClient();
     return useMutation({

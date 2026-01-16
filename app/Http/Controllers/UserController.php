@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
@@ -148,6 +149,34 @@ class UserController extends Controller
         'user' => $targetUser
     ]);
 }
+    public function updateAvatar(Request $request)
+        {
+            // 1. Validate the image
+            $request->validate([
+                'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
+            ]);
+
+            $user = $request->user();
+
+            // 2. Delete old avatar if it exists (Optional but Professional)
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // 3. Store the new file
+            // This saves to storage/app/public/avatars and returns the path
+            $path = $request->file('avatar')->store('avatars', 'public');
+
+            // 4. Update Database
+            $user->avatar = $path;
+            $user->save();
+
+            // 5. Return the full URL for the frontend
+            return response()->json([
+                'message' => 'Avatar updated successfully',
+                'avatar_url' => asset('storage/' . $path)
+            ]);
+        }
 
     public function toggleStatus(Request $request)
     {
@@ -262,4 +291,5 @@ class UserController extends Controller
 
         return response()->json(['message' => 'User deleted successfully.']);
     }
+
 }

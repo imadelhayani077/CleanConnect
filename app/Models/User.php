@@ -21,6 +21,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'avatar',
         'password',
         'phone',
         'role',
@@ -47,6 +48,17 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    protected $appends = ['avatar_url'];
+
+    public function getAvatarUrlAttribute()
+{
+    if ($this->avatar) {
+        return asset('storage/' . $this->avatar);
+    }
+
+    // Return a professional placeholder based on their name (UI Avatars service)
+    return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=7F9CF5&background=EBF4FF';
+}
     public function sweepstarProfile()
     {
         return $this->hasOne(SweepstarProfile::class);
