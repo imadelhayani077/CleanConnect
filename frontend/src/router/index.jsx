@@ -30,11 +30,10 @@ import AddressManager from "@/pages/Client/AddressManager";
 import BookingHistory from "@/pages/Client/BookingHistory";
 import SweepstarApply from "@/pages/Client/SweepstarApply";
 
-
-
 import { useUser } from "@/Hooks/useAuth";
 import MissionsHistory from "../pages/Sweepstar/MissionsHistory";
 import AvailableMissions from "@/pages/Sweepstar/AvailableMissions";
+import CurrentMissions from "@/pages/Sweepstar/CurrentMissions";
 
 // GuestOnly: redirect logged-in users away from login/signup
 const GuestOnly = ({ children }) => {
@@ -139,11 +138,11 @@ export const AppRouter = createBrowserRouter([
                     },
                     {
                         path: "dashboard/current_missions",
-                        element: <MissionsHistory />,
+                        element: <CurrentMissions />,
                     },
                     {
                         path: "dashboard/missions_history",
-                        element: <MissionsHistory/>,
+                        element: <MissionsHistory />,
                     },
                 ],
             },

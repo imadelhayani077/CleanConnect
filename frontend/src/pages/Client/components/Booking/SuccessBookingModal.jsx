@@ -26,7 +26,9 @@ export default function SuccessBookingModal() {
                         <Button
                             variant="outline"
                             className="rounded-lg border-border/60 hover:bg-muted/50 flex-1"
-                            onClick={() => navigate("/bookings_history")}
+                            onClick={() =>
+                                navigate("/dashboard/bookings_history")
+                            }
                         >
                             View Booking
                         </Button>

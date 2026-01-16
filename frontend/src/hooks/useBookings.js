@@ -39,7 +39,8 @@ export const useAvailableMissions = () => {
         queryKey: ["sweepstar", "missions"],
         queryFn: async () => {
             const response = await SweepstarApi.getAvailableMissions();
-            return response.data.missions || [];
+
+            return response.data.jobs || [];
         },
     });
 };

@@ -18,7 +18,7 @@ import MissionCard from "./components/MissionCard";
 export default function AvailableMissions() {
     const { data: jobs = [], isLoading } = useAvailableMissions();
     const { mutateAsync: acceptMission } = useAcceptMission();
-
+    console.log(jobs);
     const [processingId, setProcessingId] = useState(null);
     const [acceptError, setAcceptError] = useState(null);
     const [acceptSuccess, setAcceptSuccess] = useState(null);

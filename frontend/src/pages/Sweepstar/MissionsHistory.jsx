@@ -1,32 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Trophy, Sparkles, Zap } from "lucide-react";
+import { Calendar, Trophy, Sparkles } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
-import { useCompleteMission, useMissionsHistory } from "@/Hooks/useBookings";
+import { useMissionsHistory } from "@/Hooks/useBookings";
 import MissionHistoryCard from "./components/MissionHistoryCard";
 import EmptyMissionsState from "./components/EmptyMissionsState";
 
 export default function MissionsHistory() {
     const navigate = useNavigate();
     const { data: jobs = [], isLoading } = useMissionsHistory();
-    const { mutateAsync: completeMission, isPending } = useCompleteMission();
-    const [completingId, setCompletingId] = useState(null);
 
-    const handleComplete = async (id) => {
-        if (
-            window.confirm("Excellent work! Confirm this mission is completed?")
-        ) {
-            setCompletingId(id);
-            try {
-                await completeMission(id);
-            } finally {
-                setCompletingId(null);
-            }
-        }
-    };
+    // REMOVED: useCompleteMission hook
+    // REMOVED: handleComplete function
 
     if (isLoading) {
         return (
@@ -37,10 +25,10 @@ export default function MissionsHistory() {
                     </div>
                     <div>
                         <p className="text-foreground font-semibold">
-                            Loading your schedule...
+                            Loading your history...
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Syncing your upcoming jobs
+                            Retrieving past records
                         </p>
                     </div>
                 </div>
@@ -48,11 +36,17 @@ export default function MissionsHistory() {
         );
     }
 
+    // FILTER: Completed or Cancelled only (Past)
+    const pastJobs = jobs.filter(
+        (job) => job.status === "completed" || job.status === "cancelled"
+    );
+
     const completedCount = jobs.filter(
         (job) => job.status === "completed"
     ).length;
+    // We keep this variable just for the header stats context
     const upcomingCount = jobs.filter(
-        (job) => job.status !== "completed"
+        (job) => job.status !== "completed" && job.status !== "cancelled"
     ).length;
 
     return (
@@ -69,17 +63,15 @@ export default function MissionsHistory() {
                                 Missions History
                             </h1>
                             <p className="text-muted-foreground text-sm md:text-base mt-1">
-                                {jobs.length === 0
-                                    ? "No jobs scheduled"
-                                    : `${upcomingCount} upcoming ${
-                                          upcomingCount === 1 ? "job" : "jobs"
-                                      } • ${completedCount} completed`}
+                                {pastJobs.length === 0
+                                    ? "No history yet"
+                                    : `${pastJobs.length} archived • ${completedCount} successful`}
                             </p>
                         </div>
                     </div>
 
-                    {jobs.length > 0 && (
-                        <Badge className="w-fit text-base px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/95 hover:to-primary transition-all rounded-full font-semibold">
+                    {pastJobs.length > 0 && (
+                        <Badge className="w-fit text-base px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg shadow-green-500/20 hover:from-green-600 hover:to-green-700 transition-all rounded-full font-semibold">
                             <Trophy className="w-4 h-4 mr-1.5" />
                             {completedCount} Completed
                         </Badge>
@@ -87,56 +79,42 @@ export default function MissionsHistory() {
                 </div>
 
                 {/* Progress Alert */}
-                {jobs.length > 0 && completedCount > 0 && (
+                {completedCount > 0 && (
                     <Alert className="border-green-200 dark:border-green-800/50 bg-green-50/80 dark:bg-green-900/20">
                         <Sparkles className="h-4 w-4 text-green-600 dark:text-green-400" />
                         <AlertTitle className="text-green-900 dark:text-green-300 font-semibold">
                             Amazing Progress! 🚀
                         </AlertTitle>
                         <AlertDescription className="text-green-800 dark:text-green-400 mt-1">
-                            You've completed {completedCount} mission
-                            {completedCount !== 1 ? "s" : ""}. Keep up the
-                            momentum to boost your ratings!
+                            You've successfully completed {completedCount}{" "}
+                            mission
+                            {completedCount !== 1 ? "s" : ""}.
                         </AlertDescription>
                     </Alert>
                 )}
             </div>
 
-            {/* Jobs Grid */}
+            {/* Jobs Grid - PAST ONLY */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {jobs.length === 0 ? (
+                {pastJobs.length === 0 ? (
                     <div className="col-span-full">
                         <EmptyMissionsState
                             onFindJobs={() => navigate("/dashboard/available")}
                         />
                     </div>
                 ) : (
-                    jobs.map((job) => (
+                    pastJobs.map((job) => (
                         <MissionHistoryCard
                             key={job.id}
                             job={job}
-                            onComplete={handleComplete}
-                            isCompleting={completingId === job.id && isPending}
+                            // REMOVED: onComplete and isCompleting props
+                            // This ensures the button logic is effectively gone from the UI logic
                         />
                     ))
                 )}
             </div>
 
-            {/* Motivational Footer */}
-            {upcomingCount > 0 && (
-                <Alert className="border-primary/30 bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10">
-                    <Zap className="h-5 w-5 text-primary" />
-                    <AlertTitle className="text-foreground font-semibold">
-                        Ready to Earn More? 💪
-                    </AlertTitle>
-                    <AlertDescription className="text-muted-foreground mt-2">
-                        Complete your {upcomingCount} upcoming job
-                        {upcomingCount !== 1 ? "s" : ""} and check back for more
-                        opportunities. Every completed job builds your
-                        reputation!
-                    </AlertDescription>
-                </Alert>
-            )}
+            {/* REMOVED: Motivational Footer regarding upcoming jobs */}
         </div>
     );
 }

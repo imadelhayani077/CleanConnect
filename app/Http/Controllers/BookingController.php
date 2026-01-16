@@ -205,9 +205,9 @@ public function update(Request $request, Booking $booking)
     // --- SWEEPSTAR FUNCTIONS ---
 
     /**
-     * Get jobs available for Sweepstars (No cleaner assigned yet)
+     * Get missions available for Sweepstars (No cleaner assigned yet)
      */
-    public function availableJobs(Request $request)
+    public function availableMissions(Request $request)
     {
         if ($request->user()->role !== 'sweepstar') {
             return response()->json(['message' => 'Unauthorized'], 403);
@@ -223,9 +223,9 @@ public function update(Request $request, Booking $booking)
     }
 
     /**
-     * Get jobs assigned to the current Sweepstar
+     * Get missions assigned to the current Sweepstar
      */
-    public function mySchedule(Request $request)
+    public function missionsHistory(Request $request)
     {
         $jobs = Booking::where('sweepstar_id', $request->user()->id)
             ->with(['user', 'address', 'services'])
@@ -238,7 +238,7 @@ public function update(Request $request, Booking $booking)
     /**
      * Sweepstar accepts a job
      */
-    public function acceptJob(Request $request, $id)
+    public function acceptMission(Request $request, $id)
     {
         // Use transaction and lockForUpdate to prevent two people accepting at same time
         return DB::transaction(function () use ($request, $id) {
@@ -258,7 +258,7 @@ public function update(Request $request, Booking $booking)
         });
     }
     // Add this method inside the BookingController class
-public function completeJob(Request $request, $id)
+public function completeMission(Request $request, $id)
     {
         $booking = Booking::findOrFail($id);
 
@@ -268,7 +268,7 @@ public function completeJob(Request $request, $id)
         }
 
         if ($booking->status !== 'confirmed') {
-            return response()->json(['message' => 'Job is not in progress.'], 400);
+            return response()->json(['message' => 'Mission is not in progress.'], 400);
         }
 
         // 1. Update the status

@@ -14,7 +14,7 @@ export default function EmptyHistoryState({ onFindJobs }) {
                 </div>
 
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                    Your Schedule is Clear ✨
+                    Your Missions is Clear ✨
                 </h3>
 
                 <p className="text-muted-foreground max-w-sm mb-8 leading-relaxed">

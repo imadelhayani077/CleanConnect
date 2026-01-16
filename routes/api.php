@@ -111,12 +111,12 @@ Route::get('/check-application', [SweepstarProfileController::class, 'checkAppli
         Route::post('/sweepstar/availability', [SweepstarProfileController::class, 'toggleAvailability']);
 
         // Mission Operations
-        Route::get('/sweepstar/available-missions', [BookingController::class, 'availableJobs']);
-        Route::get('/sweepstar/missions-history', [BookingController::class, 'mySchedule']);
+        Route::get('/sweepstar/available-missions', [BookingController::class, 'availableMissions']);
+        Route::get('/sweepstar/missions-history', [BookingController::class, 'missionsHistory']);
 
-        // Job Actions
-        Route::post('/bookings/{id}/accept', [BookingController::class, 'acceptJob']);
-        Route::post('/bookings/{id}/complete', [BookingController::class, 'completeJob']);
+        // Mission Actions
+        Route::post('/bookings/{id}/accept', [BookingController::class, 'acceptMission']);
+        Route::post('/bookings/{id}/complete', [BookingController::class, 'completeMission']);
     });
 
 });
