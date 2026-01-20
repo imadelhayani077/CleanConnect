@@ -11,10 +11,10 @@ export const useNotifications = () => {
             const { data } = await NotificationApi.getNotifications();
             return data.notifications;
         },
-        refetchInterval: 30000, // CHECK EVERY 30 SECONDS (Polling)
+        refetchInterval: 30000,
     });
 
-    // Mark as Read Mutation
+    // Mark Single Read
     const markReadMutation = useMutation({
         mutationFn: NotificationApi.markAsRead,
         onSuccess: () => {
@@ -22,8 +22,19 @@ export const useNotifications = () => {
         },
     });
 
+    // --- ADD THIS (Mark All Mutation) ---
+    const markAllReadMutation = useMutation({
+        mutationFn: NotificationApi.markAllAsRead,
+        onSuccess: () => {
+            // Refresh the list immediately after success
+            queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        },
+    });
+
     return {
         notifications,
         markRead: markReadMutation.mutate,
+        // We export mutateAsync so the button can 'await' it if needed
+        markAllRead: markAllReadMutation.mutateAsync,
     };
 };

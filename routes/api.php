@@ -30,6 +30,7 @@ Route::post('/register', [RegisteredUserController::class, 'store'])->name('regi
 Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead']);
     Route::get('/check-application', [SweepstarProfileController::class, 'checkApplicationStatus']);
     Route::post('/user/avatar', [UserController::class, 'updateAvatar']);
     // --- A. Core User Data ---
