@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB; // Required for transactions
 use App\Notifications\BookingStatusUpdated;
@@ -44,63 +45,84 @@ public function index(Request $request)
         ]);
     }
 
-    /**
-     * Store a newly created booking
-     */
-    public function store(Request $request)
-    {
-        // 1. Validate
-        $validated = $request->validate([
-            'address_id'   => 'required|exists:addresses,id',
-            'scheduled_at' => 'required|date|after:now',
-            'notes'        => 'nullable|string',
-            'service_ids'  => 'required|array|min:1',
-            'service_ids.*'=> 'exists:services,id',
+
+// ... imports
+
+public function store(Request $request)
+{
+    // 1. Basic Validation
+    $validated = $request->validate([
+        'service_ids'   => 'required|array|min:1',
+        'service_ids.*' => 'exists:services,id',
+        'address_id'    => 'required|exists:addresses,id',
+        'scheduled_at'  => 'required|date|after:now',
+        'notes'         => 'nullable|string',
+        // We now expect the USER to send the final adjusted price
+        'final_price'   => 'required|numeric|min:0'
+    ]);
+
+    DB::beginTransaction();
+    try {
+        // 2. Calculate Server-Side Base Price (Security Check)
+        $services = Service::whereIn('id', $validated['service_ids'])->get();
+        $basePrice = $services->sum('base_price');
+        $serviceCount = $services->count();
+
+        // 3. Define Limits based on your rules
+        // Rule: If > 1 service, min is -10%. If 1 service, min is base price (0% discount).
+        $minMultiplier = ($serviceCount > 1) ? 0.90 : 1.00;
+
+        // Rule: Max increase is always +50% (Tip)
+        $maxMultiplier = 1.50;
+
+        $minAllowedPrice = $basePrice * $minMultiplier;
+        $maxAllowedPrice = $basePrice * $maxMultiplier;
+
+        // 4. Validate the price sent by frontend is within allowed range
+        // We use a small epsilon (0.01) for floating point comparison safety
+        if ($validated['final_price'] < ($minAllowedPrice - 0.1) || $validated['final_price'] > ($maxAllowedPrice + 0.1)) {
+             return response()->json([
+                'message' => 'Invalid price adjustment.',
+                'errors' => [
+                    'final_price' => ["Price must be between " . number_format($minAllowedPrice, 2) . " and " . number_format($maxAllowedPrice, 2)]
+                ]
+            ], 422);
+        }
+
+        // 5. Create Booking
+        $booking = Booking::create([
+            'user_id' => $request->user()->id,
+            'address_id' => $validated['address_id'],
+            'scheduled_at' => $validated['scheduled_at'],
+            'status' => 'pending',
+            'notes' => $validated['notes'] ?? null,
+            'total_price' => $validated['final_price'], // Save the user's adjusted price
+            'original_price' => $basePrice, // (Optional) Good to add this column to DB for analytics
+            'duration_hours' => 2, // Logic for duration remains yours
         ]);
 
-        return DB::transaction(function () use ($request, $validated) {
-            // 2. Fetch Services to calculate total price securely
-            $services = Service::whereIn('id', $validated['service_ids'])->get();
-            $totalPrice = $services->sum('base_price');
-
-            // 3. Create the Booking
-            $booking = Booking::create([
-                'user_id'      => $request->user()->id,
-                'address_id'   => $validated['address_id'],
-                'scheduled_at' => $validated['scheduled_at'],
-                'status'       => 'pending',
-                'total_price'  => $totalPrice,
-                'notes'        => $validated['notes'] ?? null,
+        // 6. Attach Services & Snapshot Prices
+        foreach ($services as $service) {
+            $booking->services()->attach($service->id, [
+                'price_at_booking' => $service->base_price
             ]);
+        }
 
-            // 4. Attach Services with Pivot Data
-            // We save the price at the moment of booking so price changes don't affect old logs
-            $pivotData = [];
-            foreach ($services as $service) {
-                $pivotData[$service->id] = ['price_at_booking' => $service->base_price];
-            }
-            $booking->services()->attach($pivotData);
-
-            // ====================================================
-            // NEW: NOTIFICATION SYSTEM
-            // ====================================================
-
-            // A. Find all users who are Sweepstars
-            $sweepstars = User::where('role', 'sweepstar')->get();
+           $sweepstars = User::where('role', 'sweepstar')->get();
             Notification::send($sweepstars, new BookingStatusUpdated(
                 "New job available in " . $booking->address->city,
                 $booking->id
             ));
 
-            // ====================================================
+        DB::commit();
+        return response()->json(['message' => 'Booking created successfully', 'booking' => $booking], 201);
 
-            // 5. Load relationships and Return
-            return response()->json([
-                'message' => 'Booking created successfully!',
-                'booking' => $booking->load(['services', 'address'])
-            ], 201);
-        });
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json(['message' => 'Booking failed', 'error' => $e->getMessage()], 500);
     }
+}
+
 
     /**
      * Display single booking details

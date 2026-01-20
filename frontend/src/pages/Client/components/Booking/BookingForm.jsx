@@ -1,14 +1,15 @@
 // src/components/booking/BookingForm.jsx
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
     Loader2,
-    DollarSign,
     Calendar as CalendarIcon,
     CheckCircle,
     AlertCircle,
     Sparkles,
+    Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +38,11 @@ import {
     CardDescription,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Slider } from "@/components/ui/slider";
+
+// --- HELPER: Snap numbers to nearest 0.5 ---
+// Example: 10.23 -> 10.0, 10.35 -> 10.5, 10.80 -> 11.0
+const roundToHalf = (num) => Math.round(num * 2) / 2;
 
 const bookingSchema = z.object({
     service_ids: z
@@ -69,9 +75,37 @@ export default function BookingForm({
     const { watch, setValue, getValues, control, handleSubmit, trigger } = form;
 
     const selectedIds = watch("service_ids");
-    const estimatedTotal = services
-        .filter((s) => selectedIds.includes(s.id))
-        .reduce((sum, s) => sum + Number(s.base_price), 0);
+
+    // 1. Calculate Raw Base Price
+    const basePrice = useMemo(
+        () =>
+            services
+                .filter((s) => selectedIds.includes(s.id))
+                .reduce((sum, s) => sum + Number(s.base_price), 0),
+        [services, selectedIds],
+    );
+
+    const serviceCount = selectedIds.length;
+
+    // 2. Price Boundaries Logic
+    const minFactor = serviceCount > 1 ? 0.9 : 1; // -10% discount only if > 1 service
+    const maxFactor = 1.5; // +50% max tip
+
+    // 3. Round Boundaries to nearest 0.50
+    // This ensures the slider handles align perfectly with the grid
+    const minPrice = roundToHalf(basePrice * minFactor);
+    const maxPrice = roundToHalf(basePrice * maxFactor);
+
+    // 4. State: Multiplier
+    const [priceMultiplier, setPriceMultiplier] = useState(1);
+
+    // 5. Calculate Final Price and Snap to 0.50
+    let finalPrice = roundToHalf(basePrice * priceMultiplier);
+
+    // Guard: Clamp finalPrice to rounded boundaries
+    // (Fixes floating point drift, e.g. 49.99999)
+    if (finalPrice < minPrice) finalPrice = minPrice;
+    if (finalPrice > maxPrice) finalPrice = maxPrice;
 
     const toggleService = (serviceId) => {
         const currentIds = getValues("service_ids");
@@ -112,7 +146,7 @@ export default function BookingForm({
                         onSubmit={handleSubmit(onSubmit)}
                         className="space-y-8"
                     >
-                        {/* SERVICE SELECTION */}
+                        {/* --- 1. SERVICE SELECTION --- */}
                         <FormField
                             control={control}
                             name="service_ids"
@@ -124,14 +158,14 @@ export default function BookingForm({
                                     <div className="grid gap-3 mt-3">
                                         {services.map((service) => {
                                             const isChecked = watch(
-                                                "service_ids"
+                                                "service_ids",
                                             ).includes(service.id);
                                             return (
                                                 <div
                                                     key={service.id}
                                                     onClick={() =>
                                                         toggleService(
-                                                            service.id
+                                                            service.id,
                                                         )
                                                     }
                                                     className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer hover:shadow-md ${
@@ -173,7 +207,10 @@ export default function BookingForm({
                                                                 : ""
                                                         }`}
                                                     >
-                                                        ${service.base_price}
+                                                        $
+                                                        {Number(
+                                                            service.base_price,
+                                                        ).toFixed(2)}
                                                     </Badge>
                                                 </div>
                                             );
@@ -184,7 +221,7 @@ export default function BookingForm({
                             )}
                         />
 
-                        {/* ADDRESS & DATE GRID */}
+                        {/* --- 2. ADDRESS & DATE --- */}
                         <div className="grid gap-6 md:grid-cols-2">
                             <FormField
                                 control={control}
@@ -220,7 +257,7 @@ export default function BookingForm({
                                                         <SelectItem
                                                             key={addr.id}
                                                             value={String(
-                                                                addr.id
+                                                                addr.id,
                                                             )}
                                                         >
                                                             {
@@ -264,7 +301,7 @@ export default function BookingForm({
                             />
                         </div>
 
-                        {/* NOTES */}
+                        {/* --- 3. NOTES --- */}
                         <FormField
                             control={control}
                             name="notes"
@@ -285,30 +322,96 @@ export default function BookingForm({
                             )}
                         />
 
-                        {/* PRICE SUMMARY */}
-                        <div className="bg-gradient-to-br from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/5 p-6 rounded-xl border border-primary/20 dark:border-primary/30">
-                            <div className="flex justify-between items-center">
-                                <div>
-                                    <p className="text-sm font-medium text-muted-foreground">
-                                        Estimated Total
-                                    </p>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        {selectedIds.length} service
-                                        {selectedIds.length !== 1
-                                            ? "s"
-                                            : ""}{" "}
-                                        selected
-                                    </p>
+                        {/* --- 4. PRICE SECTION --- */}
+                        {selectedIds.length > 0 && (
+                            <div className="flex flex-col gap-6 p-6 bg-muted/50 rounded-lg border border-border/50">
+                                {/* Header */}
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                                            <Wallet className="w-4 h-4" />
+                                            Total Price
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Adjust your price preference
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-3xl font-bold text-primary">
+                                            ${finalPrice.toFixed(2)}
+                                        </span>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-3xl font-bold text-primary">
-                                        ${estimatedTotal.toFixed(2)}
-                                    </span>
+
+                                {/* Slider */}
+                                <div className="space-y-4 px-1">
+                                    <Slider
+                                        value={[finalPrice]}
+                                        min={minPrice}
+                                        max={maxPrice}
+                                        step={0.5} // STRICT STEP: 0.50
+                                        onValueChange={(vals) => {
+                                            const newPrice = vals[0];
+                                            // Reverse calc multiplier for internal logic
+                                            if (basePrice > 0) {
+                                                setPriceMultiplier(
+                                                    newPrice / basePrice,
+                                                );
+                                            }
+                                        }}
+                                        className="py-2"
+                                    />
+
+                                    <div className="flex justify-between text-xs font-medium text-muted-foreground">
+                                        <span>
+                                            Min: ${minPrice.toFixed(2)}{" "}
+                                            {serviceCount > 1
+                                                ? " (-10%)"
+                                                : " (Standard)"}
+                                        </span>
+                                        <span>
+                                            Max: ${maxPrice.toFixed(2)} (+50%)
+                                        </span>
+                                    </div>
+
+                                    {/* Feedback Text Logic */}
+                                    <div className="text-center h-4">
+                                        {finalPrice < basePrice && (
+                                            <span className="text-emerald-600 text-xs font-medium animate-in fade-in">
+                                                🎉 You saved{" "}
+                                                {(
+                                                    (1 -
+                                                        finalPrice /
+                                                            basePrice) *
+                                                    100
+                                                ).toFixed(0)}
+                                                % !
+                                            </span>
+                                        )}
+                                        {finalPrice > basePrice && (
+                                            <span className="text-blue-600 text-xs font-medium animate-in fade-in">
+                                                ❤️ Adding a{" "}
+                                                {(
+                                                    (finalPrice / basePrice -
+                                                        1) *
+                                                    100
+                                                ).toFixed(0)}
+                                                % tip
+                                            </span>
+                                        )}
+                                        {finalPrice === basePrice &&
+                                            serviceCount === 1 && (
+                                                <span className="text-muted-foreground text-xs italic">
+                                                    * Add another service to
+                                                    unlock discounts
+                                                </span>
+                                            )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* SUBMIT BUTTON */}
+                        {/* --- 5. SUBMIT BUTTON --- */}
                         <Button
                             type="submit"
                             disabled={isSubmitting || selectedIds.length === 0}
