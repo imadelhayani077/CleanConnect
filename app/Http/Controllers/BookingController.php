@@ -111,7 +111,7 @@ public function store(Request $request)
            $sweepstars = User::where('role', 'sweepstar')->get();
             Notification::send($sweepstars, new BookingStatusUpdated(
                 "New job available in " . $booking->address->city,
-                $booking->id
+                $booking, 'new_booking'
             ));
 
         DB::commit();
@@ -274,7 +274,7 @@ public function update(Request $request, Booking $booking)
                 'sweepstar_id' => $request->user()->id,
                 'status' => 'confirmed'
             ]);
-            $booking->user->notify(new BookingStatusUpdated("Your booking has been accepted by " . $request->user()->name, $booking->id));
+            $booking->user->notify(new BookingStatusUpdated("Your booking has been accepted by " . $request->user()->name, $booking, 'booking_accepted'));
 
             return response()->json(['message' => 'Job accepted! It is now in your schedule.']);
         });
@@ -303,7 +303,7 @@ public function completeMission(Request $request, $id)
         // Notify the user who made the booking
         $booking->user->notify(new BookingStatusUpdated(
             "Your cleaning is complete! Please review your Sweepstar.",
-            $booking->id
+            $booking, 'booking_completed'
         ));
 
         // ====================================================

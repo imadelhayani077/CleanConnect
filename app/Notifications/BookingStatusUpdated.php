@@ -12,12 +12,14 @@ class BookingStatusUpdated extends Notification
     use Queueable;
 
     public $message;
-    public $bookingId;
+    public $booking;
+    public $type;
 
-    public function __construct($message, $bookingId)
+    public function __construct($message, $booking, $type)
     {
         $this->message = $message;
-        $this->bookingId = $bookingId;
+        $this->booking = $booking;
+        $this->type = $type;
     }
 
     public function via($notifiable)
@@ -30,7 +32,8 @@ class BookingStatusUpdated extends Notification
     {
         return [
             'message' => $this->message,
-            'booking_id' => $this->bookingId,
+            'booking' => $this->booking,
+            'type'    => $this->type,
             'created_at' => now(), // Good for sorting
         ];
     }

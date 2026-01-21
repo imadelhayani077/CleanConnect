@@ -10,8 +10,16 @@ export const NotificationHandlers = {
         });
     },
 
-    booking: (navigate) => {
-        navigate("/dashboard/bookings");
+    booking_accepted: (navigate) => {
+        navigate("/dashboard/bookings_history");
+    },
+    booking_completed: (navigate, data) => {
+        navigate("/dashboard/bookings_history", {
+            state: { openBooking: data.booking },
+        });
+    },
+    new_booking: (navigate) => {
+        navigate("/dashboard/available_missions");
     },
     review: (navigate) => {
         navigate("/dashboard/bookings");

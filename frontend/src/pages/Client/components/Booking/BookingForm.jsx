@@ -1,5 +1,5 @@
 // src/components/booking/BookingForm.jsx
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -53,6 +53,7 @@ const bookingSchema = z.object({
         message: "Date must be in the future",
     }),
     notes: z.string().optional(),
+    final_price: z.number().min(0, "Final price must be positive"), // <-- ADDED
 });
 
 export default function BookingForm({
@@ -69,12 +70,14 @@ export default function BookingForm({
             address_id: addresses.length > 0 ? String(addresses[0].id) : "",
             scheduled_at: "",
             notes: "",
+            final_price: 0, // <-- ADDED
         },
     });
 
     const { watch, setValue, getValues, control, handleSubmit, trigger } = form;
 
     const selectedIds = watch("service_ids");
+    const finalPrice = watch("final_price"); // <-- WATCH FINAL PRICE
 
     // 1. Calculate Raw Base Price
     const basePrice = useMemo(
@@ -92,7 +95,6 @@ export default function BookingForm({
     const maxFactor = 1.5; // +50% max tip
 
     // 3. Round Boundaries to nearest 0.50
-    // This ensures the slider handles align perfectly with the grid
     const minPrice = roundToHalf(basePrice * minFactor);
     const maxPrice = roundToHalf(basePrice * maxFactor);
 
@@ -100,12 +102,20 @@ export default function BookingForm({
     const [priceMultiplier, setPriceMultiplier] = useState(1);
 
     // 5. Calculate Final Price and Snap to 0.50
-    let finalPrice = roundToHalf(basePrice * priceMultiplier);
+    let calculatedPrice = roundToHalf(basePrice * priceMultiplier);
 
     // Guard: Clamp finalPrice to rounded boundaries
-    // (Fixes floating point drift, e.g. 49.99999)
-    if (finalPrice < minPrice) finalPrice = minPrice;
-    if (finalPrice > maxPrice) finalPrice = maxPrice;
+    if (calculatedPrice < minPrice) calculatedPrice = minPrice;
+    if (calculatedPrice > maxPrice) calculatedPrice = maxPrice;
+
+    // KEEP FORM VALUE IN SYNC WITH CALCULATED PRICE
+    useEffect(() => {
+        if (basePrice > 0) {
+            setValue("final_price", calculatedPrice, { shouldValidate: false });
+        } else {
+            setValue("final_price", 0, { shouldValidate: false });
+        }
+    }, [basePrice, priceMultiplier, minPrice, maxPrice, setValue]);
 
     const toggleService = (serviceId) => {
         const currentIds = getValues("service_ids");
@@ -349,10 +359,9 @@ export default function BookingForm({
                                         value={[finalPrice]}
                                         min={minPrice}
                                         max={maxPrice}
-                                        step={0.5} // STRICT STEP: 0.50
+                                        step={0.5}
                                         onValueChange={(vals) => {
                                             const newPrice = vals[0];
-                                            // Reverse calc multiplier for internal logic
                                             if (basePrice > 0) {
                                                 setPriceMultiplier(
                                                     newPrice / basePrice,

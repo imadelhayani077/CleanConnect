@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
     Loader2,
     CheckCircle2,
@@ -25,7 +25,17 @@ export default function BookingHistory() {
     const [editingBooking, setEditingBooking] = useState(null);
     const [reviewingBooking, setReviewingBooking] = useState(null);
     const [cancellingBooking, setCancellingBooking] = useState(null);
+    const location = useLocation();
+    useEffect(() => {
+        // Check if we arrived here with a "openUserId" inside the state
+        if (location.state?.openBooking) {
+            // Set the ID to open the modal
+            setReviewingBooking(location.state.openBooking);
 
+            // Optional: Clean the state so if they refresh, it doesn't reopen
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-6">
