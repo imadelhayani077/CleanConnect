@@ -1,4 +1,3 @@
-// src/pages/admin/UsersList.jsx
 import React, { useState } from "react";
 import { useUser } from "@/Hooks/useAuth";
 import { useUsers, useAdminUpdateStatus } from "@/Hooks/useUsers";
@@ -18,11 +17,13 @@ import {
 } from "lucide-react";
 
 import { getRoleStyles } from "@/utils/roleStyles";
-import { useLocation } from "react-router-dom"; // <--- Import This
-import { useEffect } from "react"; // <--- Import This
+import { getInitials, getAvatarUrl } from "@/utils/avatarHelper";
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import {
     Table,
@@ -49,12 +50,10 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Components
 import UserDetailModal from "./components/Users/UserDetailModal";
-
 import AdminDeleteUserModal from "./components/Users/AdminDeleteUserModal";
 import UserEditProfileModal from "../GeneralPages/components/UserEditProfileModal";
 
@@ -72,14 +71,10 @@ export default function UsersList() {
 
     const updateStatusMutation = useAdminUpdateStatus();
 
-    // 2. LISTEN FOR NOTIFICATION CLICKS
+    // Listen for notification clicks
     useEffect(() => {
-        // Check if we arrived here with a "openUserId" inside the state
         if (location.state?.openUserId) {
-            // Set the ID to open the modal
             setSelectedUserId(location.state.openUserId);
-
-            // Optional: Clean the state so if they refresh, it doesn't reopen
             window.history.replaceState({}, document.title);
         }
     }, [location]);
@@ -142,16 +137,6 @@ export default function UsersList() {
 
         return matchesSearch && matchesRole;
     });
-
-    const getInitials = (name) =>
-        name
-            ? name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)
-            : "U";
 
     if (loading) {
         return (
@@ -388,12 +373,21 @@ export default function UsersList() {
                                                 <TableCell className="font-mono text-xs text-muted-foreground font-medium">
                                                     #{user.id}
                                                 </TableCell>
+
+                                                {/* User with Avatar - UPDATED */}
                                                 <TableCell>
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="h-9 w-9 border border-border/60">
+                                                            <AvatarImage
+                                                                src={getAvatarUrl(
+                                                                    user,
+                                                                )}
+                                                                alt={user.name}
+                                                                className="object-cover"
+                                                            />
                                                             <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-bold">
                                                                 {getInitials(
-                                                                    user.name
+                                                                    user.name,
                                                                 )}
                                                             </AvatarFallback>
                                                         </Avatar>
@@ -407,10 +401,11 @@ export default function UsersList() {
                                                         </div>
                                                     </div>
                                                 </TableCell>
+
                                                 <TableCell>
                                                     <Badge
                                                         className={`uppercase px-2.5 py-1 text-xs font-semibold tracking-wide ${getRoleStyles(
-                                                            user.role
+                                                            user.role,
                                                         )}`}
                                                     >
                                                         {user.role}
@@ -430,7 +425,7 @@ export default function UsersList() {
                                                             variant="outline"
                                                             className={`capitalize ${getStatusStyles(
                                                                 user.status,
-                                                                user.deleted_at
+                                                                user.deleted_at,
                                                             )}`}
                                                         >
                                                             {user.deleted_at
@@ -444,14 +439,14 @@ export default function UsersList() {
                                                 <TableCell className="text-muted-foreground text-sm">
                                                     {user.created_at
                                                         ? new Date(
-                                                              user.created_at
+                                                              user.created_at,
                                                           ).toLocaleDateString(
                                                               "en-US",
                                                               {
                                                                   year: "numeric",
                                                                   month: "short",
                                                                   day: "numeric",
-                                                              }
+                                                              },
                                                           )
                                                         : "—"}
                                                 </TableCell>
@@ -465,7 +460,7 @@ export default function UsersList() {
                                                             className="h-8 w-8 p-0 hover:bg-muted/70"
                                                             onClick={() =>
                                                                 handleOpenDetails(
-                                                                    user.id
+                                                                    user.id,
                                                                 )
                                                             }
                                                             title="View details"
@@ -486,7 +481,7 @@ export default function UsersList() {
                                                                 className="h-8 w-8 p-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50/60 dark:hover:bg-blue-900/20"
                                                                 onClick={() =>
                                                                     handleEditUser(
-                                                                        user
+                                                                        user,
                                                                     )
                                                                 }
                                                                 disabled={
@@ -517,7 +512,7 @@ export default function UsersList() {
                                                                             onClick={() =>
                                                                                 handleStatusChange(
                                                                                     user.id,
-                                                                                    "suspended"
+                                                                                    "suspended",
                                                                                 )
                                                                             }
                                                                         >
@@ -534,7 +529,7 @@ export default function UsersList() {
                                                                             onClick={() =>
                                                                                 handleStatusChange(
                                                                                     user.id,
-                                                                                    "active"
+                                                                                    "active",
                                                                                 )
                                                                             }
                                                                         >
@@ -554,7 +549,7 @@ export default function UsersList() {
                                                                     className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50/60 dark:hover:bg-red-900/20"
                                                                     onClick={() =>
                                                                         setUserToDelete(
-                                                                            user
+                                                                            user,
                                                                         )
                                                                     }
                                                                     title="Delete user"

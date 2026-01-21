@@ -1,4 +1,3 @@
-// src/layout/NavBar/NavBar.jsx
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -15,6 +14,7 @@ import {
 
 import { ModeButton } from "@/components/ui/Button-mode";
 import { useUser, useLogout } from "@/Hooks/useAuth";
+import { getInitials, getAvatarUrl } from "@/utils/avatarHelper";
 
 import {
     Sheet,
@@ -31,9 +31,10 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getRoleStyles } from "@/utils/roleStyles";
 
-// ✅ IMPORT THE BELL (Make sure the path matches where you saved the file)
+// Import the notification bell
 import NotificationBell from "./NotificationBell";
 
 export default function NavBar() {
@@ -41,7 +42,6 @@ export default function NavBar() {
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
 
-    // Use your auth hooks - no static data
     const { data: user, isLoading } = useUser();
     const { mutateAsync: logoutUser } = useLogout();
 
@@ -77,7 +77,7 @@ export default function NavBar() {
             }`}
         >
             <span className="flex items-center gap-2">{children}</span>
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-primary via-primary to-transparent transition-all group-hover:w-full" />
+            <span className="absolute bottom-0 left-0 h-0.5 w-0 bg-gradient-to-r from-primary via-primary to-transparent transition-all group-hover:w-full" />
         </Link>
     );
 
@@ -129,7 +129,7 @@ export default function NavBar() {
                 <div className="hidden md:flex items-center gap-3">
                     <ModeButton />
 
-                    {/* ✅ FIXED: Added Bell here for Desktop View */}
+                    {/* Notification Bell */}
                     {user && <NotificationBell />}
 
                     {isLoading ? (
@@ -153,10 +153,19 @@ export default function NavBar() {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="flex items-center gap-2 rounded-full px-3 py-1.5"
+                                    className="flex items-center gap-2 rounded-full px-1.5 py-1.5"
                                 >
-                                    <UserCircle2 className="h-5 w-5" />
-                                    <span className="text-sm font-medium">
+                                    <Avatar className="h-6 w-6 border border-border/60">
+                                        <AvatarImage
+                                            src={getAvatarUrl(user)}
+                                            alt={user?.name}
+                                            className="object-cover"
+                                        />
+                                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-bold">
+                                            {getInitials(user?.name)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm font-medium hidden sm:inline">
                                         {user?.name || "Account"}
                                     </span>
                                     <ChevronDown className="h-4 w-4 opacity-50" />
@@ -164,16 +173,33 @@ export default function NavBar() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
                                 <DropdownMenuLabel>
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-sm font-semibold text-foreground">
-                                            {user?.name || "User"}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground">
-                                            {user?.email || "no email"}
-                                        </span>
+                                    <div className="flex flex-col gap-3">
+                                        {/* Avatar + Name */}
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-10 w-10 border border-border/60">
+                                                <AvatarImage
+                                                    src={getAvatarUrl(user)}
+                                                    alt={user?.name}
+                                                    className="object-cover"
+                                                />
+                                                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-bold">
+                                                    {getInitials(user?.name)}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-foreground truncate">
+                                                    {user?.name || "User"}
+                                                </p>
+                                                <p className="text-xs text-muted-foreground truncate">
+                                                    {user?.email || "no email"}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Role Badge */}
                                         <span
-                                            className={`mt-2 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit ${getRoleStyles(
-                                                user?.role
+                                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider w-fit ${getRoleStyles(
+                                                user?.role,
                                             )}`}
                                         >
                                             {user?.role || "User"}
@@ -208,7 +234,7 @@ export default function NavBar() {
                 <div className="flex items-center gap-3 md:hidden">
                     <ModeButton />
 
-                    {/* ✅ Note: This was already here, which is why it worked on Mobile */}
+                    {/* Notification Bell for Mobile */}
                     {user && <NotificationBell />}
 
                     <Button
@@ -270,12 +296,27 @@ export default function NavBar() {
                         ) : (
                             // Logged in - show User Info & Dashboard/Logout
                             <>
-                                <div className="mt-3 mb-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-3 text-sm">
-                                    <div className="font-semibold text-foreground">
-                                        {user?.name || "User"}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                        {user?.email || "no email"}
+                                {/* User Info Card */}
+                                <div className="mt-3 mb-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-3">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10 border border-border/60 flex-shrink-0">
+                                            <AvatarImage
+                                                src={getAvatarUrl(user)}
+                                                alt={user?.name}
+                                                className="object-cover"
+                                            />
+                                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-xs font-bold">
+                                                {getInitials(user?.name)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-semibold text-foreground truncate">
+                                                {user?.name || "User"}
+                                            </div>
+                                            <div className="text-xs text-muted-foreground truncate">
+                                                {user?.email || "no email"}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="mt-2 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
                                         {user?.role || "User"}

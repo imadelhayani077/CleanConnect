@@ -25,6 +25,6 @@ export const NotificationHandlers = {
         navigate("/dashboard/bookings");
     },
     applicationRequest: (navigate) => {
-        navigate("/dashboard/applications");
+        navigate("/dashboard/sweepstar_requests");
     },
 };

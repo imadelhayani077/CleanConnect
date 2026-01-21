@@ -19,7 +19,7 @@ import NotFound from "../pages/notFound";
 import UsersList from "@/pages/Admin/UsersListe";
 import BookingManager from "@/pages/Admin/BookingManager";
 import ServiceManager from "@/pages/Admin/ServiceManager";
-import ApplicationManager from "@/pages/Admin/ApplicationManager";
+import ApplicationManager from "@/pages/Admin/ApplicationsManager";
 
 // General / shared
 import UserInfo from "@/pages/GeneralPages/UserInfo";

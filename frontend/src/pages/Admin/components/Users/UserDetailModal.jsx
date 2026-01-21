@@ -1,4 +1,3 @@
-// src/pages/admin/components/UserDetailModal.jsx
 import React from "react";
 import { format } from "date-fns";
 import {
@@ -24,7 +23,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getRoleStyles } from "@/utils/roleStyles";
+import { getInitials, getAvatarUrl } from "@/utils/avatarHelper";
 
 import { useUserDetails } from "@/Hooks/useUsers";
 
@@ -40,26 +41,36 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden rounded-2xl border-border/60 bg-background/80 backdrop-blur-xl">
-                {/* Header */}
-                <DialogHeader className="p-6 pb-4 border-b border-border/60 bg-gradient-to-r from-background to-muted/30">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                                <User className="w-6 h-6 text-primary" />
-                            </div>
-                            <div>
-                                <DialogTitle className="text-2xl font-bold text-foreground">
-                                    {isLoading ? "Loading..." : user?.name}
-                                </DialogTitle>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    User Profile Details
-                                </p>
-                            </div>
+                {/* Header with Avatar - UPDATED */}
+                <DialogHeader className="p-6 pb-6 border-b border-border/60 bg-gradient-to-r from-background to-muted/30">
+                    <div className="flex flex-col items-center gap-4">
+                        {/* Avatar - Using shadcn Avatar */}
+                        <Avatar className="h-24 w-24 border-4 border-border/60">
+                            <AvatarImage
+                                src={getAvatarUrl(user)}
+                                alt={user?.name}
+                                className="object-cover"
+                            />
+                            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary text-2xl font-semibold">
+                                {getInitials(user?.name)}
+                            </AvatarFallback>
+                        </Avatar>
+
+                        {/* Title and Info */}
+                        <div className="text-center">
+                            <DialogTitle className="text-2xl font-bold text-foreground">
+                                {isLoading ? "Loading..." : user?.name}
+                            </DialogTitle>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                User Profile Details
+                            </p>
                         </div>
+
+                        {/* Role Badge */}
                         {user && (
                             <Badge
                                 className={`uppercase text-xs font-semibold px-3 py-1 ${getRoleStyles(
-                                    user.role
+                                    user.role,
                                 )}`}
                             >
                                 {user.role}
@@ -107,7 +118,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                             label: "Date Joined",
                                             value: format(
                                                 new Date(user.created_at),
-                                                "PPP"
+                                                "PPP",
                                             ),
                                         },
                                     ].map((item, idx) => {
@@ -172,7 +183,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                 icon: Star,
                                                 label: "Average Rating",
                                                 value: `${getAverageRating(
-                                                    user.reviews_received
+                                                    user.reviews_received,
                                                 )} ★`,
                                                 color: "from-amber-100/60 to-amber-50/60 dark:from-amber-900/20 dark:to-amber-900/10",
                                                 iconColor:
@@ -235,21 +246,21 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                     <p className="text-xs text-muted-foreground">
                                                                         {format(
                                                                             new Date(
-                                                                                review.created_at
+                                                                                review.created_at,
                                                                             ),
-                                                                            "MMM d, yyyy"
+                                                                            "MMM d, yyyy",
                                                                         )}
                                                                     </p>
                                                                 </div>
                                                                 <div className="flex gap-0.5">
                                                                     {[
                                                                         ...Array(
-                                                                            5
+                                                                            5,
                                                                         ),
                                                                     ].map(
                                                                         (
                                                                             _,
-                                                                            i
+                                                                            i,
                                                                         ) => (
                                                                             <Star
                                                                                 key={
@@ -262,7 +273,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                                         : "text-muted/30"
                                                                                 }`}
                                                                             />
-                                                                        )
+                                                                        ),
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -273,7 +284,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                 "
                                                             </p>
                                                         </div>
-                                                    )
+                                                    ),
                                                 )}
                                             </div>
                                         ) : (
@@ -320,12 +331,12 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                         {booking.services
                                                                             ?.map(
                                                                                 (
-                                                                                    s
+                                                                                    s,
                                                                                 ) =>
-                                                                                    s.name
+                                                                                    s.name,
                                                                             )
                                                                             .join(
-                                                                                ", "
+                                                                                ", ",
                                                                             ) ||
                                                                             "Cleaning"}
                                                                     </p>
@@ -333,9 +344,9 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                         <Calendar className="w-3 h-3" />
                                                                         {format(
                                                                             new Date(
-                                                                                booking.scheduled_at
+                                                                                booking.scheduled_at,
                                                                             ),
-                                                                            "PPP p"
+                                                                            "PPP p",
                                                                         )}
                                                                     </p>
                                                                 </div>
@@ -369,7 +380,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                 </p>
                                                             )}
                                                         </div>
-                                                    )
+                                                    ),
                                                 )}
                                             </div>
                                         ) : (
@@ -411,12 +422,12 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                 <div className="flex gap-0.5">
                                                                     {[
                                                                         ...Array(
-                                                                            5
+                                                                            5,
                                                                         ),
                                                                     ].map(
                                                                         (
                                                                             _,
-                                                                            i
+                                                                            i,
                                                                         ) => (
                                                                             <Star
                                                                                 key={
@@ -429,7 +440,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                                         : "text-muted/30"
                                                                                 }`}
                                                                             />
-                                                                        )
+                                                                        ),
                                                                     )}
                                                                 </div>
                                                             </div>
@@ -439,7 +450,7 @@ export default function UserDetailModal({ userId, isOpen, onClose }) {
                                                                 "
                                                             </p>
                                                         </div>
-                                                    )
+                                                    ),
                                                 )}
                                             </div>
                                         ) : (
