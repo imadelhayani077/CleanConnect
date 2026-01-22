@@ -4,9 +4,9 @@ import { Navigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import { useUser } from "@/Hooks/useAuth";
 
-import AdminDashboard from "./AdminDashboard";
-import SweepstarDashboard from "./SweepstarDashboard";
-import ClientDashboard from "./ClientDashboard";
+import AdminDashboard from "./Admin/AdminDashboard";
+import SweepstarDashboard from "./Sweepstar/SweepstarDashboard";
+import ClientDashboard from "./Client/ClientDashboard";
 
 export default function MainDashboard() {
     const { data: user, isLoading } = useUser();

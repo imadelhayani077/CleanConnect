@@ -6,34 +6,35 @@ import MasterLayout from "@/layout/MasterLayout";
 import RoleRoute from "./RoleRoute";
 
 // Public pages
-import Homepage from "../pages/homepage";
-import Login from "../pages/login";
-import Signup from "../pages/signup";
-import Contact from "../pages/contact";
+import Homepage from "../pages/PublicPages/homepage";
+import Login from "../pages/PublicPages/login";
+import Signup from "../pages/PublicPages/signup";
+import Contact from "../pages/PublicPages/contact";
 
 // Shared dashboard shell
 import MainDashboard from "@/pages/Dashboards/MainDashboard";
-import NotFound from "../pages/notFound";
+import NotFound from "../pages/PublicPages/notFound";
 
 // Admin
-import UsersList from "@/pages/Admin/UsersListe";
-import BookingManager from "@/pages/Admin/BookingManager";
-import ServiceManager from "@/pages/Admin/ServiceManager";
-import ApplicationManager from "@/pages/Admin/ApplicationsManager";
+import BookingManager from "@/pages/Admin/Bookings/BookingManager";
+import ServiceManager from "@/pages/Admin/Services/ServicesManager";
+import ApplicationManager from "@/pages/Admin/Applications/ApplicationsManager";
 
 // General / shared
-import UserInfo from "@/pages/GeneralPages/UserInfo";
+import UserInfo from "@/pages/SharedComponents/UserInfo";
 
 // Client
-import Booking from "@/pages/Client/Booking";
-import AddressManager from "@/pages/Client/AddressManager";
-import BookingHistory from "@/pages/Client/BookingHistory";
-import SweepstarApply from "@/pages/Client/SweepstarApply";
+import Booking from "@/pages/Client/Booking/Booking";
+import AddressManager from "@/pages/Client/Address/AddressManager";
+import BookingHistory from "@/pages/Client/BookingHistory/BookingHistory";
+import SweepstarApply from "@/pages/Client/SweepstarRequest/SweepstarApply";
 
 import { useUser } from "@/Hooks/useAuth";
-import MissionsHistory from "../pages/Sweepstar/MissionsHistory";
-import AvailableMissions from "@/pages/Sweepstar/AvailableMissions";
-import CurrentMissions from "@/pages/Sweepstar/CurrentMissions";
+
+import UsersManager from "@/pages/Admin/Users/UsersManager";
+import MissionsHistory from "@/pages/Sweepstar/MissionsHistory/MissionsHistory";
+import AvailableMissions from "@/pages/Sweepstar/AvailableMissions/AvailableMissions";
+import CurrentMissions from "@/pages/Sweepstar/CurrentMissions/CurrentMissions";
 
 // GuestOnly: redirect logged-in users away from login/signup
 const GuestOnly = ({ children }) => {
@@ -93,7 +94,7 @@ export const AppRouter = createBrowserRouter([
             {
                 element: <RoleRoute requiredRole="admin" />,
                 children: [
-                    { path: "dashboard/users_list", element: <UsersList /> },
+                    { path: "dashboard/users_list", element: <UsersManager /> },
 
                     {
                         path: "dashboard/bookings_list",
