@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
     CalendarDays,
     CheckCircle,
@@ -18,6 +19,8 @@ import {
     MapPin,
     XCircle,
 } from "lucide-react";
+
+import { getAvatarUrl, getInitials } from "@/utils/avatarHelper";
 
 const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -75,25 +78,25 @@ export default function BookingsTable({
             <Table>
                 <TableHeader>
                     <TableRow className="border-b border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 dark:from-slate-900 to-slate-100/50 dark:to-slate-900/50">
-                        <TableHead className="px-4 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Ref ID
                         </TableHead>
-                        <TableHead className="px-4 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Client
                         </TableHead>
-                        <TableHead className="px-4   py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Sweepstar
                         </TableHead>
-                        <TableHead className="px-4 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Location
                         </TableHead>
-                        <TableHead className="px-4 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Schedule
                         </TableHead>
-                        <TableHead className="px-4 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Status
                         </TableHead>
-                        <TableHead className="px-4 py-4 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                        <TableHead className="px-2 py-4 text-right text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             Actions
                         </TableHead>
                     </TableRow>
@@ -129,12 +132,20 @@ export default function BookingsTable({
                                     #{booking.id.toString().padStart(4, "0")}
                                 </TableCell>
 
-                                <TableCell className="px-4 py-4">
+                                {/* Client Column */}
+                                <TableCell className="px-2 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                                            {booking.user?.name?.charAt(0) ||
-                                                "U"}
-                                        </div>
+                                        <Avatar className="h-9 w-9 border border-border/50">
+                                            <AvatarImage
+                                                src={getAvatarUrl(booking.user)}
+                                                className="object-cover"
+                                            />
+                                            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                                                {getInitials(
+                                                    booking.user?.name || "U",
+                                                )}
+                                            </AvatarFallback>
+                                        </Avatar>
                                         <div className="min-w-0">
                                             <div className="font-semibold text-foreground truncate text-sm">
                                                 {booking.user?.name ||
@@ -147,17 +158,33 @@ export default function BookingsTable({
                                     </div>
                                 </TableCell>
 
-                                <TableCell className="px-4 py-4">
+                                {/* [!code focus] Sweepstar Column - Updated Size & Details */}
+                                <TableCell className="px-2 py-4">
                                     {booking.sweepstar ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-6 h-6 rounded-full bg-blue-100/60 dark:bg-blue-900/20 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300">
-                                                {booking.sweepstar.name?.charAt(
-                                                    0,
-                                                )}
+                                        <div className="flex items-center gap-3">
+                                            {/* Larger Avatar (h-9 w-9) */}
+                                            <Avatar className="h-9 w-9 border border-border/50">
+                                                <AvatarImage
+                                                    src={getAvatarUrl(
+                                                        booking.sweepstar,
+                                                    )}
+                                                    className="object-cover"
+                                                />
+                                                <AvatarFallback className="bg-blue-100/60 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-xs font-bold">
+                                                    {getInitials(
+                                                        booking.sweepstar.name,
+                                                    )}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            <div className="min-w-0">
+                                                <div className="font-semibold text-foreground truncate text-sm">
+                                                    {booking.sweepstar.name}
+                                                </div>
+                                                {/* Added Email Display */}
+                                                <div className="text-xs text-muted-foreground truncate">
+                                                    {booking.sweepstar.email}
+                                                </div>
                                             </div>
-                                            <span className="text-sm font-medium text-foreground">
-                                                {booking.sweepstar.name}
-                                            </span>
                                         </div>
                                     ) : (
                                         <Badge
@@ -169,7 +196,7 @@ export default function BookingsTable({
                                     )}
                                 </TableCell>
 
-                                <TableCell className="px-4 py-4">
+                                <TableCell className="px-2 py-4">
                                     <div className="flex items-center gap-1.5 text-muted-foreground max-w-[150px]">
                                         <MapPin className="w-4 h-4 shrink-0 text-primary/60" />
                                         <span className="truncate text-sm font-medium">
@@ -178,7 +205,7 @@ export default function BookingsTable({
                                     </div>
                                 </TableCell>
 
-                                <TableCell className="px-4 py-4">
+                                <TableCell className="px-2 py-4">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <Clock className="w-4 h-4 shrink-0 text-primary/60" />
                                         <span className="text-sm font-medium whitespace-nowrap">
@@ -187,7 +214,7 @@ export default function BookingsTable({
                                     </div>
                                 </TableCell>
 
-                                <TableCell className="px-4 py-4">
+                                <TableCell className="px-2 py-4">
                                     <Badge
                                         variant="outline"
                                         className={`text-xs font-bold border ${getStatusColor(
@@ -199,38 +226,43 @@ export default function BookingsTable({
                                     </Badge>
                                 </TableCell>
 
-                                <TableCell className="px-4 py-4 text-right">
+                                <TableCell className="px-2 py-4 text-right">
                                     <div className="flex justify-end gap-1.5">
+                                        {/* Approve: Pending Only */}
                                         {booking.status === "pending" && (
-                                            <>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20 transition-all"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onApprove(booking.id);
-                                                    }}
-                                                    disabled={isMutating}
-                                                    title="Approve booking"
-                                                >
-                                                    <CheckCircle className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50/60 dark:hover:bg-red-900/20 transition-all"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onReject(booking.id);
-                                                    }}
-                                                    disabled={isMutating}
-                                                    title="Reject booking"
-                                                >
-                                                    <XCircle className="w-4 h-4" />
-                                                </Button>
-                                            </>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50/60 dark:hover:bg-emerald-900/20 transition-all"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onApprove(booking.id);
+                                                }}
+                                                disabled={isMutating}
+                                                title="Approve booking"
+                                            >
+                                                <CheckCircle className="w-4 h-4" />
+                                            </Button>
                                         )}
+
+                                        {/* Reject: Pending OR Confirmed */}
+                                        {(booking.status === "pending" ||
+                                            booking.status === "confirmed") && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50/60 dark:hover:bg-red-900/20 transition-all"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onReject(booking.id);
+                                                }}
+                                                disabled={isMutating}
+                                                title="Reject/Cancel booking"
+                                            >
+                                                <XCircle className="w-4 h-4" />
+                                            </Button>
+                                        )}
+
                                         <Button
                                             size="sm"
                                             variant="ghost"

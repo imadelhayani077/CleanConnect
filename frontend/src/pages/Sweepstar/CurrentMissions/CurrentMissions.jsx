@@ -1,16 +1,16 @@
 // src/pages/sweepstar/CurrentMissions.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Zap, Sparkles } from "lucide-react";
+import { Calendar, Zap, Sparkles, Loader2 } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 
 import { useCompleteMission, useMissionsHistory } from "@/Hooks/useBookings";
-import { Loader2 } from "lucide-react";
 
 import CurrentMissionCard from "./components/CurrentMissionCard";
 import EmptyHistoryState from "../components/EmptyHistoryState";
+import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus] 1. Import Modal
 
 export default function CurrentMissions() {
     const navigate = useNavigate();
@@ -20,12 +20,31 @@ export default function CurrentMissions() {
 
     const [completingId, setCompletingId] = useState(null);
 
-    const handleComplete = async (id) => {
-        if (!window.confirm("Confirm this mission is completed?")) return;
+    // [!code focus] 2. State for confirmation modal
+    const [confirmModal, setConfirmModal] = useState({
+        open: false,
+        id: null,
+    });
 
-        setCompletingId(id);
+    // [!code focus] 3. Trigger the modal instead of window.confirm
+    const handleCompleteClick = (id) => {
+        setConfirmModal({
+            open: true,
+            id: id,
+        });
+    };
+
+    // [!code focus] 4. The actual completion logic
+    const handleConfirmComplete = async () => {
+        const id = confirmModal.id;
+        if (!id) return;
+
+        setCompletingId(id); // Set this to show loading state on the card if needed
         try {
             await completeMission(id);
+            setConfirmModal({ open: false, id: null });
+        } catch (error) {
+            console.error("Failed to complete mission", error);
         } finally {
             setCompletingId(null);
         }
@@ -114,7 +133,8 @@ export default function CurrentMissions() {
                         <CurrentMissionCard
                             key={job.id}
                             job={job}
-                            onComplete={handleComplete}
+                            // [!code focus] 5. Pass the new handler
+                            onComplete={handleCompleteClick}
                             isCompleting={
                                 completingId === job.id && isCompletingMission
                             }
@@ -137,6 +157,20 @@ export default function CurrentMissions() {
                     </AlertDescription>
                 </Alert>
             )}
+
+            {/* [!code focus] 6. Render Confirmation Modal */}
+            <ConfirmationModal
+                open={confirmModal.open}
+                onClose={() =>
+                    setConfirmModal({ ...confirmModal, open: false })
+                }
+                onConfirm={handleConfirmComplete}
+                title="Complete Mission?"
+                description="Are you sure you want to mark this mission as completed? This will update your status and notify the client."
+                variant="default" // Using default (blue/primary) as this is a positive action
+                confirmText="Complete Mission"
+                isLoading={isCompletingMission}
+            />
         </div>
     );
 }

@@ -1,5 +1,5 @@
 // src/pages/admin/ServiceForm.jsx
-import React from "react";
+import React, { useEffect } from "react"; // [!code focus] Import useEffect
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -39,7 +39,8 @@ const formSchema = z.object({
     description: z.string().max(500).optional(),
 });
 
-export default function ServiceForm({ editingId, setEditingId }) {
+// [!code focus] 1. Make sure to accept 'services' as a prop
+export default function ServiceForm({ editingId, setEditingId, services }) {
     const createMutation = useCreateService();
     const updateMutation = useUpdateService();
 
@@ -48,93 +49,100 @@ export default function ServiceForm({ editingId, setEditingId }) {
         defaultValues: { name: "", base_price: "", description: "" },
     });
 
+    // [!code focus] 2. Add this useEffect to listen for changes
+    useEffect(() => {
+        if (editingId && services) {
+            // Find the service that matches the ID
+            const serviceToEdit = services.find((s) => s.id === editingId);
+
+            if (serviceToEdit) {
+                // Populate the form with that service's data
+                form.reset({
+                    name: serviceToEdit.name,
+                    base_price: serviceToEdit.base_price,
+                    description: serviceToEdit.description || "",
+                });
+            }
+        } else {
+            // If not editing (or ID is cleared), clear the form
+            form.reset({
+                name: "",
+                base_price: "",
+                description: "",
+            });
+        }
+    }, [editingId, services, form]);
+
     const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-    React.useEffect(() => {
-        if (!editingId) {
-            form.reset({ name: "", base_price: "", description: "" });
-        }
-    }, [editingId, form]);
-
     const onSubmit = async (values) => {
-        const payload = {
-            name: values.name,
-            base_price: values.base_price,
-            description: values.description || undefined,
-        };
-
         try {
             if (editingId) {
                 await updateMutation.mutateAsync({
                     id: editingId,
-                    data: payload,
+                    data: values,
                 });
+                setEditingId(null); // Clear edit mode after success
             } else {
-                await createMutation.mutateAsync(payload);
+                await createMutation.mutateAsync(values);
+                // Form clears automatically via the useEffect when editingId remains null
+                form.reset();
             }
-            setEditingId(null);
-        } catch (err) {
-            console.error("Service save failed:", err);
+        } catch (error) {
+            console.error("Failed to save service", error);
         }
     };
 
     const handleCancel = () => {
         setEditingId(null);
+        form.reset({ name: "", base_price: "", description: "" });
     };
 
     return (
-        <Card
-            className={`md:col-span-5 lg:col-span-4 rounded-xl border-border/60 bg-background/50 backdrop-blur-sm transition-all duration-300 ${
-                editingId ? "ring-2 ring-primary/50 shadow-lg" : "shadow-md"
-            }`}
-        >
+        <Card className="md:col-span-5 lg:col-span-4 rounded-xl border-border/60 bg-background/50 backdrop-blur-sm h-fit sticky top-6">
             <CardHeader className="border-b border-border/60 pb-4">
                 <CardTitle className="text-xl flex items-center gap-2">
                     {editingId ? (
                         <>
-                            <Pencil className="w-5 h-5 text-blue-600" />
+                            <Pencil className="w-5 h-5 text-primary" />
                             Edit Service
                         </>
                     ) : (
                         <>
                             <Plus className="w-5 h-5 text-primary" />
-                            Add New Service
+                            New Service
                         </>
                     )}
                 </CardTitle>
-                <CardDescription className="mt-2">
+                <CardDescription>
                     {editingId
-                        ? "Update service details and pricing below"
-                        : "Create a new service offering for clients"}
+                        ? "Update service details and pricing"
+                        : "Add a new cleaning package to the platform"}
                 </CardDescription>
             </CardHeader>
-
             <CardContent className="pt-6">
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-5"
+                        className="space-y-4"
                     >
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-semibold">
+                                    <FormLabel className="flex items-center gap-1.5">
+                                        <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
                                         Service Name
                                     </FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                placeholder="e.g. Deep Cleaning"
-                                                disabled={isSubmitting}
-                                                className="pl-10"
-                                                {...field}
-                                            />
-                                        </div>
+                                        <Input
+                                            placeholder="e.g. Deep Clean"
+                                            className="bg-muted/30"
+                                            {...field}
+                                        />
                                     </FormControl>
-                                    <FormMessage className="text-xs" />
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -144,24 +152,20 @@ export default function ServiceForm({ editingId, setEditingId }) {
                             name="base_price"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-semibold">
+                                    <FormLabel className="flex items-center gap-1.5">
+                                        <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
                                         Base Price ($)
                                     </FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                placeholder="0.00"
-                                                disabled={isSubmitting}
-                                                className="pl-10"
-                                                {...field}
-                                            />
-                                        </div>
+                                        <Input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            className="bg-muted/30 font-mono"
+                                            {...field}
+                                        />
                                     </FormControl>
-                                    <FormMessage className="text-xs" />
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -171,26 +175,23 @@ export default function ServiceForm({ editingId, setEditingId }) {
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="text-sm font-semibold">
-                                        Description (Optional)
+                                    <FormLabel className="flex items-center gap-1.5">
+                                        <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                                        Description
                                     </FormLabel>
                                     <FormControl>
-                                        <div className="relative">
-                                            <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                            <Input
-                                                placeholder="What does this service include?"
-                                                disabled={isSubmitting}
-                                                className="pl-10"
-                                                {...field}
-                                            />
-                                        </div>
+                                        <Input
+                                            placeholder="What's included?"
+                                            className="bg-muted/30"
+                                            {...field}
+                                        />
                                     </FormControl>
-                                    <FormMessage className="text-xs" />
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
 
-                        <div className="flex gap-3 pt-4">
+                        <div className="flex gap-3 pt-2">
                             <Button
                                 type="submit"
                                 disabled={isSubmitting}

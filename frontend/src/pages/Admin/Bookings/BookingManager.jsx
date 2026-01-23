@@ -1,3 +1,4 @@
+// src/pages/dashboards/BookingManager.jsx
 import React, { useState } from "react";
 import { Loader2, BarChart3 } from "lucide-react";
 import { useAllBookings, useEditBooking } from "@/Hooks/useBookings";
@@ -5,6 +6,7 @@ import BookingStats from "./components/BookingStats";
 import BookingFilter from "./components/BookingFilter";
 import BookingsTable from "./components/BookingsTable";
 import BookingDetailModal from "./components/BookingDetailModal";
+import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus] 1. Import the modal
 
 export default function BookingManager() {
     const { data: bookings = [], isLoading } = useAllBookings();
@@ -12,24 +14,78 @@ export default function BookingManager() {
     const [filterStatus, setFilterStatus] = useState("all");
     const [selectedBooking, setSelectedBooking] = useState(null);
 
-    const handleApprove = async (id) => {
-        await editBookingMutation.mutateAsync({
+    // [!code focus] 2. Add state for the confirmation modal
+    const [confirmState, setConfirmState] = useState({
+        open: false,
+        type: null, // 'APPROVE' or 'REJECT'
+        id: null,
+    });
+
+    // [!code focus] 3. Handler to open modal for Approval
+    const handleApproveClick = (id) => {
+        setConfirmState({
+            open: true,
+            type: "APPROVE",
             id,
-            data: { status: "confirmed" },
         });
     };
 
-    const handleReject = async (id) => {
-        if (window.confirm("Are you sure you want to reject this booking?")) {
-            await editBookingMutation.mutateAsync({
-                id,
-                data: {
-                    status: "cancelled",
-                    cancellation_reason: "Rejected by Admin",
-                },
-            });
+    // [!code focus] 4. Handler to open modal for Rejection (Replacing window.confirm)
+    const handleRejectClick = (id) => {
+        setConfirmState({
+            open: true,
+            type: "REJECT",
+            id,
+        });
+    };
+
+    // [!code focus] 5. The generic execution function
+    const handleFinalConfirmation = async () => {
+        const { type, id } = confirmState;
+
+        try {
+            if (type === "APPROVE") {
+                await editBookingMutation.mutateAsync({
+                    id,
+                    data: { status: "confirmed" },
+                });
+            } else if (type === "REJECT") {
+                await editBookingMutation.mutateAsync({
+                    id,
+                    data: {
+                        status: "cancelled",
+                        cancellation_reason: "Rejected by Admin",
+                    },
+                });
+            }
+            // Close modal on success
+            setConfirmState({ ...confirmState, open: false });
+        } catch (error) {
+            console.error("Action failed", error);
         }
     };
+
+    // [!code focus] 6. Helper to get dynamic text for the modal
+    const getModalContent = () => {
+        if (confirmState.type === "APPROVE") {
+            return {
+                title: "Confirm Booking?",
+                description:
+                    "Are you sure you want to mark this booking as confirmed?",
+                variant: "default",
+                confirmText: "Confirm Booking",
+            };
+        }
+        return {
+            title: "Reject Booking?",
+            description:
+                "Are you sure you want to reject this booking? This action cannot be undone.",
+            variant: "destructive",
+            confirmText: "Reject Booking",
+        };
+    };
+
+    const modalContent = getModalContent();
 
     const filteredBookings = bookings.filter((b) =>
         filterStatus === "all" ? true : b.status === filterStatus,
@@ -100,10 +156,11 @@ export default function BookingManager() {
 
                 <BookingsTable
                     bookings={filteredBookings}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
+                    // [!code focus] 7. Pass the new handlers that open the modal
+                    onApprove={handleApproveClick}
+                    onReject={handleRejectClick}
                     onViewDetails={setSelectedBooking}
-                    isMutating={editBookingMutation.isPending}
+                    isMutating={editBookingMutation.isPending} // This is for table row loading state
                 />
             </div>
 
@@ -111,6 +168,20 @@ export default function BookingManager() {
                 booking={selectedBooking}
                 open={!!selectedBooking}
                 onClose={() => setSelectedBooking(null)}
+            />
+
+            {/* [!code focus] 8. Render the Confirmation Modal */}
+            <ConfirmationModal
+                open={confirmState.open}
+                onClose={() =>
+                    setConfirmState({ ...confirmState, open: false })
+                }
+                onConfirm={handleFinalConfirmation}
+                title={modalContent.title}
+                description={modalContent.description}
+                variant={modalContent.variant}
+                confirmText={modalContent.confirmText}
+                isLoading={editBookingMutation.isPending}
             />
         </div>
     );

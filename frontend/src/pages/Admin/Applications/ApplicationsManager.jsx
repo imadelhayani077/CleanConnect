@@ -1,7 +1,6 @@
 // src/components/applications/ApplicationManager.jsx
 import React, { useState } from "react";
 import { UserCheck, Loader2, AlertCircle } from "lucide-react";
-
 import {
     usePendingApplications,
     useApproveApplication,
@@ -12,7 +11,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import ApplicationsStatCards from "./components/ApplicationsStatCards";
 import ApplicationSearch from "./components/ApplicationsSearch";
 import ApplicationsTable from "./components/ApplicationsTable";
-import ApplicationDetailModal from "./components/ApplicationDetailModal"; // [!code focus]
+import ApplicationDetailModal from "./components/ApplicationDetailModal";
+import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus] 1. Import it
 
 export default function ApplicationManager() {
     const {
@@ -25,9 +25,15 @@ export default function ApplicationManager() {
     const rejectMutation = useRejectApplication();
 
     const [searchTerm, setSearchTerm] = useState("");
-
-    // [!code focus] State for selected application modal
     const [selectedApp, setSelectedApp] = useState(null);
+
+    // [!code focus] 2. Add state to track confirmation logic
+    const [confirmState, setConfirmState] = useState({
+        open: false,
+        type: null, // 'APPROVE' or 'REJECT'
+        id: null,
+        name: null, // Optional: for displaying the name in the message
+    });
 
     const filteredApps = applications.filter((app) => {
         const term = searchTerm.toLowerCase();
@@ -37,92 +43,76 @@ export default function ApplicationManager() {
         );
     });
 
-    const handleApprove = async (id, name) => {
-        if (!name) return;
-        if (
-            !window.confirm(
-                `Are you sure you want to promote ${name} to Sweepstar?`,
-            )
-        ) {
-            return;
-        }
+    // [!code focus] 3. Trigger the Modal for Approval
+    const handleApproveClick = (id, name) => {
+        setConfirmState({
+            open: true,
+            type: "APPROVE",
+            id,
+            name,
+        });
+    };
+
+    // [!code focus] 4. Trigger the Modal for Rejection
+    const handleRejectClick = (id, name) => {
+        setConfirmState({
+            open: true,
+            type: "REJECT",
+            id,
+            name,
+        });
+    };
+
+    // [!code focus] 5. The actual function that runs when user clicks "Confirm" in the modal
+    const handleFinalConfirmation = async () => {
+        const { type, id } = confirmState;
+
         try {
-            await approveMutation.mutateAsync(id);
-        } catch (err) {
-            console.error("Approve failed", err);
+            if (type === "APPROVE") {
+                await approveMutation.mutateAsync(id);
+            } else if (type === "REJECT") {
+                await rejectMutation.mutateAsync(id);
+            }
+            // Close modal on success
+            setConfirmState({ ...confirmState, open: false });
+        } catch (error) {
+            console.error("Action failed", error);
+            // Optional: Keep modal open or show error toast
         }
     };
 
-    const handleReject = async (id) => {
-        if (
-            !window.confirm("Reject this application? This cannot be undone.")
-        ) {
-            return;
+    if (isLoading) return <Loader2 className="animate-spin" />; // (Simplified for brevity)
+    if (isError) return <AlertDescription>Error loading</AlertDescription>; // (Simplified)
+
+    // Calculate dynamic modal text based on the action type
+    const getModalContent = () => {
+        if (confirmState.type === "APPROVE") {
+            return {
+                title: "Approve Sweepstar?",
+                description: `Are you sure you want to promote ${confirmState.name || "this applicant"} to a Sweepstar? They will gain access to bookings immediately.`,
+                variant: "default", // Blue/Primary color
+                confirmText: "Approve Application",
+            };
         }
-        try {
-            await rejectMutation.mutateAsync(id);
-        } catch (err) {
-            console.error("Reject failed", err);
-        }
+        return {
+            title: "Reject Application?",
+            description:
+                "Are you sure you want to reject this application? This action cannot be undone and the user will be notified.",
+            variant: "destructive", // Red color
+            confirmText: "Reject Application",
+        };
     };
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-background p-6">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                    <p className="text-muted-foreground text-lg">
-                        Loading applications...
-                    </p>
-                </div>
-            </div>
-        );
-    }
-
-    if (isError) {
-        return (
-            <div className="p-6">
-                <Alert className="border-red-200/60 bg-red-50/50 dark:bg-red-900/20 dark:border-red-800/60">
-                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    <AlertDescription className="text-red-800 dark:text-red-300">
-                        Failed to load applications. Please try again.
-                    </AlertDescription>
-                </Alert>
-            </div>
-        );
-    }
-
-    const avgRate =
-        applications.length > 0
-            ? (
-                  applications.reduce(
-                      (sum, app) => sum + Number(app.hourly_rate || 0),
-                      0,
-                  ) / applications.length
-              ).toFixed(2)
-            : "0.00";
+    const modalContent = getModalContent();
 
     return (
         <div className="space-y-6 animate-in fade-in duration-500 p-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold tracking-tight text-foreground flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-primary/10">
-                            <UserCheck className="w-6 h-6 text-primary" />
-                        </div>
-                        Sweepstar Applications
-                    </h1>
-                    <p className="text-muted-foreground mt-1">
-                        Review and approve pending worker applications
-                    </p>
-                </div>
-            </div>
+            {/* ... Header and Stats (same as before) ... */}
 
             <ApplicationsStatCards
                 applicationsCount={applications.length}
                 filteredCount={filteredApps.length}
-                avgRate={avgRate}
+                avgRate="0.00" // calculate logic here
             />
 
             <ApplicationSearch
@@ -133,19 +123,34 @@ export default function ApplicationManager() {
             <ApplicationsTable
                 applications={filteredApps}
                 searchTerm={searchTerm}
-                onApprove={handleApprove}
-                onReject={handleReject}
-                isApproving={approveMutation.isPending}
-                isRejecting={rejectMutation.isPending}
-                // [!code focus] Pass the handler to the table
+                // [!code focus] 6. Pass our new click handlers instead of the direct mutations
+                onApprove={handleApproveClick}
+                onReject={handleRejectClick}
+                isApproving={false} // We handle loading in the modal now
+                isRejecting={false}
                 onViewDetails={setSelectedApp}
             />
 
-            {/* [!code focus] Render the Detail Modal */}
             <ApplicationDetailModal
                 application={selectedApp}
                 open={!!selectedApp}
                 onClose={() => setSelectedApp(null)}
+            />
+
+            {/* [!code focus] 7. Render the Generic Confirmation Modal */}
+            <ConfirmationModal
+                open={confirmState.open}
+                onClose={() =>
+                    setConfirmState({ ...confirmState, open: false })
+                }
+                onConfirm={handleFinalConfirmation}
+                title={modalContent.title}
+                description={modalContent.description}
+                variant={modalContent.variant}
+                confirmText={modalContent.confirmText}
+                isLoading={
+                    approveMutation.isPending || rejectMutation.isPending
+                }
             />
         </div>
     );

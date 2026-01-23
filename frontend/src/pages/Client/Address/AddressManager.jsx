@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import AddressCard from "./components/AddressCard";
 import AddAddressForm from "./components/AddAddressForm";
+import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus] 1. Import Modal
 
 export default function AddressManager() {
     const { addresses, loading, error, deleteAddress } = useAddress();
@@ -25,18 +26,37 @@ export default function AddressManager() {
     const [deletingId, setDeletingId] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
 
-    const handleDelete = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this address?"))
-            return;
+    // [!code focus] 2. State for the confirmation modal
+    const [confirmModal, setConfirmModal] = useState({
+        open: false,
+        id: null,
+    });
 
-        setDeletingId(id);
+    // [!code focus] 3. Handler to open the modal (passed to AddressCard)
+    const handleDeleteClick = (id) => {
+        setConfirmModal({
+            open: true,
+            id: id,
+        });
         setDeleteError(null);
+    };
+
+    // [!code focus] 4. Handler for the actual deletion logic
+    const handleConfirmDelete = async () => {
+        const id = confirmModal.id;
+        if (!id) return;
+
+        setDeletingId(id); // Triggers loading state
 
         try {
             await deleteAddress(id);
+            // Close modal on success
+            setConfirmModal({ open: false, id: null });
         } catch (err) {
             console.error(err);
             setDeleteError("Could not delete address. Please try again.");
+            // We close the modal to show the error alert on the main screen
+            setConfirmModal({ open: false, id: null });
         } finally {
             setDeletingId(null);
         }
@@ -170,13 +190,28 @@ export default function AddressManager() {
                             <AddressCard
                                 key={addr.id}
                                 address={addr}
-                                onDelete={handleDelete}
+                                // [!code focus] 5. Pass the click handler instead of direct delete
+                                onDelete={handleDeleteClick}
                                 isDeleting={deletingId === addr.id}
                             />
                         ))
                     )}
                 </div>
             </div>
+
+            {/* [!code focus] 6. Render the Confirmation Modal */}
+            <ConfirmationModal
+                open={confirmModal.open}
+                onClose={() =>
+                    setConfirmModal({ ...confirmModal, open: false })
+                }
+                onConfirm={handleConfirmDelete}
+                title="Delete Address?"
+                description="Are you sure you want to remove this address from your account? This action cannot be undone."
+                variant="destructive"
+                confirmText="Delete Address"
+                isLoading={!!deletingId} // Show loading state on the button
+            />
         </div>
     );
 }

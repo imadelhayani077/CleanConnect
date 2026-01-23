@@ -7,24 +7,38 @@ import {
     CheckCircle2,
     AlertCircle,
 } from "lucide-react";
-
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-
 import { useAvailableMissions, useAcceptMission } from "@/Hooks/useBookings";
-
 import EmptyMissionsState from "../components/EmptyMissionsState";
 import MissionCard from "./components/AvailableMissionCard";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function AvailableMissions() {
     const { data: jobs = [], isLoading } = useAvailableMissions();
     const { mutateAsync: acceptMission } = useAcceptMission();
-    console.log(jobs);
+
     const [processingId, setProcessingId] = useState(null);
     const [acceptError, setAcceptError] = useState(null);
     const [acceptSuccess, setAcceptSuccess] = useState(null);
 
-    const handleAccept = async (jobId) => {
+    // Modal state
+    const [confirmModal, setConfirmModal] = useState({
+        open: false,
+        jobId: null,
+    });
+
+    const handleAcceptClick = (jobId) => {
+        setConfirmModal({
+            open: true,
+            jobId,
+        });
+    };
+
+    const handleConfirmAccept = async () => {
+        const jobId = confirmModal.jobId;
+        if (!jobId) return;
+
         setProcessingId(jobId);
         setAcceptError(null);
         setAcceptSuccess(null);
@@ -34,19 +48,22 @@ export default function AvailableMissions() {
             setAcceptSuccess(
                 "Congratulations! You've accepted this mission. Check your schedule for details.",
             );
+            // Close modal only on success
+            setConfirmModal({ open: false, jobId: null });
         } catch (error) {
             console.error("Acceptance failed", error);
             setAcceptError(
                 error?.response?.data?.message ||
                     "Could not accept this job. It may have been taken by another worker.",
             );
+            // Modal stays open so user can see the error and try again or cancel
         } finally {
             setProcessingId(null);
         }
     };
 
     const handleViewDetails = (jobId) => {
-        // TODO: Add your function here to handle view details
+        // TODO: Implement view details (modal, navigate to detail page, etc.)
         console.log("View details for mission:", jobId);
     };
 
@@ -86,9 +103,7 @@ export default function AvailableMissions() {
                             <p className="text-muted-foreground text-sm md:text-base mt-1">
                                 {jobs.length === 0
                                     ? "Check back soon for new missions"
-                                    : `${jobs.length} mission${
-                                          jobs.length !== 1 ? "s" : ""
-                                      } ready for you to grab`}
+                                    : `${jobs.length} mission${jobs.length !== 1 ? "s" : ""} ready for you to grab`}
                             </p>
                         </div>
                     </div>
@@ -117,22 +132,7 @@ export default function AvailableMissions() {
                 )}
             </div>
 
-            {/* Status Alerts */}
-            {acceptError && (
-                <Alert
-                    variant="destructive"
-                    className="animate-in slide-in-from-top-2"
-                >
-                    <AlertCircle className="h-5 w-5" />
-                    <AlertTitle className="font-semibold">
-                        Could Not Accept Mission ❌
-                    </AlertTitle>
-                    <AlertDescription className="mt-2 text-sm">
-                        {acceptError}
-                    </AlertDescription>
-                </Alert>
-            )}
-
+            {/* Status Alerts (shown outside modal) */}
             {acceptSuccess && (
                 <Alert className="border-green-200 dark:border-green-800/50 bg-green-50/80 dark:bg-green-900/20 animate-in slide-in-from-top-2">
                     <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -145,7 +145,7 @@ export default function AvailableMissions() {
                 </Alert>
             )}
 
-            {/* Jobs Grid */}
+            {/* Main content */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {jobs.length === 0 ? (
                     <div className="col-span-full">
@@ -156,13 +156,28 @@ export default function AvailableMissions() {
                         <MissionCard
                             key={job.id}
                             job={job}
-                            onAccept={handleAccept}
+                            onAccept={handleAcceptClick}
                             onViewDetails={handleViewDetails}
                             isProcessing={processingId === job.id}
                         />
                     ))
                 )}
             </div>
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                open={confirmModal.open}
+                onClose={() =>
+                    setConfirmModal({ ...confirmModal, open: false })
+                }
+                onConfirm={handleConfirmAccept}
+                title="Accept this Mission?"
+                description="This will assign the mission to you. Make sure it fits your availability — accept only if you're ready to complete it."
+                variant="default"
+                confirmText="Yes, Accept Mission"
+                cancelText="No, Cancel"
+                isLoading={processingId === confirmModal.jobId}
+            />
         </div>
     );
 }
