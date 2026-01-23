@@ -10,7 +10,11 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export default function RecentActivity({ recentActivity, formatCurrency }) {
+export default function RecentActivity({
+    recentActivity,
+    formatCurrency,
+    onViewBooking,
+}) {
     const getStatusIcon = (status) => {
         switch (status) {
             case "completed":
@@ -57,7 +61,10 @@ export default function RecentActivity({ recentActivity, formatCurrency }) {
                         recentActivity.map((booking) => (
                             <div
                                 key={booking.id}
-                                className="flex items-center justify-between p-4 rounded-lg border border-border/60 bg-muted/20 hover:border-primary/30 hover:bg-muted/30 transition-all"
+                                onClick={() =>
+                                    onViewBooking && onViewBooking(booking)
+                                }
+                                className="flex items-center justify-between p-4 rounded-lg border border-border/60 bg-muted/20 hover:border-primary/30 hover:bg-muted/30 transition-all cursor-pointer group"
                             >
                                 <div className="flex items-start gap-3 min-w-0 flex-1">
                                     <div
@@ -65,19 +72,41 @@ export default function RecentActivity({ recentActivity, formatCurrency }) {
                                     >
                                         {getStatusIcon(booking.status)}
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-foreground truncate">
-                                            {booking.user?.name ||
-                                                "Unknown Client"}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                            <p className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                                                {booking.user?.name ||
+                                                    "Unknown Client"}
+                                            </p>
+                                        </div>
+
+                                        {/* Attempt to show services in list if available */}
+                                        <div className="flex flex-wrap gap-1 mt-1.5 mb-1.5">
+                                            {booking.services &&
+                                            booking.services.length > 0
+                                                ? booking.services.map(
+                                                      (service, idx) => (
+                                                          <Badge
+                                                              key={idx}
+                                                              variant="secondary"
+                                                              className="text-[10px] px-1.5 h-5 font-normal bg-purple-100/50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 border-0"
+                                                          >
+                                                              {service.name}
+                                                          </Badge>
+                                                      ),
+                                                  )
+                                                : // Optional: don't show anything if empty in list view to keep it clean
+                                                  null}
+                                        </div>
+
+                                        <p className="text-xs text-muted-foreground flex items-center gap-2">
                                             <Badge
                                                 variant="outline"
-                                                className="text-[10px] capitalize"
+                                                className="text-[10px] capitalize h-5"
                                             >
                                                 {booking.status}
                                             </Badge>
-                                            <span className="ml-1">
+                                            <span className="text-[10px]">
                                                 {new Date(
                                                     booking.created_at,
                                                 ).toLocaleString("en-US", {

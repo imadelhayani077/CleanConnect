@@ -1,20 +1,42 @@
 // src/pages/dashboards/AdminDashboard.jsx
-import React from "react";
-import { Activity, Download } from "lucide-react";
+import React, { useState } from "react";
+import {
+    Activity,
+    Download,
+    Users,
+    Star,
+    Calendar,
+    DollarSign,
+    Loader2,
+} from "lucide-react";
 
 import { useUser } from "@/Hooks/useAuth";
 import { useDashboard } from "@/Hooks/useDashboard";
+import { useAllBookings } from "@/Hooks/useBookings"; // [!code focus] 1. Import this
 
 import { Button } from "@/components/ui/button";
 import StatCard from "./components/StatCard";
 import RecentActivity from "./components/RecentActivity";
 import SystemStatus from "./components/SystemStatus";
-import { Users, Star, Calendar, DollarSign } from "lucide-react";
-import { Loader2 } from "lucide-react";
+import BookingDetailModal from "@/pages/Admin/Bookings/components/BookingDetailModal";
 
 export default function AdminDashboard() {
     const { data: user } = useUser();
     const { adminStats, isAdminLoading } = useDashboard();
+
+    // [!code focus] 2. Fetch all bookings so we have the full details (services, etc.)
+    const { data: allBookings = [] } = useAllBookings();
+
+    const [selectedBooking, setSelectedBooking] = useState(null);
+
+    // [!code focus] 3. Helper to find the full booking object
+    const handleViewBooking = (partialBooking) => {
+        // Try to find the full booking details in our list
+        const fullDetails = allBookings.find((b) => b.id === partialBooking.id);
+
+        // Use full details if found, otherwise fall back to the partial data
+        setSelectedBooking(fullDetails || partialBooking);
+    };
 
     const formatCurrency = (amount) =>
         new Intl.NumberFormat("en-US", {
@@ -96,9 +118,18 @@ export default function AdminDashboard() {
                 <RecentActivity
                     recentActivity={adminStats?.data.recent_activity || []}
                     formatCurrency={formatCurrency}
+                    // [!code focus] 4. Use our new smart handler
+                    onViewBooking={handleViewBooking}
                 />
                 <SystemStatus adminStats={adminStats} />
             </div>
+
+            {/* Booking Detail Modal */}
+            <BookingDetailModal
+                booking={selectedBooking}
+                open={!!selectedBooking}
+                onClose={() => setSelectedBooking(null)}
+            />
         </div>
     );
 }

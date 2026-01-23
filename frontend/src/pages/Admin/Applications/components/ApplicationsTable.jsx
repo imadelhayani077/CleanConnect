@@ -7,6 +7,7 @@ import {
     UserCheck,
     DollarSign,
     Loader2,
+    Eye,
 } from "lucide-react";
 
 import { getInitials, getAvatarUrl } from "@/utils/avatarHelper";
@@ -20,12 +21,21 @@ import {
     CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 export default function ApplicationsTable({
     applications,
     searchTerm,
     onApprove,
     onReject,
+    onViewDetails,
     isApproving,
     isRejecting,
 }) {
@@ -45,33 +55,33 @@ export default function ApplicationsTable({
             </CardHeader>
 
             <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-border/60 bg-muted/30 hover:bg-muted/30">
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="border-b border-border/60 bg-muted/30 hover:bg-muted/30">
+                            <TableHead className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Applicant
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            </TableHead>
+                            <TableHead className="px-4   py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 ID Number
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            </TableHead>
+                            <TableHead className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Hourly Rate
-                            </th>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
+                            </TableHead>
+                            <TableHead className="px-4 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden lg:table-cell">
                                 Bio
-                            </th>
-                            <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            </TableHead>
+                            <TableHead className="px-4 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                 Actions
-                            </th>
-                        </tr>
-                    </thead>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
 
-                    <tbody className="divide-y divide-border/40">
+                    <TableBody className="divide-y divide-border/40">
                         {applications.length === 0 ? (
-                            <tr>
-                                <td
+                            <TableRow>
+                                <TableCell
                                     colSpan={5}
-                                    className="px-6 py-16 text-center"
+                                    className="px-4 py-16 text-center"
                                 >
                                     <div className="flex flex-col items-center gap-3">
                                         <UserCheck className="w-12 h-12 text-muted-foreground/20" />
@@ -80,22 +90,17 @@ export default function ApplicationsTable({
                                                 ? `No applicants found matching "${searchTerm}"`
                                                 : "No pending applications"}
                                         </p>
-                                        {!hasSearch && (
-                                            <p className="text-sm text-muted-foreground/70">
-                                                Great! You've reviewed all
-                                                applicants.
-                                            </p>
-                                        )}
                                     </div>
-                                </td>
-                            </tr>
+                                </TableCell>
+                            </TableRow>
                         ) : (
                             applications.map((app) => (
-                                <tr
+                                <TableRow
                                     key={app.id}
                                     className="border-b border-border/40 hover:bg-muted/20 transition-colors"
                                 >
-                                    <td className="px-6 py-4">
+                                    {/* Applicant */}
+                                    <TableCell className="px-4 py-4">
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-10 w-10 border border-border/60">
                                                 <AvatarImage
@@ -118,18 +123,20 @@ export default function ApplicationsTable({
                                                 </p>
                                             </div>
                                         </div>
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4">
+                                    {/* ID Number */}
+                                    <TableCell className="px-4 py-4">
                                         <Badge
                                             variant="outline"
                                             className="font-mono text-xs bg-muted/50 border-border/60"
                                         >
                                             {app.id_number}
                                         </Badge>
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4">
+                                    {/* Hourly Rate */}
+                                    <TableCell className="px-4 py-4">
                                         <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                                             <DollarSign className="w-4 h-4" />
                                             {app.hourly_rate}
@@ -137,9 +144,10 @@ export default function ApplicationsTable({
                                                 /hr
                                             </span>
                                         </div>
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4 hidden lg:table-cell max-w-xs">
+                                    {/* Bio - visible only on lg+ */}
+                                    <TableCell className="px-6 py-4 hidden lg:table-cell max-w-xs">
                                         <div className="flex items-start gap-2 text-sm text-muted-foreground">
                                             <FileText className="w-4 h-4 mt-0.5 shrink-0" />
                                             <p
@@ -149,10 +157,24 @@ export default function ApplicationsTable({
                                                 {app.bio || "No bio provided"}
                                             </p>
                                         </div>
-                                    </td>
+                                    </TableCell>
 
-                                    <td className="px-6 py-4">
+                                    {/* Actions */}
+                                    <TableCell className="px-4 py-4">
                                         <div className="flex justify-end gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+                                                onClick={() =>
+                                                    onViewDetails &&
+                                                    onViewDetails(app)
+                                                }
+                                                title="View Details"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Button>
+
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
@@ -188,12 +210,12 @@ export default function ApplicationsTable({
                                                 )}
                                             </Button>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </TableCell>
+                                </TableRow>
                             ))
                         )}
-                    </tbody>
-                </table>
+                    </TableBody>
+                </Table>
             </div>
         </Card>
     );

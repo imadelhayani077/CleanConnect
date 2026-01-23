@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials, getAvatarUrl } from "@/utils/avatarHelper";
 
 const AVATAR_CONFIG = {
-    MAX_SIZE: 5 * 1024 * 1024, // 5MB
+    MAX_SIZE: 2 * 1024 * 1024, // 2MB
     ACCEPTED_TYPES: ["image/jpeg", "image/png", "image/webp"],
     ACCEPTED_FORMATS: "image/jpeg,image/png,image/webp",
 };
@@ -48,7 +48,7 @@ export default function AvatarUpload({ user, editable = true, size = "lg" }) {
 
         // Check file size
         if (file.size > AVATAR_CONFIG.MAX_SIZE) {
-            setError("File is too large. Maximum size is 5MB.");
+            setError("File is too large. Maximum size is 2MB.");
             return false;
         }
 
@@ -174,7 +174,7 @@ export default function AvatarUpload({ user, editable = true, size = "lg" }) {
             {/* Info Text - Show upload requirements */}
             {editable && (
                 <p className="text-xs text-muted-foreground text-center max-w-sm">
-                    JPG, PNG, or WebP • Max 5MB • Click the camera icon to
+                    JPG, PNG, or WebP • Max 2MB • Click the camera icon to
                     upload
                 </p>
             )}

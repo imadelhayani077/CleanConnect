@@ -47,7 +47,7 @@ export default function UserInfo() {
     const handleDelete = () => {
         if (
             window.confirm(
-                "ARE YOU SURE? This action cannot be undone. Type 'DELETE' to confirm."
+                "ARE YOU SURE? This action cannot be undone. Type 'DELETE' to confirm.",
             )
         ) {
             deleteAccount();
@@ -89,15 +89,6 @@ export default function UserInfo() {
                             <div className="flex items-center gap-6">
                                 <div className="relative">
                                     <AvatarUpload user={user} />
-                                    {/* <Avatar className="w-24 h-24 md:w-28 md:h-28 border-4 border-white dark:border-slate-900 shadow-2xl">
-                                        <AvatarImage src={user.avatar_url} />
-                                        <AvatarFallback className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70 text-white">
-                                            {user.name?.charAt(0).toUpperCase()}
-                                        </AvatarFallback>
-                                    </Avatar> */}
-                                    {/* <div className="absolute bottom-0 right-0 p-2 bg-white dark:bg-slate-800 rounded-full shadow-lg border-2 border-primary/20">
-                                        <Camera className="w-4 h-4 text-primary" />
-                                    </div> */}
                                 </div>
 
                                 <div>
@@ -105,7 +96,7 @@ export default function UserInfo() {
                                         <h1 className="text-3xl md:text-4xl font-bold text-foreground">
                                             {user.name}
                                         </h1>
-                                        {isActive && (
+                                        {!isAdmin && isActive && (
                                             <Badge className="bg-green-500/20 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800">
                                                 <CheckCircle2 className="w-3 h-3 mr-1" />
                                                 Active
@@ -124,7 +115,7 @@ export default function UserInfo() {
                             {/* Role Badge */}
                             <Badge
                                 className={`text-sm px-4 py-2.5 font-bold tracking-wider uppercase ${getRoleStyles(
-                                    user.role
+                                    user.role,
                                 )}`}
                             >
                                 {user.role}

@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import ApplicationsStatCards from "./components/ApplicationsStatCards";
 import ApplicationSearch from "./components/ApplicationsSearch";
 import ApplicationsTable from "./components/ApplicationsTable";
+import ApplicationDetailModal from "./components/ApplicationDetailModal"; // [!code focus]
 
 export default function ApplicationManager() {
     const {
@@ -24,6 +25,9 @@ export default function ApplicationManager() {
     const rejectMutation = useRejectApplication();
 
     const [searchTerm, setSearchTerm] = useState("");
+
+    // [!code focus] State for selected application modal
+    const [selectedApp, setSelectedApp] = useState(null);
 
     const filteredApps = applications.filter((app) => {
         const term = searchTerm.toLowerCase();
@@ -115,7 +119,6 @@ export default function ApplicationManager() {
                 </div>
             </div>
 
-            {/* Statistics Cards – extracted */}
             <ApplicationsStatCards
                 applicationsCount={applications.length}
                 filteredCount={filteredApps.length}
@@ -134,6 +137,15 @@ export default function ApplicationManager() {
                 onReject={handleReject}
                 isApproving={approveMutation.isPending}
                 isRejecting={rejectMutation.isPending}
+                // [!code focus] Pass the handler to the table
+                onViewDetails={setSelectedApp}
+            />
+
+            {/* [!code focus] Render the Detail Modal */}
+            <ApplicationDetailModal
+                application={selectedApp}
+                open={!!selectedApp}
+                onClose={() => setSelectedApp(null)}
             />
         </div>
     );

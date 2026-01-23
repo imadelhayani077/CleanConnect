@@ -69,11 +69,16 @@ export default function UsersTable({
                                 key={user.id}
                                 className="hover:bg-muted/30 transition-colors"
                             >
-                                <TableCell className="font-mono text-xs text-muted-foreground">
+                                <TableCell
+                                    className="font-mono text-xs text-muted-foreground"
+                                    onClick={() => setSelectedUserId(user.id)}
+                                >
                                     #{user.id}
                                 </TableCell>
 
-                                <TableCell>
+                                <TableCell
+                                    onClick={() => setSelectedUserId(user.id)}
+                                >
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-9 w-9 border">
                                             <AvatarImage
@@ -95,7 +100,7 @@ export default function UsersTable({
                                     </div>
                                 </TableCell>
 
-                                <TableCell>
+                                <TableCell onClick={() => setSelectedUserId(user.id)}>
                                     <Badge
                                         className={`uppercase ${getRoleStyles(user.role)}`}
                                     >
@@ -103,7 +108,7 @@ export default function UsersTable({
                                     </Badge>
                                 </TableCell>
 
-                                <TableCell>
+                                <TableCell onClick={() => setSelectedUserId(user.id)}>
                                     {user.role === "admin" ? (
                                         <Badge
                                             variant="outline"
@@ -127,7 +132,7 @@ export default function UsersTable({
                                     )}
                                 </TableCell>
 
-                                <TableCell className="text-sm text-muted-foreground">
+                                <TableCell className="text-sm text-muted-foreground" onClick={() => setSelectedUserId(user.id)}>
                                     {user.created_at
                                         ? new Date(
                                               user.created_at,
