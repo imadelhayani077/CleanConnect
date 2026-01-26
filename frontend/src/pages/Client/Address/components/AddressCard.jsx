@@ -1,11 +1,11 @@
 // src/components/address/AddressCard.jsx
 import React from "react";
-import { Home, Loader2, Trash2, MapPin, Zap } from "lucide-react";
+import { Home, Loader2, Trash2, MapPin, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export default function AddressCard({ address, onDelete, isDeleting }) {
+export default function AddressCard({ address, onDelete, isDeleting, onEdit }) {
     return (
         <Card className="rounded-xl border-border/60 bg-background/50 backdrop-blur-sm group hover:shadow-lg hover:border-primary/50 transition-all duration-300 overflow-hidden">
             {/* Accent Bar */}
@@ -83,9 +83,10 @@ export default function AddressCard({ address, onDelete, isDeleting }) {
                         variant="outline"
                         size="sm"
                         className="w-full rounded-lg text-xs font-semibold border-border/60 hover:bg-muted/50 group/btn"
+                        onClick={() => onEdit(address)}
                     >
-                        <Zap className="w-3 h-3 mr-1.5 group-hover/btn:translate-y-0.5 transition-transform" />
-                        Use This Address
+                        <Pencil className="w-3 h-3 mr-1.5 group-hover/btn:translate-y-0.5 transition-transform" />
+                        Edit This Address
                     </Button>
                 </div>
             </CardContent>

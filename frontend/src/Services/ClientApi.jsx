@@ -67,6 +67,10 @@ const ClientApi = {
     deleteAddress: async (id) => {
         return await axiosClient.delete(`/api/addresses/${id}`);
     },
+    // Update an address
+    updateAddress: async (id, data) => {
+        return await axiosClient.put(`/api/addresses/${id}`, data);
+    },
 
     // --- BOOKINGS ---
     // Create a new booking

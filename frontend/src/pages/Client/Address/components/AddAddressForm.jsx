@@ -1,9 +1,16 @@
 // src/components/address/AddAddressForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { MapPin, Loader2, AlertCircle, CheckCircle2, Home } from "lucide-react";
+import {
+    MapPin,
+    Loader2,
+    AlertCircle,
+    CheckCircle2,
+    Home,
+    Pencil,
+} from "lucide-react";
 
 import { useAddress } from "@/Hooks/useAddress";
 
@@ -33,8 +40,10 @@ const addressSchema = z.object({
     postal_code: z.string().optional(),
 });
 
-export default function AddAddressForm({ onSuccess }) {
-    const { addAddress, isAdding } = useAddress();
+export default function AddAddressForm({ onSuccess, addressToEdit }) {
+    // 1. Destructure update functions from the hook
+    const { addAddress, updateAddress, isAdding, isUpdating } = useAddress();
+
     const [submitError, setSubmitError] = useState(null);
     const [submitSuccess, setSubmitSuccess] = useState(null);
 
@@ -47,14 +56,43 @@ export default function AddAddressForm({ onSuccess }) {
         },
     });
 
+    // 2. Effect: Populate the form if we are editing
+    useEffect(() => {
+        if (addressToEdit) {
+            form.reset({
+                street_address: addressToEdit.street_address,
+                city: addressToEdit.city,
+                postal_code: addressToEdit.postal_code || "",
+            });
+        } else {
+            form.reset({
+                street_address: "",
+                city: "",
+                postal_code: "",
+            });
+        }
+    }, [addressToEdit, form]);
+
     const onSubmit = async (data) => {
         setSubmitError(null);
         setSubmitSuccess(null);
 
         try {
-            await addAddress(data);
-            setSubmitSuccess("Address saved successfully!");
-            form.reset();
+            if (addressToEdit) {
+                // 3. EDIT MODE logic
+                await updateAddress({ id: addressToEdit.id, data });
+                setSubmitSuccess("Address updated successfully!");
+            } else {
+                // 4. CREATE MODE logic
+                await addAddress(data);
+                setSubmitSuccess("Address saved successfully!");
+            }
+
+            // Only reset if it's a new address, otherwise keep values for user to see
+            if (!addressToEdit) {
+                form.reset();
+            }
+
             setTimeout(() => {
                 if (onSuccess) onSuccess();
             }, 1500);
@@ -62,24 +100,36 @@ export default function AddAddressForm({ onSuccess }) {
             console.error(error);
             setSubmitError(
                 error.response?.data?.message ||
-                    "Failed to save address. Please try again."
+                    "Failed to save address. Please try again.",
             );
         }
     };
 
+    // Calculate loading state
+    const isLoading = isAdding || isUpdating;
+
     return (
-        <Card className="rounded-2xl border-border/60 bg-background/50 backdrop-blur-sm">
+        <Card className="rounded-2xl border-border/60 bg-background/50 backdrop-blur-sm shadow-none border-0">
             <CardHeader className="border-b border-border/60 pb-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-primary/10">
-                        <Home className="w-5 h-5 text-primary" />
+                        {/* Dynamic Icon */}
+                        {addressToEdit ? (
+                            <Pencil className="w-5 h-5 text-primary" />
+                        ) : (
+                            <Home className="w-5 h-5 text-primary" />
+                        )}
                     </div>
                     <div>
                         <CardTitle className="text-lg">
-                            Add New Address
+                            {/* Dynamic Title */}
+                            {addressToEdit ? "Edit Address" : "Add New Address"}
                         </CardTitle>
                         <CardDescription className="mt-0.5">
-                            Save a new delivery or service address
+                            {/* Dynamic Description */}
+                            {addressToEdit
+                                ? "Update your existing location details"
+                                : "Save a new delivery or service address"}
                         </CardDescription>
                     </div>
                 </div>
@@ -181,18 +231,26 @@ export default function AddAddressForm({ onSuccess }) {
                         {/* Submit Button */}
                         <Button
                             type="submit"
-                            disabled={isAdding}
+                            disabled={isLoading}
                             className="w-full rounded-lg h-10 font-semibold bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all duration-200 group gap-2"
                         >
-                            {isAdding ? (
+                            {isLoading ? (
                                 <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    Saving Address...
+                                    {addressToEdit
+                                        ? "Updating..."
+                                        : "Saving Address..."}
                                 </>
                             ) : (
                                 <>
-                                    <MapPin className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
-                                    Save Address
+                                    {addressToEdit ? (
+                                        <Pencil className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                                    ) : (
+                                        <MapPin className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
+                                    )}
+                                    {addressToEdit
+                                        ? "Update Address"
+                                        : "Save Address"}
                                 </>
                             )}
                         </Button>

@@ -49,7 +49,15 @@ export const useAddress = () => {
 
         onError: (error) => {
             console.error("Hook: Add Address Failed", error);
-        }
+        },
+    });
+    const updateMutation = useMutation({
+        mutationFn: async ({ id, data }) => {
+            return await ClientApi.updateAddress(id, data);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["addresses"] });
+        },
     });
 
     // ============================================================
@@ -65,7 +73,7 @@ export const useAddress = () => {
         },
         onError: (error) => {
             console.error("Hook: Delete Failed", error);
-        }
+        },
     });
 
     // ============================================================
@@ -76,16 +84,18 @@ export const useAddress = () => {
     return {
         // Data
         addresses: addressesQuery.data || [], // Default to empty array if data is undefined
-        loading: addressesQuery.isLoading,    // True while fetching
-        error: addressesQuery.isError,        // True if fetch failed
+        loading: addressesQuery.isLoading, // True while fetching
+        error: addressesQuery.isError, // True if fetch failed
 
         // Actions
         // We use mutateAsync so you can use 'await' in your components if needed
         addAddress: addMutation.mutateAsync,
+        updateAddress: updateMutation.mutateAsync,
         deleteAddress: deleteMutation.mutateAsync,
 
         // Status of actions (Optional, useful for disabling buttons)
         isAdding: addMutation.isPending,
+        isUpdating: updateMutation.isPending,
         isDeleting: deleteMutation.isPending,
     };
 };

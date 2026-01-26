@@ -1,6 +1,6 @@
 // src/pages/AddressManager.jsx
 import React, { useState } from "react";
-import { Loader2, AlertCircle, Plus, MapPin, Home } from "lucide-react";
+import { Loader2, AlertCircle, Plus, MapPin, Home, Pencil } from "lucide-react";
 
 import { useAddress } from "@/Hooks/useAddress";
 
@@ -17,7 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import AddressCard from "./components/AddressCard";
 import AddAddressForm from "./components/AddAddressForm";
-import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus] 1. Import Modal
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function AddressManager() {
     const { addresses, loading, error, deleteAddress } = useAddress();
@@ -26,13 +26,28 @@ export default function AddressManager() {
     const [deletingId, setDeletingId] = useState(null);
     const [deleteError, setDeleteError] = useState(null);
 
-    // [!code focus] 2. State for the confirmation modal
+    // [!code focus] State to track which address is being edited (null = create mode)
+    const [editingAddress, setEditingAddress] = useState(null);
+
+    // State for the confirmation modal
     const [confirmModal, setConfirmModal] = useState({
         open: false,
         id: null,
     });
 
-    // [!code focus] 3. Handler to open the modal (passed to AddressCard)
+    // [!code focus] Handler for "Add New" button - Resets edit state
+    const handleAddNewClick = () => {
+        setEditingAddress(null);
+        setIsDialogOpen(true);
+    };
+
+    // [!code focus] Handler for "Edit" button - Loads address into state
+    const handleEditClick = (address) => {
+        setEditingAddress(address);
+        setIsDialogOpen(true);
+    };
+
+    // Handler to open the delete modal
     const handleDeleteClick = (id) => {
         setConfirmModal({
             open: true,
@@ -41,21 +56,19 @@ export default function AddressManager() {
         setDeleteError(null);
     };
 
-    // [!code focus] 4. Handler for the actual deletion logic
+    // Handler for the actual deletion logic
     const handleConfirmDelete = async () => {
         const id = confirmModal.id;
         if (!id) return;
 
-        setDeletingId(id); // Triggers loading state
+        setDeletingId(id);
 
         try {
             await deleteAddress(id);
-            // Close modal on success
             setConfirmModal({ open: false, id: null });
         } catch (err) {
             console.error(err);
             setDeleteError("Could not delete address. Please try again.");
-            // We close the modal to show the error alert on the main screen
             setConfirmModal({ open: false, id: null });
         } finally {
             setDeletingId(null);
@@ -80,30 +93,47 @@ export default function AddressManager() {
                     </div>
 
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        {/* [!code focus] Update trigger to call handleAddNewClick */}
                         <DialogTrigger asChild>
-                            <Button className="shrink-0 rounded-lg h-11 px-6 font-semibold bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all gap-2">
+                            <Button
+                                onClick={handleAddNewClick}
+                                className="shrink-0 rounded-lg h-11 px-6 font-semibold bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all gap-2"
+                            >
                                 <Plus className="w-4 h-4" />
                                 Add New Address
                             </Button>
                         </DialogTrigger>
+
                         <DialogContent className="sm:max-w-[500px] rounded-2xl border-border/60 bg-background/80 backdrop-blur-xl">
                             <DialogHeader className="border-b border-border/60 pb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-lg bg-primary/10">
-                                        <MapPin className="w-5 h-5 text-primary" />
+                                        {/* [!code focus] Dynamic Icon */}
+                                        {editingAddress ? (
+                                            <Pencil className="w-5 h-5 text-primary" />
+                                        ) : (
+                                            <MapPin className="w-5 h-5 text-primary" />
+                                        )}
                                     </div>
                                     <div>
+                                        {/* [!code focus] Dynamic Title */}
                                         <DialogTitle className="text-2xl">
-                                            Add New Address
+                                            {editingAddress
+                                                ? "Edit Address"
+                                                : "Add New Address"}
                                         </DialogTitle>
                                         <DialogDescription className="mt-1">
-                                            Enter your location details below
+                                            {editingAddress
+                                                ? "Update your location details below"
+                                                : "Enter your location details below"}
                                         </DialogDescription>
                                     </div>
                                 </div>
                             </DialogHeader>
                             <div className="pt-6">
+                                {/* [!code focus] Pass editingAddress to the form */}
                                 <AddAddressForm
+                                    addressToEdit={editingAddress}
                                     onSuccess={() => setIsDialogOpen(false)}
                                 />
                             </div>
@@ -177,7 +207,7 @@ export default function AddressManager() {
                                     your first address to get started.
                                 </p>
                                 <Button
-                                    onClick={() => setIsDialogOpen(true)}
+                                    onClick={handleAddNewClick}
                                     className="rounded-lg h-10 px-6 font-semibold bg-gradient-to-r from-primary to-primary/90 hover:shadow-lg transition-all gap-2"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -190,8 +220,9 @@ export default function AddressManager() {
                             <AddressCard
                                 key={addr.id}
                                 address={addr}
-                                // [!code focus] 5. Pass the click handler instead of direct delete
                                 onDelete={handleDeleteClick}
+                                // [!code focus] Pass the new edit handler
+                                onEdit={handleEditClick}
                                 isDeleting={deletingId === addr.id}
                             />
                         ))
@@ -199,7 +230,7 @@ export default function AddressManager() {
                 </div>
             </div>
 
-            {/* [!code focus] 6. Render the Confirmation Modal */}
+            {/* Confirmation Modal */}
             <ConfirmationModal
                 open={confirmModal.open}
                 onClose={() =>
@@ -210,7 +241,7 @@ export default function AddressManager() {
                 description="Are you sure you want to remove this address from your account? This action cannot be undone."
                 variant="destructive"
                 confirmText="Delete Address"
-                isLoading={!!deletingId} // Show loading state on the button
+                isLoading={!!deletingId}
             />
         </div>
     );
