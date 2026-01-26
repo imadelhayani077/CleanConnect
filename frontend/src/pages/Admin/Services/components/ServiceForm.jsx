@@ -1,22 +1,13 @@
-// src/pages/admin/ServiceForm.jsx
-import React, { useEffect } from "react"; // [!code focus] Import useEffect
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-    Pencil,
-    Plus,
-    Loader2,
-    CheckCircle2,
-    Briefcase,
-    DollarSign,
-    FileText,
-} from "lucide-react";
+import { Loader2, Plus, Save, X, UploadCloud, ImageIcon } from "lucide-react";
 
 import { useCreateService, useUpdateService } from "@/Hooks/useServices";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Form,
     FormControl,
@@ -33,156 +24,241 @@ import {
     CardDescription,
 } from "@/components/ui/card";
 
+// Simple schema (we handle file validation manually to keep it simple)
 const formSchema = z.object({
-    name: z.string().min(2).max(100),
-    base_price: z.coerce.number().min(0.01),
-    description: z.string().max(500).optional(),
+    name: z.string().min(2, "Name is too short"),
+    base_price: z.coerce.number().min(1, "Price must be at least 1"),
+    description: z.string().optional(),
 });
 
-// [!code focus] 1. Make sure to accept 'services' as a prop
 export default function ServiceForm({ editingId, setEditingId, services }) {
     const createMutation = useCreateService();
     const updateMutation = useUpdateService();
+
+    // UI States
+    const [previewUrl, setPreviewUrl] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
 
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: { name: "", base_price: "", description: "" },
     });
 
-    // [!code focus] 2. Add this useEffect to listen for changes
+    // 1. Populate form when Editing
     useEffect(() => {
         if (editingId && services) {
-            // Find the service that matches the ID
-            const serviceToEdit = services.find((s) => s.id === editingId);
-
-            if (serviceToEdit) {
-                // Populate the form with that service's data
+            const service = services.find((s) => s.id === editingId);
+            if (service) {
                 form.reset({
-                    name: serviceToEdit.name,
-                    base_price: serviceToEdit.base_price,
-                    description: serviceToEdit.description || "",
+                    name: service.name,
+                    base_price: service.base_price,
+                    description: service.description || "",
                 });
+                // If the service has an image, show it
+                if (service.image_path) {
+                    setPreviewUrl(`http://localhost:8000${service.image_path}`);
+                } else {
+                    setPreviewUrl(null);
+                }
             }
         } else {
-            // If not editing (or ID is cleared), clear the form
-            form.reset({
-                name: "",
-                base_price: "",
-                description: "",
-            });
+            handleReset();
         }
     }, [editingId, services, form]);
 
-    const isSubmitting = createMutation.isPending || updateMutation.isPending;
-
-    const onSubmit = async (values) => {
-        try {
-            if (editingId) {
-                await updateMutation.mutateAsync({
-                    id: editingId,
-                    data: values,
-                });
-                setEditingId(null); // Clear edit mode after success
-            } else {
-                await createMutation.mutateAsync(values);
-                // Form clears automatically via the useEffect when editingId remains null
-                form.reset();
-            }
-        } catch (error) {
-            console.error("Failed to save service", error);
+    // 2. Handle File Selection
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file)); // Local preview
         }
     };
 
-    const handleCancel = () => {
-        setEditingId(null);
-        form.reset({ name: "", base_price: "", description: "" });
+    // 3. Clear Image
+    const handleRemoveImage = (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Stop clicking the upload box
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        // Reset the file input value
+        const fileInput = document.getElementById("icon-upload");
+        if (fileInput) fileInput.value = "";
     };
 
+    // 4. Reset Form
+    const handleReset = () => {
+        setEditingId(null);
+        form.reset({ name: "", base_price: "", description: "" });
+        setPreviewUrl(null);
+        setSelectedFile(null);
+    };
+
+    // 5. Submit Logic (FormData)
+    const onSubmit = async (values) => {
+        const formData = new FormData();
+        formData.append("name", values.name);
+        formData.append("base_price", values.base_price);
+        formData.append("description", values.description || "");
+
+        if (selectedFile) {
+            formData.append("image", selectedFile);
+        }
+
+        // Note: For Update, Laravel often needs _method: PUT inside FormData
+        if (editingId) {
+            formData.append("_method", "PUT");
+            await updateMutation.mutateAsync({ id: editingId, data: formData });
+            setEditingId(null);
+        } else {
+            await createMutation.mutateAsync(formData);
+            handleReset();
+        }
+    };
+
+    const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
     return (
-        <Card className="md:col-span-5 lg:col-span-4 rounded-xl border-border/60 bg-background/50 backdrop-blur-sm h-fit sticky top-6">
-            <CardHeader className="border-b border-border/60 pb-4">
-                <CardTitle className="text-xl flex items-center gap-2">
+        <Card className="border-border/60 shadow-lg bg-card">
+            <CardHeader className="pb-3 border-b border-border/40 mb-4 bg-muted/20">
+                <CardTitle className="text-lg flex items-center gap-2">
                     {editingId ? (
-                        <>
-                            <Pencil className="w-5 h-5 text-primary" />
-                            Edit Service
-                        </>
+                        <Save className="w-4 h-4" />
                     ) : (
-                        <>
-                            <Plus className="w-5 h-5 text-primary" />
-                            New Service
-                        </>
+                        <Plus className="w-4 h-4" />
                     )}
+                    {editingId ? "Edit Service" : "New Service"}
                 </CardTitle>
                 <CardDescription>
                     {editingId
-                        ? "Update service details and pricing"
-                        : "Add a new cleaning package to the platform"}
+                        ? "Update service details and icon."
+                        : "Add a new cleaning package."}
                 </CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
+
+            <CardContent>
                 <Form {...form}>
                     <form
                         onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-4"
+                        className="space-y-5"
                     >
+                        {/* --- CUSTOM IMAGE UPLOAD AREA --- */}
+                        <div className="space-y-2">
+                            <FormLabel>Service Icon</FormLabel>
+
+                            {/* Hidden standard Input */}
+                            <input
+                                type="file"
+                                id="icon-upload"
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/jpg, image/svg+xml"
+                                onChange={handleFileChange}
+                            />
+
+                            {/* Custom styled box linked to the hidden input */}
+                            <label
+                                htmlFor="icon-upload"
+                                className={`
+                                    relative flex flex-col items-center justify-center w-full h-40
+                                    border-2 border-dashed rounded-xl cursor-pointer transition-all
+                                    hover:bg-muted/50
+                                    ${previewUrl ? "border-primary/50 bg-primary/5" : "border-muted-foreground/25 bg-muted/5"}
+                                `}
+                            >
+                                {previewUrl ? (
+                                    <>
+                                        {/* Image Preview */}
+                                        <img
+                                            src={previewUrl}
+                                            alt="Preview"
+                                            className="h-full w-full object-contain p-2 rounded-xl"
+                                        />
+
+                                        {/* Remove Button (X) */}
+                                        <button
+                                            onClick={handleRemoveImage}
+                                            type="button"
+                                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-1.5 shadow-md hover:bg-destructive/90 transition-colors"
+                                            title="Remove image"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </>
+                                ) : (
+                                    /* Empty State */
+                                    <div className="flex flex-col items-center text-center p-4">
+                                        <div className="p-3 bg-background rounded-full shadow-sm mb-3">
+                                            <UploadCloud className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <p className="text-sm font-medium">
+                                            Click to upload image
+                                        </p>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            PNG, JPG or SVG (Max 2MB)
+                                        </p>
+                                    </div>
+                                )}
+                            </label>
+                        </div>
+
+                        {/* Name Field */}
                         <FormField
                             control={form.control}
                             name="name"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-1.5">
-                                        <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
-                                        Service Name
-                                    </FormLabel>
+                                    <FormLabel>Service Name</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="e.g. Deep Clean"
-                                            className="bg-muted/30"
-                                            {...field}
-                                        />
+                                        <div className="relative">
+                                            <BriefcaseIconWrapper />
+                                            <Input
+                                                className="pl-9"
+                                                placeholder="e.g. Deep Clean"
+                                                {...field}
+                                            />
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
+                        {/* Price Field */}
                         <FormField
                             control={form.control}
                             name="base_price"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-1.5">
-                                        <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-                                        Base Price ($)
-                                    </FormLabel>
+                                    <FormLabel>Base Price ($)</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0.00"
-                                            className="bg-muted/30 font-mono"
-                                            {...field}
-                                        />
+                                        <div className="relative">
+                                            <span className="absolute left-3 top-2.5 text-muted-foreground">
+                                                $
+                                            </span>
+                                            <Input
+                                                type="number"
+                                                className="pl-7"
+                                                placeholder="0.00"
+                                                {...field}
+                                            />
+                                        </div>
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
 
+                        {/* Description Field */}
                         <FormField
                             control={form.control}
                             name="description"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel className="flex items-center gap-1.5">
-                                        <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                                        Description
-                                    </FormLabel>
+                                    <FormLabel>Description</FormLabel>
                                     <FormControl>
-                                        <Input
-                                            placeholder="What's included?"
-                                            className="bg-muted/30"
+                                        <Textarea
+                                            className="resize-none min-h-[80px]"
+                                            placeholder="What is included in this service?"
                                             {...field}
                                         />
                                     </FormControl>
@@ -191,27 +267,19 @@ export default function ServiceForm({ editingId, setEditingId, services }) {
                             )}
                         />
 
+                        {/* Action Buttons */}
                         <div className="flex gap-3 pt-2">
                             <Button
                                 type="submit"
+                                className="flex-1"
                                 disabled={isSubmitting}
-                                className="flex-1 gap-2"
                             >
                                 {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                        Saving...
-                                    </>
+                                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
                                 ) : editingId ? (
-                                    <>
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        Update Service
-                                    </>
+                                    "Update"
                                 ) : (
-                                    <>
-                                        <Plus className="h-4 w-4" />
-                                        Add Service
-                                    </>
+                                    "Create"
                                 )}
                             </Button>
 
@@ -219,7 +287,7 @@ export default function ServiceForm({ editingId, setEditingId, services }) {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    onClick={handleCancel}
+                                    onClick={handleReset}
                                     disabled={isSubmitting}
                                 >
                                     Cancel
@@ -230,5 +298,14 @@ export default function ServiceForm({ editingId, setEditingId, services }) {
                 </Form>
             </CardContent>
         </Card>
+    );
+}
+
+// Helper component for style
+function BriefcaseIconWrapper() {
+    return (
+        <div className="absolute left-3 top-2.5 text-muted-foreground">
+            <ImageIcon className="w-4 h-4" />
+        </div>
     );
 }

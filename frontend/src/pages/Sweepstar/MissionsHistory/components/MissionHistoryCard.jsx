@@ -1,15 +1,6 @@
 import { useState } from "react";
 import { format } from "date-fns";
-import {
-    MapPin,
-    Clock,
-    Trophy,
-    XCircle,
-    Navigation,
-    Phone,
-    FileText,
-    ArrowRight,
-} from "lucide-react";
+import { MapPin, Clock, Trophy, XCircle, FileText } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";

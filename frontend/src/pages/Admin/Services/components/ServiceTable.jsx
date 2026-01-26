@@ -1,6 +1,6 @@
 // src/pages/admin/ServiceTable.jsx
-import React, { useState } from "react"; // [!code focus]
-import { Pencil, Trash2, Briefcase, Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { Pencil, Trash2, Briefcase } from "lucide-react";
 
 import { useDeleteService } from "@/Hooks/useServices";
 
@@ -14,18 +14,17 @@ import {
 } from "@/components/ui/table";
 import {
     Card,
-    CardContent,
     CardHeader,
     CardTitle,
     CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus]
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
 export default function ServiceTable({ services, editingId, setEditingId }) {
     const deleteMutation = useDeleteService();
 
-    // [!code focus] 1. State for the delete confirmation modal
+    // State for the delete confirmation modal
     const [deleteModal, setDeleteModal] = useState({
         open: false,
         id: null,
@@ -35,7 +34,7 @@ export default function ServiceTable({ services, editingId, setEditingId }) {
         setEditingId(service.id);
     };
 
-    // [!code focus] 2. Open the modal instead of window.confirm
+    // Open the modal instead of window.confirm
     const handleDeleteClick = (id) => {
         setDeleteModal({
             open: true,
@@ -43,27 +42,26 @@ export default function ServiceTable({ services, editingId, setEditingId }) {
         });
     };
 
-    // [!code focus] 3. The actual deletion logic called by the modal
+    // The actual deletion logic called by the modal
     const handleConfirmDelete = async () => {
         const id = deleteModal.id;
         if (!id) return;
 
         try {
             await deleteMutation.mutateAsync(id);
+            // If we deleted the item currently being edited, close the edit form
             if (editingId === id) setEditingId(null);
 
             // Close modal on success
             setDeleteModal({ open: false, id: null });
         } catch (err) {
             console.error("Delete failed:", err);
-            // Optional: You could keep the modal open to show an error,
-            // but usually we close it or show a toast notification here.
         }
     };
 
     return (
         <>
-            <Card className="md:col-span-7 lg:col-span-8 rounded-xl border-border/60 bg-background/50 backdrop-blur-sm overflow-hidden">
+            <Card className="md:col-span-7 lg:col-span-8 rounded-xl border-border/60 bg-background/50 backdrop-blur-sm overflow-hidden h-fit sticky top-6">
                 <CardHeader className="border-b border-border/60 pb-4">
                     <div className="flex items-center justify-between">
                         <div>
@@ -134,7 +132,22 @@ export default function ServiceTable({ services, editingId, setEditingId }) {
                                             #{service.id}
                                         </TableCell>
                                         <TableCell className="font-semibold text-foreground">
-                                            {service.name}
+                                            {/* --- UPDATED: Image Display --- */}
+                                            <div className="flex items-center gap-3">
+                                                <div className="h-10 w-10 shrink-0 rounded-lg bg-muted flex items-center justify-center overflow-hidden border border-border">
+                                                    {service.image_path ? (
+                                                        <img
+                                                            // Ensure this matches your Laravel URL structure
+                                                            src={`http://localhost:8000${service.image_path}`}
+                                                            alt={service.name}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <Briefcase className="h-5 w-5 text-muted-foreground" />
+                                                    )}
+                                                </div>
+                                                <span>{service.name}</span>
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-muted-foreground text-sm max-w-[220px] truncate">
                                             {service.description || "—"}
@@ -184,7 +197,7 @@ export default function ServiceTable({ services, editingId, setEditingId }) {
                 </div>
             </Card>
 
-            {/* [!code focus] 4. Render the Confirmation Modal */}
+            {/* Render the Confirmation Modal */}
             <ConfirmationModal
                 open={deleteModal.open}
                 onClose={() => setDeleteModal({ ...deleteModal, open: false })}
