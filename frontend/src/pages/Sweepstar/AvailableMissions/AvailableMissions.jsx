@@ -1,4 +1,4 @@
-// src/pages/jobs/AvailableJobs.jsx
+// src/pages/jobs/AvailableMissions.jsx
 import React, { useState } from "react";
 import {
     Briefcase,
@@ -14,6 +14,9 @@ import EmptyMissionsState from "../components/EmptyMissionsState";
 import MissionCard from "./components/AvailableMissionCard";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 
+// 1. IMPORT THE DETAIL MODAL
+import MissionDetailModal from "./components/MissionDetailModal";
+
 export default function AvailableMissions() {
     const { data: jobs = [], isLoading } = useAvailableMissions();
     const { mutateAsync: acceptMission } = useAcceptMission();
@@ -22,7 +25,10 @@ export default function AvailableMissions() {
     const [acceptError, setAcceptError] = useState(null);
     const [acceptSuccess, setAcceptSuccess] = useState(null);
 
-    // Modal state
+    // 2. ADD STATE FOR SELECTED JOB DETAILS
+    const [selectedJob, setSelectedJob] = useState(null);
+
+    // Modal state for Accepting
     const [confirmModal, setConfirmModal] = useState({
         open: false,
         jobId: null,
@@ -62,9 +68,12 @@ export default function AvailableMissions() {
         }
     };
 
+    // 3. IMPLEMENT THE VIEW DETAILS HANDLER
     const handleViewDetails = (jobId) => {
-        // TODO: Implement view details (modal, navigate to detail page, etc.)
-        console.log("View details for mission:", jobId);
+        const job = jobs.find((j) => j.id === jobId);
+        if (job) {
+            setSelectedJob(job);
+        }
     };
 
     if (isLoading) {
@@ -145,6 +154,17 @@ export default function AvailableMissions() {
                 </Alert>
             )}
 
+            {acceptError && (
+                <Alert
+                    variant="destructive"
+                    className="animate-in slide-in-from-top-2"
+                >
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Error</AlertTitle>
+                    <AlertDescription>{acceptError}</AlertDescription>
+                </Alert>
+            )}
+
             {/* Main content */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {jobs.length === 0 ? (
@@ -177,6 +197,13 @@ export default function AvailableMissions() {
                 confirmText="Yes, Accept Mission"
                 cancelText="No, Cancel"
                 isLoading={processingId === confirmModal.jobId}
+            />
+
+            {/* 4. RENDER THE DETAILS MODAL */}
+            <MissionDetailModal
+                open={!!selectedJob}
+                booking={selectedJob}
+                onClose={() => setSelectedJob(null)}
             />
         </div>
     );

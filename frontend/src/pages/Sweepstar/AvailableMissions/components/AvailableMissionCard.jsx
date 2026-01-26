@@ -1,28 +1,20 @@
-// src/components/jobs/JobCard.jsx
+import { useState } from "react";
 import { format } from "date-fns";
 import {
     MapPin,
-    Calendar,
     Clock,
-    DollarSign,
     Briefcase,
     Loader2,
-    CheckCircle2,
-    AlertCircle,
     Zap,
-    TrendingUp,
     ArrowRight,
+    FileText,
+    DollarSign,
 } from "lucide-react";
 
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import MissionDetailModal from "./MissionDetailModal";
 
 const formatCurrency = (amount) =>
     new Intl.NumberFormat("en-US", {
@@ -30,146 +22,135 @@ const formatCurrency = (amount) =>
         currency: "USD",
     }).format(amount);
 
-export default function MissionCard({
+export default function AvailableMissionCard({
     job,
     onAccept,
     isProcessing,
     onViewDetails,
 }) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const scheduledDate = new Date(job.scheduled_at);
-    const now = new Date();
-    const hoursUntil = Math.floor((scheduledDate - now) / (1000 * 60 * 60));
-    const minutesUntil = Math.floor(
-        ((scheduledDate - now) % (1000 * 60 * 60)) / (1000 * 60)
-    );
 
-    let timeLabel = "";
-    if (hoursUntil > 24) {
-        const days = Math.floor(hoursUntil / 24);
-        timeLabel = `In ${days} day${days !== 1 ? "s" : ""}`;
-    } else if (hoursUntil > 0) {
-        timeLabel = `In ${hoursUntil}h ${minutesUntil}m`;
-    } else {
-        timeLabel = "Starting soon";
-    }
+    // Handle internal "View Details" or parent "onViewDetails"
+    const handleViewDetails = () => {
+        setIsModalOpen(true);
+        if (onViewDetails) onViewDetails(job.id);
+    };
 
     return (
-        <Card className="group border-primary/20 hover:border-primary/50 hover:shadow-xl transition-all duration-300 overflow-hidden">
-            <div className="h-1.5 bg-gradient-to-r from-primary via-primary/60 to-primary/20" />
+        <>
+            <Card className="group relative overflow-hidden transition-all hover:shadow-xl border-primary/20 hover:border-primary/50 bg-card">
+                {/* Top Gradient - Blue for Available */}
+                <div className="h-1.5 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-300" />
 
-            <CardHeader className="pb-4">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                            <Briefcase className="w-5 h-5 text-primary" />
+                <div className="absolute top-4 right-4">
+                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 shadow-sm border-0">
+                        Available
+                    </Badge>
+                </div>
+
+                <CardHeader className="pb-4">
+                    <div className="flex items-start gap-3">
+                        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400">
+                            <Briefcase className="w-5 h-5" />
                         </div>
-                        <Badge
-                            variant="outline"
-                            className="capitalize font-medium text-xs"
+                        <div>
+                            <Badge variant="outline" className="mb-1.5 text-xs">
+                                {job.service_type || "Standard Clean"}
+                            </Badge>
+                            <CardTitle className="text-lg md:text-xl line-clamp-1">
+                                {job.address?.city || "Unknown Location"}
+                            </CardTitle>
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                                <MapPin className="w-3.5 h-3.5" />
+                                {job.address?.street_address ||
+                                    "Address hidden"}
+                            </div>
+                        </div>
+                    </div>
+                </CardHeader>
+
+                <CardContent className="space-y-5 pb-5">
+                    {/* Date & Time Grid */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border text-center">
+                            <p className="text-xs font-bold text-slate-500 uppercase">
+                                {format(scheduledDate, "MMM")}
+                            </p>
+                            <p className="text-xl font-bold text-foreground">
+                                {format(scheduledDate, "d")}
+                            </p>
+                        </div>
+                        <div className="col-span-2 space-y-2">
+                            <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border flex items-center justify-between">
+                                <span className="text-xs uppercase text-muted-foreground font-bold">
+                                    {format(scheduledDate, "EEEE")}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                    {format(scheduledDate, "yyyy")}
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30 flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                                <Clock className="w-4 h-4" />
+                                <span className="font-medium text-sm">
+                                    {format(scheduledDate, "h:mm a")}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* PRICE SECTION (Specific to Available Card) */}
+                    <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30">
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                                <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                                    <DollarSign className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-semibold uppercase tracking-wide">
+                                    Your Earning
+                                </span>
+                            </div>
+                            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-400">
+                                {formatCurrency(job.total_price)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-2">
+                        <Button
+                            onClick={() => onAccept(job.id)}
+                            disabled={isProcessing}
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white shadow-md hover:shadow-lg transition-all"
                         >
-                            {job.service_type || "Standard Clean"}
-                        </Badge>
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Securing...
+                                </>
+                            ) : (
+                                <>
+                                    <Zap className="w-4 h-4 mr-2 fill-current" />
+                                    Accept Mission
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            onClick={handleViewDetails}
+                            className="px-3"
+                        >
+                            <FileText className="w-4 h-4" />
+                        </Button>
                     </div>
-                    <div className="text-right">
-                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">
-                            Earning
-                        </p>
-                        <p className="text-2xl font-bold text-primary">
-                            {formatCurrency(job.total_price)}
-                        </p>
-                    </div>
-                </div>
+                </CardContent>
+            </Card>
 
-                <CardTitle className="text-xl text-foreground line-clamp-1">
-                    {job.address?.city || "Unknown Location"}
-                </CardTitle>
-                <CardDescription className="flex items-center gap-1.5 mt-2 text-xs font-medium">
-                    <Zap className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
-                    {timeLabel}
-                </CardDescription>
-            </CardHeader>
-
-            <CardContent className="pb-4 space-y-4">
-                {/* Date & Time */}
-                <div className="space-y-2.5">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
-                        <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-                        <div className="flex-1">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                                Date
-                            </p>
-                            <p className="font-semibold text-foreground text-sm">
-                                {format(scheduledDate, "EEE, MMM d")}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
-                        <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                        <div className="flex-1">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                                Time
-                            </p>
-                            <p className="font-semibold text-foreground text-sm">
-                                {format(scheduledDate, "h:mm a")}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Location */}
-                <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200/50 dark:border-slate-700/50">
-                    <div className="flex gap-3">
-                        <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                        <div className="flex-1 min-w-0">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
-                                Address
-                            </p>
-                            <p className="font-medium text-foreground line-clamp-2 text-sm">
-                                {job.address?.street_address}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                {job.address?.city}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </CardContent>
-
-            {/* Footer with Actions */}
-            <div className="border-t border-slate-200 dark:border-slate-800 p-4 bg-gradient-to-r from-slate-50/50 dark:from-slate-900/50 to-transparent space-y-3">
-                <Button
-                    onClick={() => onAccept(job.id)}
-                    disabled={isProcessing}
-                    className="w-full h-11 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/95 hover:to-primary hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 text-base font-semibold rounded-lg group/btn disabled:opacity-70"
-                >
-                    {isProcessing ? (
-                        <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Securing...
-                        </>
-                    ) : (
-                        <>
-                            <Zap className="w-4 h-4 mr-2" />
-                            Accept Mission
-                            <ArrowRight className="w-4 h-4 ml-2 group-hover/btn:translate-x-0.5 transition-transform" />
-                        </>
-                    )}
-                </Button>
-
-                <Button
-                    onClick={() => onViewDetails(job.id)}
-                    variant="outline"
-                    className="w-full h-10 rounded-lg font-medium transition-all hover:bg-slate-100 dark:hover:bg-slate-800 group/detail"
-                >
-                    View Full Details
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover/detail:translate-x-0.5 transition-transform" />
-                </Button>
-
-                <p className="text-xs text-muted-foreground text-center font-medium">
-                    Secure this now before it's gone
-                </p>
-            </div>
-        </Card>
+            <MissionDetailModal
+                booking={job}
+                open={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+            />
+        </>
     );
 }
