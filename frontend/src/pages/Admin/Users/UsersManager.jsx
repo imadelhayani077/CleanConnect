@@ -20,7 +20,7 @@ import UsersTable from "./components/UsersTable";
 
 import UserDetailModal from "./components/UserDetailModal";
 import AdminDeleteUserModal from "./components/AdminDeleteUserModal";
-import UserEditProfileModal from "../../SharedComponents/components/UserEditProfileModal";
+import UserEditProfileModal from "../../SharedComponents/components/User/UserEditProfileModal";
 
 export default function UsersManager() {
     const { users, loading, error, refetch } = useUsers();

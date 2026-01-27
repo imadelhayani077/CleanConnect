@@ -25,8 +25,8 @@ import {
 } from "lucide-react";
 import { useDeleteAccount, useToggleStatus, useUser } from "@/Hooks/useAuth";
 import { getRoleStyles } from "@/utils/roleStyles";
-import UserEditProfileModal from "./components/UserEditProfileModal";
-import DeleteAccountModal from "./components/DeleteAccountModal";
+import UserEditProfileModal from "./components/User/UserEditProfileModal";
+import DeleteAccountModal from "./components/User/DeleteAccountModal";
 import AvatarUpload from "./AvatarUpload";
 
 export default function UserInfo() {

@@ -35,6 +35,7 @@ import UsersManager from "@/pages/Admin/Users/UsersManager";
 import MissionsHistory from "@/pages/Sweepstar/MissionsHistory/MissionsHistory";
 import AvailableMissions from "@/pages/Sweepstar/AvailableMissions/AvailableMissions";
 import CurrentMissions from "@/pages/Sweepstar/CurrentMissions/CurrentMissions";
+import NotificationsPage from "@/pages/SharedComponents/NotificationsPage";
 
 // GuestOnly: redirect logged-in users away from login/signup
 const GuestOnly = ({ children }) => {
@@ -86,6 +87,10 @@ export const AppRouter = createBrowserRouter([
                     {
                         path: "dashboard/my_informations",
                         element: <UserInfo />,
+                    },
+                    {
+                        path: "dashboard/notifications",
+                        element: <NotificationsPage />,
                     },
                 ],
             },
