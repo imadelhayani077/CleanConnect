@@ -93,7 +93,6 @@ Route::middleware(['auth:sanctum', 'active_user'])->group(function () {
         Route::post('/admin/users/{id}/restore', [UserController::class, 'restoreUser']);
 
         // 2. Service Management (Admin Create/Update/Delete)
-        Route::post('/services', [ServiceController::class, 'store']);
         Route::put('/services/{id}', [ServiceController::class, 'update']);
         Route::delete('/services/{service}', [ServiceController::class, 'destroy']);
 

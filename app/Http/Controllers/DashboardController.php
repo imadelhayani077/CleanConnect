@@ -14,11 +14,27 @@ class DashboardController extends Controller
      */
     public function adminStats()
     {
+        // Total money collected
         $revenue = Booking::where('status', 'completed')->sum('total_price');
+
+        // FINANCIAL ANALYTICS (Using the new original_price vs total_price logic)
+        // 1. Total Tips: Sum of (total - original) where total > original
+        $totalTips = Booking::where('status', 'completed')
+            ->whereColumn('total_price', '>', 'original_price')
+            ->select(DB::raw('SUM(total_price - original_price) as total'))
+            ->first()->total ?? 0;
+
+        // 2. Total Discounts: Sum of (original - total) where total < original
+        $totalDiscounts = Booking::where('status', 'completed')
+            ->whereColumn('total_price', '<', 'original_price')
+            ->select(DB::raw('SUM(original_price - total_price) as total'))
+            ->first()->total ?? 0;
+
         $activeBookings = Booking::whereIn('status', ['pending', 'confirmed'])->count();
 
         // Get recent activity (last 5 bookings)
-        $recentBookings = Booking::with(['user', 'sweepstar'])
+        // Updated relationship to 'bookingServices.service'
+        $recentBookings = Booking::with(['user', 'sweepstar', 'bookingServices.service'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
@@ -27,7 +43,9 @@ class DashboardController extends Controller
             'total_clients'    => User::where('role', 'client')->count(),
             'total_sweepstars' => User::where('role', 'sweepstar')->count(),
             'active_bookings'  => $activeBookings,
-            'revenue'          => $revenue,
+            'revenue'          => (float) $revenue,
+            'total_tips'       => (float) $totalTips,
+            'total_discounts'  => (float) $totalDiscounts,
             'recent_activity'  => $recentBookings
         ]);
     }
@@ -40,10 +58,11 @@ class DashboardController extends Controller
         $user = $request->user();
         $user->load('sweepstarProfile');
 
+        // UPDATED: Use 'bookingServices.service' instead of 'services'
         $upcoming = Booking::where('sweepstar_id', $user->id)
             ->where('status', 'confirmed')
             ->where('scheduled_at', '>=', now())
-            ->with(['user', 'address', 'services'])
+            ->with(['user', 'address', 'bookingServices.service'])
             ->orderBy('scheduled_at', 'asc')
             ->get();
 
@@ -51,6 +70,7 @@ class DashboardController extends Controller
             ->where('status', 'completed')
             ->count();
 
+        // Earnings is the actual total_price (which includes tips)
         $earnings = Booking::where('sweepstar_id', $user->id)
             ->where('status', 'completed')
             ->sum('total_price');
@@ -60,14 +80,13 @@ class DashboardController extends Controller
             'upcoming_jobs' => $upcoming,
             'stats' => [
                 'completed' => $completedCount,
-                'earnings'  => $earnings
+                'earnings'  => (float) $earnings
             ]
         ]);
     }
 
     /**
-     * [NEW] CLIENT DASHBOARD
-     * Useful for showing "Total Spent" or "Membership Level" later
+     * CLIENT DASHBOARD
      */
     public function clientStats(Request $request)
     {
@@ -79,13 +98,12 @@ class DashboardController extends Controller
 
         $totalBookings = Booking::where('user_id', $user->id)->count();
 
-        // Count active bookings to show a badge on the dashboard
         $activeBookings = Booking::where('user_id', $user->id)
             ->whereIn('status', ['pending', 'confirmed'])
             ->count();
 
         return response()->json([
-            'total_spent'     => $totalSpent,
+            'total_spent'     => (float) $totalSpent,
             'total_bookings'  => $totalBookings,
             'active_bookings' => $activeBookings,
             'address_count'   => $user->addresses()->count()

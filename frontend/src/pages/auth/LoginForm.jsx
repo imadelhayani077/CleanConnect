@@ -141,7 +141,6 @@ export default function ClientLoginForm() {
                                     </FormItem>
                                 )}
                             />
-
                             {/* Password Field */}
                             <FormField
                                 control={form.control}
@@ -177,7 +176,7 @@ export default function ClientLoginForm() {
                                                     type="button"
                                                     onClick={() =>
                                                         setShowPassword(
-                                                            !showPassword
+                                                            !showPassword,
                                                         )
                                                     }
                                                     className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground transition-colors"

@@ -6,13 +6,6 @@ const ServiceApi = {
         return await axiosClient.get("/api/services");
     },
 
-    // ServiceApi.jsx
-    createService: async (formData) => {
-        // Note: We send 'formData' directly, not { ...data }
-        return await axiosClient.post("/api/services", formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
-    },
     updateService: async (id, formData) => {
         // Laravel sometimes struggles with PUT + FormData.
         // A common trick is using POST with _method: "PUT"

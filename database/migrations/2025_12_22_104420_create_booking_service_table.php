@@ -13,13 +13,13 @@ return new class extends Migration
 
             $table->foreignId('booking_id')->constrained()->onDelete('cascade');
             $table->foreignId('service_id')->constrained()->onDelete('cascade');
-
-            // Saves the price at the moment of booking (snapshot)
-            $table->decimal('price_at_booking', 8, 2);
+            $table->decimal('total_price', 10, 2)->default(0.00);
+            $table->integer('total_duration_minutes')->default(0);
 
             $table->timestamps();
         });
     }
+
 
     public function down(): void
     {

@@ -15,10 +15,16 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
+            $table->string('avatar')->nullable();
+            $table->string('phone')->nullable();
+            $table->enum('role', ['client', 'sweepstar', 'admin'])->default('client');
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('status')->default('active');
             $table->string('password');
+            $table->text('delete_reason')->nullable();
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

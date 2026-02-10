@@ -27,7 +27,6 @@ export const useAllBookings = () => {
         queryKey: ["bookings", "admin"],
         queryFn: async () => {
             const response = await AdminApi.getAllBookings();
-            console.log(response);
             return response.data.bookings || response.data;
         },
     });

@@ -42,30 +42,9 @@ export const useServices = () => {
 };
 
 /*
-    -------------------------------------------
-    PART 2: ADD SERVICE (POST)
-    -------------------------------------------
-*/
-export const useCreateService = () => {
-    const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async (newServiceData) => {
-            return await ServiceApi.createService(newServiceData);
-        },
-        onSuccess: () => {
-            // Tell React Query to re-fetch the list immediately
-            queryClient.invalidateQueries({ queryKey: ["services"] });
-        },
-        onError: (error) => {
-            console.error("Failed to add service", error);
-        },
-    });
-};
-
-/*
     -------------------------------------------
-    PART 3: UPDATE SERVICE (PUT)
+    PART 2: UPDATE SERVICE (PUT)
     -------------------------------------------
 */
 export const useUpdateService = () => {
@@ -88,7 +67,7 @@ export const useUpdateService = () => {
 
 /*
     -------------------------------------------
-    PART 4: DELETE SERVICE (DELETE)
+    PART 3: DELETE SERVICE (DELETE)
     -------------------------------------------
 */
 export const useDeleteService = () => {

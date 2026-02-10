@@ -105,6 +105,7 @@ export default function ServiceFormModal({ isOpen, onClose, serviceToEdit }) {
             } else {
                 await createMutation.mutateAsync(formData);
             }
+
             onClose(); // Close modal on success
         } catch (error) {
             console.error("Error submitting form", error);

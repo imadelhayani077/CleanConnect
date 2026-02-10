@@ -14,7 +14,9 @@ const AdminApi = {
     // Fetch all bookings for Admin Dashboard
     // Note: Ensure your backend route '/api/bookings' returns ALL bookings when accessed by an admin
     getAllBookings: async () => {
-        return await axiosClient.get("/api/bookings");
+        const data = await axiosClient.get("/api/bookings");
+        console.log(data);
+        return data;
     },
 
     // Update specific booking status

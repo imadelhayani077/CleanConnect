@@ -12,8 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name'); // e.g., 'Indoor Cleaning'
             $table->text('description')->nullable();
-            $table->decimal('base_price', 8, 2);
-
+            $table->string('service_icon')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -12,10 +12,9 @@ class Service extends Model
 
     protected $table = 'services'; // Optional but good practice
 
-    protected $fillable = [
+  protected $fillable = [
         'name',
         'description',
-        'base_price',
         'service_icon',
     ];
 
@@ -24,11 +23,20 @@ class Service extends Model
     ];
 
 
-public function bookings()
-{
+    public function bookings()
+    {
     return $this->belongsToMany(Booking::class, 'booking_service')
                 ->withPivot('price_at_booking')
                 ->withTimestamps();
-}
+    }
+    public function options()
+    {
+        return $this->hasMany(ServiceOption::class);
+    }
+
+    public function extras()
+    {
+        return $this->hasMany(ServiceExtra::class);
+    }
 
 }

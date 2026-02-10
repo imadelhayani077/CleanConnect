@@ -10,55 +10,46 @@ class Booking extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = [
-        'user_id',        // client
-        'sweepstar_id',   // assigned cleaner (nullable)
-        'address_id',
-        'scheduled_at',
-        'duration_hours',
-        'total_price',
-        'status',
-        'notes',
-        'cancellation_reason',
-    ];
+  protected $fillable = [
+    'user_id',
+    'sweepstar_id',
+    'address_id',
+    'scheduled_at',
+    'duration_minutes',
+    'total_price',
+    'original_price',
+    'status',
+    'notes',
+    'cancellation_reason',
+];
 
     protected $casts = [
-        'scheduled_at'   => 'datetime',
-        'total_price'    => 'decimal:2',
-        'duration_hours' => 'integer',
-        'status'         => 'string',
+        'scheduled_at'     => 'datetime',
+        'total_price'      => 'decimal:2',
+        'duration_minutes' => 'integer',
+        'status'           => 'string',
     ];
 
-    // --- Relationships ---
+    public function user() { return $this->belongsTo(User::class, 'user_id'); }
+    public function sweepstar() { return $this->belongsTo(User::class, 'sweepstar_id'); }
+    public function address() { return $this->belongsTo(Address::class); }
+    public function review() { return $this->hasOne(Review::class); }
 
-    /** * FIX: Renamed from 'client' to 'user' so Controller can call ->with('user')
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+public function bookingServices() // Ensure this is PLURAL if controller uses plural
+{
+    return $this->hasMany(BookingService::class);
+}
 
-    /** Sweepstar assigned to the job (nullable) */
-    public function sweepstar()
-    {
-        return $this->belongsTo(User::class, 'sweepstar_id');
-    }
 
-    /** Address where the service will be performed */
-    public function address()
-    {
-        return $this->belongsTo(Address::class);
-    }
-
-    public function services()
-    {
-        return $this->belongsToMany(Service::class, 'booking_service')
-            ->withPivot('price_at_booking')
-            ->withTimestamps();
-    }
-
-    public function review()
-    {
-        return $this->hasOne(Review::class);
-    }
+    public function service()
+{
+    return $this->hasOneThrough(
+        Service::class,
+        BookingService::class,
+        'booking_id', // Foreign key on booking_service table
+        'id',         // Foreign key on services table
+        'id',         // Local key on bookings table
+        'service_id'  // Local key on booking_service table
+    );
+}
 }

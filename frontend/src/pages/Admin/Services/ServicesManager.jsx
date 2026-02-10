@@ -5,7 +5,8 @@ import { useServices, useDeleteService } from "@/Hooks/useServices";
 // Components
 import ServiceStats from "./components/ServiceStats";
 import ServiceCard from "./components/ServiceCard";
-import ServiceFormModal from "./components/ServiceForm"; // The modal we just made
+import ServiceDetailsModal from "./components/ServiceDetailsModal"; // New
+import ServiceUpdateModal from "./components/ServiceUpdateModal"; // New (Locked fields)
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { Button } from "@/components/ui/button";
 
@@ -14,41 +15,45 @@ export default function ServiceManager() {
     const deleteMutation = useDeleteService();
 
     // --- State Management ---
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [editingService, setEditingService] = useState(null);
-
-    const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+    const [selectedService, setSelectedService] = useState(null);
+    const [modalState, setModalState] = useState({
+        details: false,
+        update: false,
+        delete: false,
+    });
 
     // --- Handlers ---
 
-    // 1. Open Modal for Create
-    const handleCreateClick = () => {
-        setEditingService(null); // Clear data
-        setIsFormOpen(true);
+    // 1. Open Details (The Eye Button)
+    const handleDetailsClick = (service) => {
+        setSelectedService(service);
+        setModalState((prev) => ({ ...prev, details: true }));
     };
 
-    // 2. Open Modal for Edit
+    // 2. Open Update Modal (The Edit Button)
     const handleEditClick = (service) => {
-        setEditingService(service); // Load data
-        setIsFormOpen(true);
+        setSelectedService(service);
+        setModalState((prev) => ({ ...prev, update: true }));
     };
 
-    // 3. Handle Delete (Opens confirmation)
+    // 3. Handle Delete
     const handleDeleteClick = (id) => {
-        setDeleteModal({ open: true, id });
+        setSelectedService({ id }); // We just need the ID for delete
+        setModalState((prev) => ({ ...prev, delete: true }));
     };
 
     const confirmDelete = async () => {
-        if (deleteModal.id) {
-            await deleteMutation.mutateAsync(deleteModal.id);
-            setDeleteModal({ open: false, id: null });
+        if (selectedService?.id) {
+            await deleteMutation.mutateAsync(selectedService.id);
+            setModalState((prev) => ({ ...prev, delete: false }));
+            setSelectedService(null);
         }
     };
 
     if (isLoading)
         return (
             <div className="h-screen flex items-center justify-center">
-                <Loader2 className="animate-spin" />
+                <Loader2 className="animate-spin text-primary" />
             </div>
         );
 
@@ -61,68 +66,52 @@ export default function ServiceManager() {
                         <div className="p-2 rounded-xl bg-primary/10">
                             <LayoutGrid className="w-6 h-6 text-primary" />
                         </div>
-                        Services
+                        Services Management
                     </h1>
                     <p className="text-muted-foreground mt-1 ml-12">
-                        Manage your cleaning catalog and prices.
+                        View details and update pricing configuration.
                     </p>
                 </div>
-
-                {/* Main Action Button */}
-                <Button
-                    onClick={handleCreateClick}
-                    size="lg"
-                    className="shadow-lg hover:shadow-primary/25 transition-all"
-                >
-                    <Plus className="w-4 h-4 mr-2" /> Add New Service
-                </Button>
             </div>
 
-            {/* Statistics Section */}
             <ServiceStats services={services} />
 
             {/* --- CARDS GRID --- */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {/* Render Service Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
                 {services.map((service) => (
                     <ServiceCard
                         key={service.id}
                         service={service}
+                        onDetails={handleDetailsClick} // Pass the details handler
                         onEdit={handleEditClick}
                         onDelete={handleDeleteClick}
                     />
                 ))}
-
-                {/* Empty State / "Add New" Placeholder Card (Optional, looks nice) */}
-                <button
-                    onClick={handleCreateClick}
-                    className="group flex flex-col items-center justify-center h-full min-h-[300px] rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 transition-all"
-                >
-                    <div className="p-4 rounded-full bg-muted group-hover:bg-background transition-colors shadow-sm">
-                        <Plus className="w-6 h-6 text-muted-foreground group-hover:text-primary" />
-                    </div>
-                    <p className="mt-4 font-medium text-muted-foreground group-hover:text-foreground">
-                        Create New Service
-                    </p>
-                </button>
             </div>
 
             {/* --- MODALS --- */}
 
-            {/* 1. Create / Edit Form Modal */}
-            <ServiceFormModal
-                isOpen={isFormOpen}
-                onClose={() => setIsFormOpen(false)}
-                serviceToEdit={editingService}
+            {/* 1. Read-Only Details Modal */}
+            <ServiceDetailsModal
+                isOpen={modalState.details}
+                onClose={() => setModalState({ ...modalState, details: false })}
+                service={selectedService}
             />
 
-            {/* 2. Delete Confirmation */}
+            {/* 2. Restricted Update Modal (Icon + Price + Duration only) */}
+            <ServiceUpdateModal
+                isOpen={modalState.update}
+                onClose={() => setModalState({ ...modalState, update: false })}
+                service={selectedService}
+            />
+
+            {/* 3. Delete Confirmation */}
             <ConfirmationModal
-                open={deleteModal.open}
-                onClose={() => setDeleteModal({ ...deleteModal, open: false })}
+                open={modalState.delete}
+                onClose={() => setModalState({ ...modalState, delete: false })}
                 onConfirm={confirmDelete}
                 title="Delete Service?"
-                description="This action cannot be undone."
+                description="This will permanently remove the service and all its pricing options."
                 variant="destructive"
                 confirmText="Delete"
                 isLoading={deleteMutation.isPending}

@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Service;
-use App\Models\User;
-use App\Notifications\ServiceUpdated;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 
 class ServiceController extends Controller
@@ -15,65 +13,82 @@ class ServiceController extends Controller
     /**
      * Get list of all services (Public or Auth)
      */
-    public function index()
-    {
-        return response()->json([
-            'services' => Service::all()
-        ]);
-    }
-
-    /**
-     * Create a new Service (Admin Only)
-     */
-   public function store(Request $request)
+   public function index()
 {
-    // 1. Validation (Note: 'image' rule limits types to png, jpg, etc.)
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string|max:1000',
-        'base_price' => 'required|numeric|min:0',
-        'service_icon' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048', // Max 2MB
+    return response()->json([
+        // This tells Laravel to include the related options and extras in the JSON
+        'services' => Service::with(['options', 'extras'])->get()
     ]);
-
-    // 2. Handle File Upload
-    if ($request->hasFile('service_icon')) {
-        // Stores in storage/app/public/services
-        $path = $request->file('service_icon')->store('services', 'public');
-        $validated['service_icon'] = '/storage/' . $path; // Add publicly accessible path
-    }
-
-    $service = Service::create($validated);
-
-    return response()->json(['message' => 'Service created', 'service' => $service], 201);
 }
 
 public function update(Request $request, $id)
 {
-    $service = Service::findOrFail($id);
+    $service = Service::with(['options', 'extras'])->findOrFail($id);
 
+    // 1. Validation: Only allow icon and the nested arrays for options/extras
     $validated = $request->validate([
-        'name' => 'sometimes|string|max:255',
-        'description' => 'nullable|string|max:1000',
-        'base_price' => 'sometimes|numeric|min:0',
         'service_icon' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+
+        // Options Validation
+        'options' => 'nullable|array',
+        'options.*.id' => 'nullable|exists:service_options,id',
+        'options.*.name' => 'required|string',
+        'options.*.option_price' => 'required|numeric|min:0',
+        'options.*.duration_minutes' => 'required|integer',
+
+        // Extras (Tasks) Validation
+        'extras' => 'nullable|array',
+        'extras.*.id' => 'nullable|exists:service_extras,id',
+        'extras.*.name' => 'required|string',
+        'extras.*.extra_price' => 'required|numeric|min:0',
+        'extras.*.duration_minutes' => 'required|integer',
     ]);
 
-    // 2. Handle File Replacement
-    if ($request->hasFile('service_icon')) {
-        // Delete old image if it exists
-        if ($service->service_icon) {
-            // Convert "/storage/services/..." back to "services/..." for deletion
-            $oldPath = str_replace('/storage/', '', $service->service_icon);
-            Storage::disk('public')->delete($oldPath);
+    return DB::transaction(function () use ($request, $validated, $service) {
+
+        // 2. Handle Icon Replacement
+        if ($request->hasFile('service_icon')) {
+            if ($service->service_icon) {
+                $oldPath = str_replace('/storage/', '', $service->service_icon);
+                Storage::disk('public')->delete($oldPath);
+            }
+            $path = $request->file('service_icon')->store('services', 'public');
+            $service->update(['service_icon' => '/storage/' . $path]);
         }
 
-        $path = $request->file('service_icon')->store('services', 'public');
-        $validated['service_icon'] = '/storage/' . $path;
-    }
+        // 3. Update Options (Prices & Names)
+        if ($request->has('options')) {
+            foreach ($validated['options'] as $optData) {
+                $service->options()->updateOrCreate(
+                    ['id' => $optData['id'] ?? null],
+                    [
+                        'name' => $optData['name'],
+                        'option_price' => $optData['option_price'],
+                        'duration_minutes' => $optData['duration_minutes']
+                    ]
+                );
+            }
+        }
 
-    $service->update($validated);
+        // 4. Update Extras/Tasks (Prices & Names)
+        if ($request->has('extras')) {
+            foreach ($validated['extras'] as $extraData) {
+                $service->extras()->updateOrCreate(
+                    ['id' => $extraData['id'] ?? null],
+                    [
+                        'name' => $extraData['name'],
+                        'extra_price' => $extraData['extra_price'],
+                        'duration_minutes' => $extraData['duration_minutes']
+                    ]
+                );
+            }
+        }
 
-    return response()->json(['message' => 'Service updated', 'service' => $service]);
+        return response()->json([
+            'message' => 'Service pricing and icon updated successfully',
+            'service' => $service->load(['options', 'extras'])
+        ]);
+    });
 }
 
     public function destroy(Request $request, Service $service)

@@ -20,6 +20,7 @@ return new class extends Migration
     $table->string('id_number')->nullable();
     $table->decimal('hourly_rate', 8, 2)->default(25.00);
     $table->boolean('is_verified')->default(false);
+     $table->boolean('is_available')->default(false);
     $table->integer('total_jobs_completed')->default(0);
 
     $table->timestamps();

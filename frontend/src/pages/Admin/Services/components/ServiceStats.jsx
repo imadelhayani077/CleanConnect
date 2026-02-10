@@ -16,7 +16,7 @@ export default function ServiceStats({ services }) {
             : "0.00";
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-1 ">
             <Card className="rounded-xl border-border/60 bg-background/50 backdrop-blur-sm">
                 <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
@@ -30,24 +30,6 @@ export default function ServiceStats({ services }) {
                         </div>
                         <div className="p-3 rounded-lg bg-primary/10">
                             <Briefcase className="w-5 h-5 text-primary" />
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
-            <Card className="rounded-xl border-border/60 bg-background/50 backdrop-blur-sm">
-                <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                        <div>
-                            <p className="text-sm font-medium text-muted-foreground">
-                                Average Price
-                            </p>
-                            <p className="text-3xl font-bold text-foreground mt-2">
-                                ${avgPrice}
-                            </p>
-                        </div>
-                        <div className="p-3 rounded-lg bg-emerald-100/60 dark:bg-emerald-900/20">
-                            <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                     </div>
                 </CardContent>

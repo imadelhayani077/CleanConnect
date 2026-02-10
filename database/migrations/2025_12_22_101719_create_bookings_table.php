@@ -18,10 +18,12 @@ return new class extends Migration
 
             // Booking Details
             $table->dateTime('scheduled_at');
-            $table->integer('duration_hours')->default(2);
+            $table->integer('duration_minutes')->default(120);
             $table->decimal('total_price', 10, 2);
+            $table->decimal('original_price', 10, 2)->nullable();
             $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending');
-            $table->text('notes')->nullable(); // Important: Added notes column
+            $table->text('notes')->nullable();
+             $table->text('cancellation_reason')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

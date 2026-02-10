@@ -3,30 +3,34 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Pivot;
 
 class BookingService extends Model
 {
     protected $table = 'booking_service';
 
-    protected $fillable = [
+ protected $fillable = [
         'booking_id',
         'service_id',
-        'price_at_booking',
+        'total_price',            // Matches database
+        'total_duration_minutes', // Matches database
     ];
 
     protected $casts = [
-        'price_at_booking' => 'decimal:2',
+        // REMOVE: 'base_price_at_booking' => 'decimal:2',
+        'total_price'            => 'decimal:2',
+        'total_duration_minutes' => 'integer',
     ];
 
-    // Relationships (if you need to access from the pivot)
-    public function booking()
+    public function booking() { return $this->belongsTo(Booking::class); }
+    public function service() { return $this->belongsTo(Service::class); }
+
+    public function selectedOptions()
     {
-        return $this->belongsTo(Booking::class);
+        return $this->hasMany(BookingServiceOption::class, 'booking_service_id');
     }
 
-    public function service()
+    public function selectedExtras()
     {
-        return $this->belongsTo(Service::class);
+        return $this->hasMany(BookingServiceExtra::class, 'booking_service_id');
     }
 }
