@@ -1,4 +1,4 @@
-// src/pages/booking/BookingFilters.jsx
+// src/pages/booking/Components/BookingHistoryFilters.jsx
 import React from "react";
 import { FilterX } from "lucide-react";
 import {
@@ -18,7 +18,7 @@ const STATUS_OPTIONS = [
     { value: "cancelled", label: "Cancelled" },
 ];
 
-export default function BookingFilters({
+export default function BookingHistoryFilters({
     statusFilter,
     setStatusFilter,
     totalCount,

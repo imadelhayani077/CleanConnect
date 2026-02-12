@@ -1,3 +1,4 @@
+// src/pages/booking/BookingHistory.jsx
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -55,6 +56,9 @@ export default function BookingHistory() {
         return booking.status?.toLowerCase() === statusFilter.toLowerCase();
     });
 
+    const totalCount = bookings.length;
+    const filteredCount = filteredBookings.length;
+
     return (
         <div className="min-h-screen bg-muted/30 pb-20">
             <div className="container mx-auto py-8 px-4 max-w-6xl">
@@ -86,15 +90,17 @@ export default function BookingHistory() {
                 <BookingHistoryStatsCards bookings={bookings} />
                 <div className="mt-8 mb-6">
                     <BookingHistoryFilters
-                        activeFilter={statusFilter}
-                        onFilterChange={setStatusFilter}
+                        statusFilter={statusFilter}
+                        setStatusFilter={setStatusFilter}
+                        totalCount={totalCount}
+                        filteredCount={filteredCount}
                     />
                 </div>
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
                         <p className="text-muted-foreground">
-                            Loading your missions...
+                            Loading your bookings...
                         </p>
                     </div>
                 ) : filteredBookings.length === 0 ? (
@@ -134,13 +140,11 @@ export default function BookingHistory() {
                     </div>
                 )}
 
-                {/* Modal for Viewing Details */}
                 <BookingDetailModal
                     open={!!viewingBooking}
                     booking={viewingBooking}
                     onClose={() => setViewingBooking(null)}
                 />
-                {/* Modal for Editing Booking - Now with full editing capabilities */}
                 {editingBooking && (
                     <EditBookingModal
                         isOpen={!!editingBooking}
@@ -149,7 +153,6 @@ export default function BookingHistory() {
                         onSuccess={handleSuccess}
                     />
                 )}
-                {/* Other modals remain the same */}
                 {cancellingBooking && (
                     <CancelBookingModal
                         isOpen={!!cancellingBooking}

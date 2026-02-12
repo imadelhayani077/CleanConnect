@@ -1,4 +1,3 @@
-// src/pages/sweepstar/CurrentMissions.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Zap, Sparkles, Loader2 } from "lucide-react";
@@ -8,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 
 import { useCompleteMission, useMissionsHistory } from "@/Hooks/useBookings";
 
-import CurrentMissionCard from "./components/CurrentMissionCard";
-import EmptyHistoryState from "../components/EmptyHistoryState";
-import ConfirmationModal from "@/components/ui/ConfirmationModal"; // [!code focus] 1. Import Modal
+import EmptyHistoryState from "../MissionsHistory/components/EmptyHistoryState";
+import ConfirmationModal from "@/components/ui/ConfirmationModal"; // Modal
+import CurrentMissionCard from "./components/CurrentMissionCard"; // Current Mission Card
 
 export default function CurrentMissions() {
     const navigate = useNavigate();
@@ -19,14 +18,11 @@ export default function CurrentMissions() {
         useCompleteMission();
 
     const [completingId, setCompletingId] = useState(null);
-
-    // [!code focus] 2. State for confirmation modal
     const [confirmModal, setConfirmModal] = useState({
         open: false,
         id: null,
     });
 
-    // [!code focus] 3. Trigger the modal instead of window.confirm
     const handleCompleteClick = (id) => {
         setConfirmModal({
             open: true,
@@ -34,12 +30,11 @@ export default function CurrentMissions() {
         });
     };
 
-    // [!code focus] 4. The actual completion logic
     const handleConfirmComplete = async () => {
         const id = confirmModal.id;
         if (!id) return;
 
-        setCompletingId(id); // Set this to show loading state on the card if needed
+        setCompletingId(id); // Show loading state
         try {
             await completeMission(id);
             setConfirmModal({ open: false, id: null });
@@ -93,7 +88,9 @@ export default function CurrentMissions() {
                             <p className="text-muted-foreground mt-1.5">
                                 {upcomingCount === 0
                                     ? "No active missions right now"
-                                    : `${upcomingCount} active mission${upcomingCount !== 1 ? "s" : ""} • ${completedCount} completed total`}
+                                    : `${upcomingCount} active mission${
+                                          upcomingCount !== 1 ? "s" : ""
+                                      } • ${completedCount} completed total`}
                             </p>
                         </div>
                     </div>
@@ -133,7 +130,7 @@ export default function CurrentMissions() {
                         <CurrentMissionCard
                             key={job.id}
                             job={job}
-                            // [!code focus] 5. Pass the new handler
+                            // Pass handler to complete the mission
                             onComplete={handleCompleteClick}
                             isCompleting={
                                 completingId === job.id && isCompletingMission
@@ -158,7 +155,7 @@ export default function CurrentMissions() {
                 </Alert>
             )}
 
-            {/* [!code focus] 6. Render Confirmation Modal */}
+            {/* Render Confirmation Modal */}
             <ConfirmationModal
                 open={confirmModal.open}
                 onClose={() =>
@@ -167,7 +164,7 @@ export default function CurrentMissions() {
                 onConfirm={handleConfirmComplete}
                 title="Complete Mission?"
                 description="Are you sure you want to mark this mission as completed? This will update your status and notify the client."
-                variant="default" // Using default (blue/primary) as this is a positive action
+                variant="default" // Blue/primary as it's a positive action
                 confirmText="Complete Mission"
                 isLoading={isCompletingMission}
             />

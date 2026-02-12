@@ -1,3 +1,4 @@
+// src/pages/booking/Booking.jsx
 import React, { useState, useMemo } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { useAddress } from "@/Hooks/useAddress";
@@ -7,14 +8,8 @@ import BookingForm from "./components/BookingForm";
 import SuccessBookingModal from "./components/SuccessBookingModal";
 
 export default function Booking() {
-    // 1. Fetch Services
     const { data: services = [], isLoading: loadingServices } = useServices();
-
-    // 2. Fetch Addresses
-    // We destructure carefully. If your hook returns { data: [...] }, we use that.
     const { addresses: addressData, loading: loadingAddresses } = useAddress();
-
-    // 3. Mutation for API call
     const {
         mutateAsync: createBookingMutation,
         isPending: isBookingSubmitting,
@@ -23,7 +18,6 @@ export default function Booking() {
     const [isSuccess, setIsSuccess] = useState(false);
     const [submitError, setSubmitError] = useState(null);
 
-    // FIX: Ensure addresses is always an array before passing to BookingForm
     const verifiedAddresses = useMemo(() => {
         if (Array.isArray(addressData)) return addressData;
         if (addressData?.data && Array.isArray(addressData.data))
@@ -31,7 +25,6 @@ export default function Booking() {
         return [];
     }, [addressData]);
 
-    // --- Loading State ---
     if (loadingServices || loadingAddresses) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20 p-6">
@@ -45,7 +38,6 @@ export default function Booking() {
         );
     }
 
-    // --- Submit Logic ---
     const handleFormSubmit = async (formData) => {
         setSubmitError(null);
         try {
@@ -53,13 +45,8 @@ export default function Booking() {
                 service_id: Number(formData.service_id),
                 address_id: Number(formData.address_id),
                 scheduled_at: formData.scheduled_at,
-                // Ensure options is just an array of numbers
-                options: formData.options.map((id) => Number(id)),
-                // Map extras to match the structure the controller loops through
-                extras: formData.extras.map((e) => ({
-                    id: Number(e.id),
-                    quantity: Number(e.quantity || 1),
-                })),
+                options: (formData.options || []).map((id) => Number(id)),
+                extras: (formData.extras || []).map((id) => Number(id)),
                 final_price: Number(formData.final_price),
                 notes: formData.notes || "",
             };
@@ -69,7 +56,6 @@ export default function Booking() {
                 setIsSuccess(true);
             }
         } catch (error) {
-            // This will now show the REAL error from Laravel if it fails again
             const serverError =
                 error.response?.data?.message || "Booking failed.";
             setSubmitError(serverError);
@@ -84,7 +70,6 @@ export default function Booking() {
     return (
         <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 py-12 px-6">
             <div className="max-w-3xl mx-auto">
-                {/* Header Section */}
                 <div className="mb-10 text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
                         <div className="p-2 rounded-lg bg-primary/10">
@@ -100,7 +85,6 @@ export default function Booking() {
                     </p>
                 </div>
 
-                {/* Form Section */}
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
                     {submitError && (
                         <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 text-destructive rounded-xl text-sm font-medium">
@@ -110,7 +94,7 @@ export default function Booking() {
 
                     <BookingForm
                         services={services}
-                        addresses={verifiedAddresses} // Use the verified array
+                        addresses={verifiedAddresses}
                         onSubmit={handleFormSubmit}
                         isSubmitting={isBookingSubmitting}
                     />

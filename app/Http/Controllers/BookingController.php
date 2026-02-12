@@ -61,7 +61,7 @@ class BookingController extends Controller
             $totalDuration = 0;
 
             // 1. Calculate Price from Options (1 per group)
-            $availableOptions = $service->options->groupBy('option_group');
+            $availableOptions = $service->options->groupBy('option_group_name'); // FIXED: use correct column
             $selectedOptionIds = $validated['options'];
 
             foreach ($availableOptions as $groupName => $optionsInGroup) {
@@ -78,14 +78,13 @@ class BookingController extends Controller
                 $totalDuration += $option->duration_minutes;
             }
 
-            // 2. Add Extras
+            // 2. Add Extras (NOW JUST ARRAY OF IDs)
             if (!empty($validated['extras'])) {
-                foreach ($validated['extras'] as $extraItem) {
-                    $extra = $service->extras->find($extraItem['id']);
+                foreach ($validated['extras'] as $extraId) {
+                    $extra = $service->extras->find($extraId);
                     if ($extra) {
-                        $qty = $extraItem['quantity'] ?? 1;
-                        $systemPrice += ($extra->extra_price * $qty);
-                        $totalDuration += ($extra->duration_minutes * $qty);
+                        $systemPrice += $extra->extra_price;
+                        $totalDuration += $extra->duration_minutes;
                     }
                 }
             }
@@ -112,35 +111,45 @@ class BookingController extends Controller
                 'duration_minutes' => $totalDuration,
             ]);
 
-            // 5. Create Snapshot - UPDATED COLUMN NAMES
+            // 5. Create Snapshot
             $bookingService = $booking->bookingServices()->create([
                 'service_id'             => $service->id,
                 'total_price'            => $systemPrice,
                 'total_duration_minutes' => $totalDuration,
             ]);
 
-            // 6. Sync Items
+            // 6. Sync Options (IDs only)
             foreach ($selectedOptionIds as $optId) {
                 $bookingService->selectedOptions()->create(['service_option_id' => $optId]);
             }
 
+            // 7. Sync Extras (IDs only – NO QUANTITY)
             if (!empty($validated['extras'])) {
-                foreach ($validated['extras'] as $extraItem) {
-                    $bookingService->selectedExtras()->create([
-                        'service_extra_id' => $extraItem['id'],
-                        'quantity'         => $extraItem['quantity'] ?? 1
-                    ]);
+                foreach ($validated['extras'] as $extraId) {
+                    $bookingService->selectedExtras()->create(['service_extra_id' => $extraId]);
                 }
             }
 
-            // 7. NOTIFY SWEEPSTARS
+            // 8. NOTIFY SWEEPSTARS
             $sweepstars = User::where('role', 'sweepstar')->get();
             Notification::send($sweepstars, new BookingStatusUpdated(
                 "New job available in " . $booking->address->city,
                 $booking, 'new_booking'
             ));
 
-            return response()->json($booking->load('bookingServices.service', 'address'), 201);
+        return response()->json(
+            $booking->load([
+                'user',
+                'address',
+                'bookingServices.service',
+                'bookingServices.selectedOptions.option',
+                'bookingServices.selectedExtras.extra',
+                'review',
+                'sweepstar',
+            ]),
+            201
+        );
+
         });
     }
 
@@ -172,7 +181,7 @@ class BookingController extends Controller
                 $systemPrice = 0;
                 $totalDuration = 0;
 
-                $availableOptions = $service->options->groupBy('option_group');
+                $availableOptions = $service->options->groupBy('option_group_name'); // FIXED
                 $selectedOptionIds = $validated['options'];
 
                 foreach ($availableOptions as $groupName => $optionsInGroup) {
@@ -185,13 +194,13 @@ class BookingController extends Controller
                     $totalDuration += $option->duration_minutes;
                 }
 
+                // Extras – IDs only
                 if (!empty($validated['extras'])) {
-                    foreach ($validated['extras'] as $extraItem) {
-                        $extra = $service->extras->find($extraItem['id']);
+                    foreach ($validated['extras'] as $extraId) {
+                        $extra = $service->extras->find($extraId);
                         if ($extra) {
-                            $qty = $extraItem['quantity'] ?? 1;
-                            $systemPrice += ($extra->extra_price * $qty);
-                            $totalDuration += ($extra->duration_minutes * $qty);
+                            $systemPrice += $extra->extra_price;
+                            $totalDuration += $extra->duration_minutes;
                         }
                     }
                 }
@@ -209,39 +218,46 @@ class BookingController extends Controller
                 $booking->total_price = $validated['final_price'];
                 $booking->duration_minutes = $totalDuration;
 
+                // Remove old snapshot
                 $booking->bookingServices()->delete();
 
-                // UPDATED COLUMN NAMES HERE TOO
+                // Create new snapshot
                 $bookingService = $booking->bookingServices()->create([
                     'service_id'             => $service->id,
                     'total_price'            => $systemPrice,
                     'total_duration_minutes' => $totalDuration,
                 ]);
 
+                // Sync options
                 foreach ($selectedOptionIds as $optId) {
                     $bookingService->selectedOptions()->create(['service_option_id' => $optId]);
                 }
 
+                // Sync extras – NO QUANTITY
                 if (!empty($validated['extras'])) {
-                    foreach ($validated['extras'] as $extraItem) {
-                        $bookingService->selectedExtras()->create([
-                            'service_extra_id' => $extraItem['id'],
-
-                        ]);
+                    foreach ($validated['extras'] as $extraId) {
+                        $bookingService->selectedExtras()->create(['service_extra_id' => $extraId]);
                     }
                 }
             }
 
             $booking->save();
 
-            return response()->json([
+        return response()->json([
                 'message' => 'Booking updated successfully',
-                'booking' => $booking->load('bookingServices.service', 'address')
+                'booking' => $booking->load([
+                    'user',
+                    'address',
+                    'bookingServices.service',
+                    'bookingServices.selectedOptions.option',
+                    'bookingServices.selectedExtras.extra',
+                    'review',
+                    'sweepstar',
+                ])
             ]);
+
         });
     }
-
-    // ... (rest of the methods index, show, acceptMission, etc., remain as they were)
 
     public function show(Request $request, Booking $booking)
     {
@@ -264,26 +280,47 @@ class BookingController extends Controller
         return response()->json(['message' => 'Booking deleted successfully']);
     }
 
-    public function availableMissions(Request $request)
-    {
-        $jobs = Booking::whereNull('sweepstar_id')
-            ->where('status', 'pending')
-            ->with(['user', 'address', 'bookingServices.service'])
-            ->orderBy('scheduled_at', 'asc')
-            ->get();
+public function availableMissions(Request $request)
+{
+    $relationships = [
+        'user',
+        'address',
+        'bookingServices.service',
+        'bookingServices.selectedOptions.option',
+        'bookingServices.selectedExtras.extra',
+        'review',
+        'sweepstar',
+    ];
 
-        return response()->json(['jobs' => $jobs]);
-    }
+    $jobs = Booking::whereNull('sweepstar_id')
+        ->where('status', 'pending')
+        ->with($relationships)
+        ->orderBy('scheduled_at', 'asc')
+        ->get();
 
-    public function missionsHistory(Request $request)
-    {
-        $jobs = Booking::where('sweepstar_id', $request->user()->id)
-            ->with(['user', 'address', 'bookingServices.service'])
-            ->orderBy('scheduled_at', 'desc')
-            ->get();
+    return response()->json(['jobs' => $jobs]);
+}
 
-        return response()->json(['jobs' => $jobs]);
-    }
+public function missionsHistory(Request $request)
+{
+    $relationships = [
+        'user',
+        'address',
+        'bookingServices.service',
+        'bookingServices.selectedOptions.option',
+        'bookingServices.selectedExtras.extra',
+        'review',
+        'sweepstar',
+    ];
+
+    $jobs = Booking::where('sweepstar_id', $request->user()->id)
+        ->with($relationships)
+        ->orderBy('scheduled_at', 'desc')
+        ->get();
+
+    return response()->json(['jobs' => $jobs]);
+}
+
 
     public function acceptMission(Request $request, $id)
     {

@@ -6,16 +6,15 @@ import {
     Briefcase,
     Loader2,
     Zap,
-    ArrowRight,
     FileText,
     DollarSign,
 } from "lucide-react";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import MissionDetailModal from "./MissionDetailModal";
 
+// Format currency helper function
 const formatCurrency = (amount) =>
     new Intl.NumberFormat("en-US", {
         style: "currency",
@@ -30,12 +29,21 @@ export default function AvailableMissionCard({
 }) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const scheduledDate = new Date(job.scheduled_at);
+    console.log(job);
 
     // Handle internal "View Details" or parent "onViewDetails"
     const handleViewDetails = () => {
         setIsModalOpen(true);
         if (onViewDetails) onViewDetails(job.id);
     };
+
+    // Format options and extras (from the updated structure)
+    const selectedOptions = job.booking_services[0]?.selected_options?.map(
+        (option) => option.option?.name,
+    );
+    const selectedExtras = job.booking_services[0]?.selected_extras?.map(
+        (extra) => extra.extra?.name,
+    );
 
     return (
         <>
@@ -52,11 +60,19 @@ export default function AvailableMissionCard({
                 <CardHeader className="pb-4">
                     <div className="flex items-start gap-3">
                         <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 text-blue-600 dark:text-blue-400">
-                            <Briefcase className="w-5 h-5" />
+                            <img
+                                className="w-15 h-15"
+                                src={`http://localhost:8000${
+                                    job.booking_services[0]?.service
+                                        ?.service_icon
+                                }`}
+                                alt={job.booking_services[0]?.service?.name}
+                            />
                         </div>
                         <div>
                             <Badge variant="outline" className="mb-1.5 text-xs">
-                                {job.service_type || "Standard Clean"}
+                                {job.booking_services[0]?.service?.name ||
+                                    "Standard Clean"}
                             </Badge>
                             <CardTitle className="text-lg md:text-xl line-clamp-1">
                                 {job.address?.city || "Unknown Location"}
@@ -99,7 +115,7 @@ export default function AvailableMissionCard({
                         </div>
                     </div>
 
-                    {/* PRICE SECTION (Specific to Available Card) */}
+                    {/* PRICE SECTION */}
                     <div className="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-800/30">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
@@ -115,6 +131,42 @@ export default function AvailableMissionCard({
                             </span>
                         </div>
                     </div>
+
+                    {/* Options and Extras */}
+                    {selectedOptions && selectedOptions.length > 0 && (
+                        <div className="space-y-2">
+                            <span className="text-sm font-semibold">
+                                Options
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedOptions.map((option, idx) => (
+                                    <Badge
+                                        key={idx}
+                                        className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                                    >
+                                        {option}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {selectedExtras && selectedExtras.length > 0 && (
+                        <div className="space-y-2">
+                            <span className="text-sm font-semibold">
+                                Extras
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedExtras.map((extra, idx) => (
+                                    <Badge
+                                        key={idx}
+                                        className="bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300"
+                                    >
+                                        {extra}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex gap-3 pt-2">

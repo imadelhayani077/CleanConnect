@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { MapPin, Clock, Trophy, XCircle, FileText } from "lucide-react";
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-
 import MissionDetailModal from "../../AvailableMissions/components/MissionDetailModal";
 
 export default function MissionHistoryCard({ job }) {
@@ -13,6 +11,7 @@ export default function MissionHistoryCard({ job }) {
     const scheduledDate = new Date(job.scheduled_at);
     const isCompleted = job.status === "completed";
 
+    // Handle directions button click (Open in Google Maps)
     const handleDirections = () => {
         if (job.address) {
             const query = `${job.address.street_address}, ${job.address.city}`;
@@ -23,7 +22,7 @@ export default function MissionHistoryCard({ job }) {
         }
     };
 
-    // Color Logic
+    // Color Logic for completed vs cancelled
     const theme = isCompleted
         ? {
               border: "from-green-500 via-green-400 to-green-300",
@@ -37,6 +36,14 @@ export default function MissionHistoryCard({ job }) {
               iconBg: "bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400",
               cardBorder: "border-red-200/50 dark:border-red-900/20 opacity-90",
           };
+
+    // Options and Extras (from updated backend model)
+    const selectedOptions = job.booking_services[0]?.selected_options?.map(
+        (option) => option.option?.name,
+    );
+    const selectedExtras = job.booking_services[0]?.selected_extras?.map(
+        (extra) => extra.extra?.name,
+    );
 
     return (
         <>
@@ -54,16 +61,17 @@ export default function MissionHistoryCard({ job }) {
 
                 <CardHeader className="pb-4">
                     <div className="flex items-start gap-3">
-                        <div className={`p-3 rounded-xl ${theme.iconBg}`}>
-                            {isCompleted ? (
-                                <Trophy className="w-5 h-5" />
-                            ) : (
-                                <XCircle className="w-5 h-5" />
-                            )}
-                        </div>
+                        <img
+                            className="w-15 h-15"
+                            src={`http://localhost:8000${
+                                job.booking_services[0]?.service?.service_icon
+                            }`}
+                            alt={job.booking_services[0]?.service?.name}
+                        />
                         <div>
                             <Badge variant="outline" className="mb-1.5 text-xs">
-                                {job.service_type || "Cleaning Mission"}
+                                {job.booking_services[0]?.service?.name ||
+                                    "Cleaning Mission"}
                             </Badge>
                             <CardTitle className="text-lg md:text-xl line-clamp-1">
                                 {job.address?.city || "Location"}
@@ -104,6 +112,42 @@ export default function MissionHistoryCard({ job }) {
                             </div>
                         </div>
                     </div>
+
+                    {/* Options and Extras */}
+                    {selectedOptions && selectedOptions.length > 0 && (
+                        <div className="space-y-2">
+                            <span className="text-sm font-semibold">
+                                Options
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedOptions.map((option, idx) => (
+                                    <Badge
+                                        key={idx}
+                                        className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300"
+                                    >
+                                        {option}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                    {selectedExtras && selectedExtras.length > 0 && (
+                        <div className="space-y-2">
+                            <span className="text-sm font-semibold">
+                                Extras
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                                {selectedExtras.map((extra, idx) => (
+                                    <Badge
+                                        key={idx}
+                                        className="bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300"
+                                    >
+                                        {extra}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex pt-2">

@@ -10,7 +10,7 @@ import { useMissionsHistory } from "@/Hooks/useBookings";
 import { Loader2 } from "lucide-react";
 
 import MissionHistoryCard from "./components/MissionHistoryCard";
-import EmptyMissionsState from "../components/EmptyMissionsState";
+import EmptyHistoryState from "./components/EmptyHistoryState";
 
 export default function MissionsHistory() {
     const navigate = useNavigate();
@@ -89,7 +89,7 @@ export default function MissionsHistory() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {pastJobs.length === 0 ? (
                     <div className="col-span-full">
-                        <EmptyMissionsState
+                        <EmptyHistoryState
                             onFindJobs={() => navigate("/dashboard/available")}
                         />
                     </div>

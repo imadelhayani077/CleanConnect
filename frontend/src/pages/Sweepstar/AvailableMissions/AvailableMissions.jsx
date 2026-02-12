@@ -10,7 +10,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { useAvailableMissions, useAcceptMission } from "@/Hooks/useBookings";
-import EmptyMissionsState from "../components/EmptyMissionsState";
+import EmptyMissionsState from "./components/EmptyMissionsState";
 import MissionCard from "./components/AvailableMissionCard";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 

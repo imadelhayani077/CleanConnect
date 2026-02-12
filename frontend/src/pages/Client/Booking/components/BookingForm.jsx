@@ -6,7 +6,6 @@ import * as z from "zod";
 import {
     Loader2,
     Sparkles,
-    Clock,
     Check,
     MessageSquare,
     Calendar,
@@ -41,27 +40,46 @@ const formatDuration = (totalMinutes) => {
     return `${hours}h ${minutes < 10 ? "0" : ""}${minutes}min`;
 };
 
-const bookingSchema = z.object({
-    service_id: z.number({ required_error: "Please select a service" }),
-    address_id: z.string().min(1, "Please select an address"),
-    scheduled_at: z.string().min(1, "Please select date and time"),
-    options: z.array(z.number()).min(1, "Please select required options"),
-    extras: z.array(
-        z.object({
-            id: z.number(),
-            quantity: z.number(),
-        }),
-    ),
-    notes: z.string().optional(),
-    final_price: z.number(),
-});
-
 export default function BookingForm({
     services,
     addresses,
     onSubmit,
     isSubmitting,
 }) {
+    const [priceMultiplier, setPriceMultiplier] = useState(1);
+    const [selectedServiceId, setSelectedServiceId] = useState(null);
+
+    const currentService = useMemo(
+        () => services.find((s) => s.id === selectedServiceId),
+        [services, selectedServiceId],
+    );
+
+    // Dynamic schema: options required only if service has options
+    const bookingSchema = useMemo(() => {
+        let schema = z.object({
+            service_id: z.number({ required_error: "Please select a service" }),
+            address_id: z.string().min(1, "Please select an address"),
+            scheduled_at: z.string().min(1, "Please select date and time"),
+            extras: z.array(z.number()), // array of extra IDs
+            notes: z.string().optional(),
+            final_price: z.number(),
+        });
+
+        if (currentService?.options?.length > 0) {
+            schema = schema.extend({
+                options: z
+                    .array(z.number())
+                    .min(1, "Please select required options"),
+            });
+        } else {
+            schema = schema.extend({
+                options: z.array(z.number()).optional().default([]),
+            });
+        }
+
+        return schema;
+    }, [currentService]);
+
     const form = useForm({
         resolver: zodResolver(bookingSchema),
         defaultValues: {
@@ -83,15 +101,8 @@ export default function BookingForm({
         formState: { errors },
     } = form;
 
-    const selectedServiceId = watch("service_id");
-    const selectedOptions = watch("options");
-    const selectedExtras = watch("extras");
-    const [priceMultiplier, setPriceMultiplier] = useState(1);
-
-    const currentService = useMemo(
-        () => services.find((s) => s.id === selectedServiceId),
-        [services, selectedServiceId],
-    );
+    const selectedOptions = watch("options") || [];
+    const selectedExtras = watch("extras") || [];
 
     const groupedOptions = useMemo(() => {
         if (!currentService?.options) return {};
@@ -105,23 +116,23 @@ export default function BookingForm({
 
     const totals = useMemo(() => {
         if (!currentService) return { finalPrice: 0, durationMinutes: 0 };
+
         let price = Number(currentService.base_price || 0);
         let duration = Number(currentService.base_duration_minutes || 0);
 
         selectedOptions.forEach((optId) => {
-            const opt = currentService.options.find((o) => o.id === optId);
+            const opt = currentService.options?.find((o) => o.id === optId);
             if (opt) {
                 price += Number(opt.option_price || 0);
                 duration += Number(opt.duration_minutes || 0);
             }
         });
 
-        selectedExtras.forEach((item) => {
-            const extra = currentService.extras.find((e) => e.id === item.id);
+        selectedExtras.forEach((extraId) => {
+            const extra = currentService.extras?.find((e) => e.id === extraId);
             if (extra) {
-                price += Number(extra.extra_price || 0) * (item.quantity || 1);
-                duration +=
-                    Number(extra.duration_minutes || 0) * (item.quantity || 1);
+                price += Number(extra.extra_price || 0);
+                duration += Number(extra.duration_minutes || 0);
             }
         });
 
@@ -141,7 +152,18 @@ export default function BookingForm({
         setValue("options", [...otherGroupsOptions, optionId]);
     };
 
-    // This catches validation errors and prints them to your browser console
+    const toggleExtra = (extraId) => {
+        const isSelected = selectedExtras.includes(extraId);
+        if (isSelected) {
+            setValue(
+                "extras",
+                selectedExtras.filter((id) => id !== extraId),
+            );
+        } else {
+            setValue("extras", [...selectedExtras, extraId]);
+        }
+    };
+
     const onInvalid = (errors) => {
         console.error("Form Validation Failed:", errors);
     };
@@ -165,6 +187,7 @@ export default function BookingForm({
                             }
                             className="h-24 flex flex-col gap-1 border-2"
                             onClick={() => {
+                                setSelectedServiceId(s.id);
                                 setValue("service_id", s.id);
                                 setValue("options", []);
                                 setValue("extras", []);
@@ -179,95 +202,86 @@ export default function BookingForm({
 
                 {currentService && (
                     <div className="space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
-                        {/* 2. Options */}
-                        {Object.entries(groupedOptions).map(
-                            ([groupName, opts]) => (
-                                <div key={groupName} className="space-y-3">
-                                    <label className="text-sm font-semibold uppercase tracking-wider text-primary">
-                                        {groupName}
-                                    </label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {opts.map((opt) => (
-                                            <Button
-                                                key={opt.id}
-                                                type="button"
-                                                variant={
-                                                    selectedOptions.includes(
-                                                        opt.id,
-                                                    )
-                                                        ? "default"
-                                                        : "outline"
-                                                }
-                                                onClick={() =>
-                                                    handleOptionSelect(
-                                                        groupName,
-                                                        opt.id,
-                                                    )
-                                                }
-                                                className="rounded-full px-6"
-                                            >
-                                                {opt.name}
-                                            </Button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ),
+                        {/* 2. Options (only if there are options) */}
+                        {Object.keys(groupedOptions).length > 0 && (
+                            <>
+                                {Object.entries(groupedOptions).map(
+                                    ([groupName, opts]) => (
+                                        <div
+                                            key={groupName}
+                                            className="space-y-3"
+                                        >
+                                            <label className="text-sm font-semibold uppercase tracking-wider text-primary">
+                                                {groupName}
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {opts.map((opt) => (
+                                                    <Button
+                                                        key={opt.id}
+                                                        type="button"
+                                                        variant={
+                                                            selectedOptions.includes(
+                                                                opt.id,
+                                                            )
+                                                                ? "default"
+                                                                : "outline"
+                                                        }
+                                                        onClick={() =>
+                                                            handleOptionSelect(
+                                                                groupName,
+                                                                opt.id,
+                                                            )
+                                                        }
+                                                        className="rounded-full px-6"
+                                                    >
+                                                        {opt.name}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ),
+                                )}
+                            </>
                         )}
 
                         {/* 3. Extra Tasks */}
-                        <div className="space-y-3">
-                            <label className="text-sm font-semibold uppercase tracking-wider text-primary">
-                                Extra Tasks
-                            </label>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {currentService.extras?.map((extra) => {
-                                    const isSelected = selectedExtras.some(
-                                        (e) => e.id === extra.id,
-                                    );
-                                    return (
-                                        <Button
-                                            key={extra.id}
-                                            type="button"
-                                            variant={
-                                                isSelected
-                                                    ? "default"
-                                                    : "outline"
-                                            }
-                                            className="justify-between h-14"
-                                            onClick={() => {
-                                                if (isSelected) {
-                                                    setValue(
-                                                        "extras",
-                                                        selectedExtras.filter(
-                                                            (e) =>
-                                                                e.id !==
-                                                                extra.id,
-                                                        ),
-                                                    );
-                                                } else {
-                                                    setValue("extras", [
-                                                        ...selectedExtras,
-                                                        {
-                                                            id: extra.id,
-                                                            quantity: 1,
-                                                        },
-                                                    ]);
+                        {currentService.extras?.length > 0 && (
+                            <div className="space-y-3">
+                                <label className="text-sm font-semibold uppercase tracking-wider text-primary">
+                                    Extra Tasks
+                                </label>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {currentService.extras.map((extra) => {
+                                        const isSelected =
+                                            selectedExtras.includes(extra.id);
+                                        return (
+                                            <Button
+                                                key={extra.id}
+                                                type="button"
+                                                variant={
+                                                    isSelected
+                                                        ? "default"
+                                                        : "outline"
                                                 }
-                                            }}
-                                        >
-                                            <span className="truncate mr-2">
-                                                {extra.name}
-                                            </span>
-                                            {isSelected && (
-                                                <Check className="w-4 h-4 shrink-0" />
-                                            )}
-                                        </Button>
-                                    );
-                                })}
+                                                className="justify-between h-14"
+                                                onClick={() =>
+                                                    toggleExtra(extra.id)
+                                                }
+                                            >
+                                                <span className="truncate mr-2">
+                                                    {extra.name}
+                                                </span>
+                                                {isSelected && (
+                                                    <Check className="w-4 h-4 shrink-0" />
+                                                )}
+                                            </Button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        {/* 4. Date & Time Selection (CRUCIAL FIX) */}
+                        {/* 4. Date & Time */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <FormField
                                 control={control}
@@ -343,26 +357,49 @@ export default function BookingForm({
                         />
 
                         {/* 6. Pricing Summary */}
+
                         <Card className="bg-primary/5 border-primary/20">
                             <CardContent className="p-6 space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <p className="text-2xl font-bold">
-                                        Estimated Time:{" "}
-                                        {formatDuration(totals.durationMinutes)}
-                                    </p>
-                                    <p className="text-4xl font-black text-primary">
-                                        Price: ${totals.finalPrice.toFixed(2)}
-                                    </p>
+                                    <div>
+                                        <p className="text-sm text-muted-foreground">
+                                            Estimated Duration
+                                        </p>
+                                        <p className="text-2xl font-bold">
+                                            {formatDuration(
+                                                totals.durationMinutes,
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-sm text-muted-foreground">
+                                            Revised Total
+                                        </p>
+                                        <p className="text-4xl font-black text-primary">
+                                            ${totals.finalPrice.toFixed(2)}
+                                        </p>
+                                    </div>
                                 </div>
-                                <Slider
-                                    min={0.9}
-                                    max={1.5}
-                                    step={0.05}
-                                    value={[priceMultiplier]}
-                                    onValueChange={([val]) =>
-                                        setPriceMultiplier(val)
-                                    }
-                                />
+
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-muted-foreground">
+                                            Price Adjustment
+                                        </span>
+                                        <span className="font-medium">
+                                            {priceMultiplier.toFixed(2)}x
+                                        </span>
+                                    </div>
+                                    <Slider
+                                        min={0.9}
+                                        max={1.5}
+                                        step={0.05}
+                                        value={[priceMultiplier]}
+                                        onValueChange={([val]) =>
+                                            setPriceMultiplier(val)
+                                        }
+                                    />
+                                </div>
                             </CardContent>
                         </Card>
                     </div>

@@ -12,7 +12,6 @@ import SweepstarApi from "@/Services/SweepstarApi";
 // 1. Client: Get "My Bookings"
 export const useMyBookings = () => {
     return useQuery({
-        // We use a specific key so we don't mix up Client bookings with Admin bookings
         queryKey: ["bookings", "client"],
         queryFn: async () => {
             const response = await ClientApi.getMyBookings();
@@ -38,35 +37,18 @@ export const useAvailableMissions = () => {
         queryKey: ["sweepstar", "missions"],
         queryFn: async () => {
             const response = await SweepstarApi.getAvailableMissions();
-
             return response.data.jobs || [];
         },
     });
 };
 
-// 4. Sweepstar: Get My Schedule
+// 4. Sweepstar: Get Missions History (Schedule)
 export const useMissionsHistory = () => {
     return useQuery({
         queryKey: ["sweepstar", "missionsHistory"],
         queryFn: async () => {
             const response = await SweepstarApi.getMissionsHistory();
             return response.data.jobs || [];
-        },
-    });
-};
-export const useCompleteMission = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async (bookingId) => {
-            return await SweepstarApi.completeMission(bookingId);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["sweepstar", "missionsHistory"],
-            });
-            // Also invalidate history if needed
-            queryClient.invalidateQueries({ queryKey: ["bookings"] });
         },
     });
 };
@@ -86,7 +68,6 @@ export const useCreateBooking = () => {
             return await ClientApi.createBooking(bookingData);
         },
         onSuccess: () => {
-            // When a client adds a booking, refresh their list
             queryClient.invalidateQueries({ queryKey: ["bookings", "client"] });
         },
         onError: (error) => {
@@ -101,17 +82,29 @@ export const useEditBooking = () => {
 
     return useMutation({
         mutationFn: async ({ id, data }) => {
-            // Note: mutationFn only accepts ONE argument, so we pass an object
             return await ClientApi.updateBooking(id, data);
         },
         onSuccess: () => {
-            // Invalidate BOTH client and admin lists to be safe
             queryClient.invalidateQueries({ queryKey: ["bookings"] });
         },
     });
 };
 
-// 7. Sweepstar: Accept a Mission
+// 7. Client: Cancel a Booking
+export const useCancelBooking = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, reason }) => {
+            return await ClientApi.cancelBooking(id, reason);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["bookings"] });
+        },
+    });
+};
+
+// 8. Sweepstar: Accept a Mission
 export const useAcceptMission = () => {
     const queryClient = useQueryClient();
 
@@ -120,12 +113,9 @@ export const useAcceptMission = () => {
             return await SweepstarApi.acceptMission(bookingId);
         },
         onSuccess: () => {
-            // Complex invalidation:
-            // 1. The job is no longer "available", so refresh available list
             queryClient.invalidateQueries({
                 queryKey: ["sweepstar", "missions"],
             });
-            // 2. The job is now in "my schedule", so refresh schedule
             queryClient.invalidateQueries({
                 queryKey: ["sweepstar", "missionsHistory"],
             });
@@ -135,14 +125,19 @@ export const useAcceptMission = () => {
         },
     });
 };
-export const useCancelBooking = () => {
+
+// 9. Sweepstar: Complete a Mission
+export const useCompleteMission = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: async ({ id, reason }) => {
-            return await ClientApi.cancelBooking(id, reason);
+        mutationFn: async (bookingId) => {
+            return await SweepstarApi.completeMission(bookingId);
         },
         onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["sweepstar", "missionsHistory"],
+            });
             queryClient.invalidateQueries({ queryKey: ["bookings"] });
         },
     });
